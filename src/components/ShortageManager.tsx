@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
+import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, Edit, Trash2 } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, Edit, Trash2, FileText, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
 
 interface ShortageManagerProps {
   onBack: () => void;
@@ -20,6 +22,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   
   const { user, checkPermission } = useAuthStore();
+  const { language, t } = useLanguageStore();
   const { medicines, addMedicine, updateMedicine, deleteMedicine } = usePharmacyStore();
   const { toast } = useToast();
 
@@ -29,15 +32,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     );
   }, [medicines, searchTerm]);
 
-  const existingMedicineNames = medicines.map(m => m.name);
+  const shortages = filteredMedicines.filter(m => m.status === 'shortage');
+  const available = filteredMedicines.filter(m => m.status === 'available');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!medicineName.trim()) {
       toast({
-        title: "خطأ",
-        description: "يرجى إدخال اسم الدواء",
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' ? "يرجى إدخال اسم الدواء" : "Please enter medicine name",
         variant: "destructive",
       });
       return;
@@ -51,73 +55,26 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         updatedBy: user?.name || ''
       });
       toast({
-        title: "تم التحديث",
-        description: `تم تحديث ${medicineName} بنجاح`,
+        title: language === 'ar' ? "تم التحديث" : "Updated",
+        description: language === 'ar' ? `تم تحديث ${medicineName} بنجاح` : `${medicineName} updated successfully`,
       });
       setEditingId(null);
     } else {
-      const existingMedicine = medicines.find(m => m.name.toLowerCase() === medicineName.toLowerCase());
-      
-      if (existingMedicine) {
-        updateMedicine(existingMedicine.id, {
-          status: 'shortage',
-          notes,
-          lastUpdated: new Date().toISOString(),
-          updatedBy: user?.name || ''
-        });
-        toast({
-          title: "تم التحديث",
-          description: `تم تحديث حالة ${medicineName} إلى ناقص`,
-        });
-      } else {
-        addMedicine({
-          name: medicineName,
-          status: 'shortage',
-          notes,
-          lastUpdated: new Date().toISOString(),
-          updatedBy: user?.name || ''
-        });
-        toast({
-          title: "تم الإضافة",
-          description: `تم إضافة ${medicineName} كدواء ناقص`,
-        });
-      }
+      addMedicine({
+        name: medicineName,
+        status: 'shortage',
+        notes,
+        lastUpdated: new Date().toISOString(),
+        updatedBy: user?.name || ''
+      });
+      toast({
+        title: language === 'ar' ? "تم الإضافة" : "Added",
+        description: language === 'ar' ? `تم إضافة ${medicineName} كدواء ناقص` : `${medicineName} added as shortage`,
+      });
     }
 
     setMedicineName('');
     setNotes('');
-  };
-
-  const handleEdit = (medicine: Medicine) => {
-    if (!checkPermission('edit_all') && medicine.updatedBy !== user?.name) {
-      toast({
-        title: "غير مصرح",
-        description: "لا يمكنك تعديل هذا السجل",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setEditingId(medicine.id);
-    setMedicineName(medicine.name);
-    setNotes(medicine.notes || '');
-  };
-
-  const handleDelete = (medicine: Medicine) => {
-    if (!checkPermission('delete_all') && medicine.updatedBy !== user?.name) {
-      toast({
-        title: "غير مصرح",
-        description: "لا يمكنك حذف هذا السجل",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    deleteMedicine(medicine.id);
-    toast({
-      title: "تم الحذف",
-      description: `تم حذف ${medicine.name} من القائمة`,
-    });
   };
 
   const toggleStatus = (medicine: Medicine) => {
@@ -129,79 +86,147 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     });
     
     toast({
-      title: "تم التحديث",
-      description: `تم تحديث حالة ${medicine.name} إلى ${newStatus === 'available' ? 'متوفر' : 'ناقص'}`,
+      title: language === 'ar' ? "تم التحديث" : "Updated",
+      description: language === 'ar' 
+        ? `تم تحديث حالة ${medicine.name} إلى ${newStatus === 'available' ? 'متوفر' : 'ناقص'}`
+        : `${medicine.name} status updated to ${newStatus}`,
     });
   };
 
+  const exportShortagesPDF = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(16);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 20, 20);
+      doc.text('Medicine Shortages Report', 20, 30);
+      
+      doc.setFontSize(12);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 45);
+      doc.text(`Generated by: ${user?.name}`, 20, 55);
+      
+      // Table headers
+      let yPosition = 75;
+      doc.setFontSize(14);
+      doc.text('No', 20, yPosition);
+      doc.text('Drug Name', 50, yPosition);
+      doc.text('Quantity', 150, yPosition);
+      
+      yPosition += 15;
+      
+      // Table content
+      doc.setFontSize(11);
+      shortages.forEach((medicine, index) => {
+        doc.text((index + 1).toString(), 20, yPosition);
+        doc.text(medicine.name, 50, yPosition);
+        doc.text('_______', 150, yPosition); // Empty quantity field
+        
+        if (medicine.repeatCount && medicine.repeatCount > 1) {
+          doc.text(`(Repeated: ${medicine.repeatCount}x)`, 50, yPosition + 10);
+          yPosition += 5;
+        }
+        
+        yPosition += 15;
+        
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 20;
+        }
+      });
+      
+      doc.save(`shortages-report-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast({
+        title: language === 'ar' ? "تم التصدير" : "Exported",
+        description: language === 'ar' ? "تم تصدير تقرير النواقص بنجاح" : "Shortages report exported successfully",
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
+        description: language === 'ar' ? "حدث خطأ أثناء تصدير التقرير" : "Error occurred while exporting report",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative">
+      {/* Background Logo */}
+      <div 
+        className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
+          backgroundSize: '600px 600px',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      />
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <Button
-              onClick={onBack}
-              variant="ghost"
-              className="flex items-center space-x-2 space-x-reverse"
-            >
-              <ArrowRight className="w-4 h-4" />
-              <span>العودة للرئيسية</span>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Button
+                onClick={onBack}
+                variant="ghost"
+                className="flex items-center space-x-2 space-x-reverse"
+              >
+                <ArrowRight className="w-4 h-4" />
+                <span>{t('back')}</span>
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900 mr-4">{t('shortages.title')}</h1>
+            </div>
+            
+            <Button onClick={exportShortagesPDF} className="pharmacy-gradient">
+              <FileText className="w-4 h-4 ml-2" />
+              {t('shortages.exportPdf')}
             </Button>
-            <h1 className="text-xl font-bold text-gray-900 mr-4">إدارة نواقص الأدوية</h1>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Add/Edit Medicine Form */}
+          {/* Add Medicine Form */}
           <div className="lg:col-span-1">
             <Card className="card-shadow">
               <CardHeader>
                 <CardTitle>
-                  {editingId ? 'تعديل الدواء' : 'إضافة دواء ناقص'}
+                  {editingId ? (language === 'ar' ? 'تعديل الدواء' : 'Edit Medicine') : t('shortages.addShortage')}
                 </CardTitle>
-                <CardDescription>
-                  {editingId ? 'تعديل بيانات الدواء' : 'أدخل اسم الدواء الناقص'}
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      اسم الدواء
+                      {t('shortages.medicineName')}
                     </label>
                     <Input
                       value={medicineName}
                       onChange={(e) => setMedicineName(e.target.value)}
-                      placeholder="أدخل اسم الدواء"
-                      list="medicine-suggestions"
+                      placeholder={language === 'ar' ? 'أدخل اسم الدواء' : 'Enter medicine name'}
                       className="text-right"
                     />
-                    <datalist id="medicine-suggestions">
-                      {existingMedicineNames.map((name, index) => (
-                        <option key={index} value={name} />
-                      ))}
-                    </datalist>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      ملاحظات (اختياري)
+                      {t('shortages.notes')}
                     </label>
                     <Input
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="أدخل ملاحظات إضافية"
+                      placeholder={language === 'ar' ? 'أدخل ملاحظات إضافية' : 'Enter additional notes'}
                       className="text-right"
                     />
                   </div>
                   
                   <Button type="submit" className="w-full pharmacy-gradient">
                     <Plus className="w-4 h-4 ml-2" />
-                    {editingId ? 'تحديث الدواء' : 'إضافة الدواء'}
+                    {editingId ? (language === 'ar' ? 'تحديث الدواء' : 'Update Medicine') : t('shortages.addMedicine')}
                   </Button>
                   
                   {editingId && (
@@ -215,7 +240,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                         setNotes('');
                       }}
                     >
-                      إلغاء التعديل
+                      {t('cancel')}
                     </Button>
                   )}
                 </form>
@@ -223,101 +248,114 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
             </Card>
           </div>
 
-          {/* Medicine List */}
-          <div className="lg:col-span-2">
+          {/* Medicine Lists */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={language === 'ar' ? 'البحث عن دواء...' : 'Search for medicine...'}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Shortages List */}
             <Card className="card-shadow">
               <CardHeader>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-                  <div>
-                    <CardTitle>قائمة الأدوية</CardTitle>
-                    <CardDescription>
-                      إجمالي الأدوية: {medicines.length} | 
-                      ناقص: {medicines.filter(m => m.status === 'shortage').length} | 
-                      متوفر: {medicines.filter(m => m.status === 'available').length}
-                    </CardDescription>
-                  </div>
-                  <div className="relative">
-                    <Search className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="البحث عن دواء..."
-                      className="pl-10 w-64"
-                    />
-                  </div>
-                </div>
+                <CardTitle className="flex items-center space-x-3 space-x-reverse text-red-600">
+                  <AlertCircle className="w-6 h-6" />
+                  <span>{t('dashboard.shortages')} ({shortages.length})</span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {filteredMedicines.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">لا توجد أدوية مسجلة</p>
-                  ) : (
-                    filteredMedicines.map((medicine) => (
-                      <div
-                        key={medicine.id}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          medicine.status === 'shortage'
-                            ? 'border-red-200 bg-red-50'
-                            : 'border-green-200 bg-green-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3 space-x-reverse">
-                            {medicine.status === 'shortage' ? (
-                              <AlertCircle className="w-5 h-5 text-red-500" />
-                            ) : (
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                            )}
-                            <div>
+                  {shortages.map((medicine) => (
+                    <div key={medicine.id} className="p-4 rounded-lg border-2 border-red-200 bg-red-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 space-x-reverse">
+                          <AlertCircle className="w-5 h-5 text-red-500" />
+                          <div>
+                            <div className="flex items-center space-x-2 space-x-reverse">
                               <h3 className="font-medium text-gray-900">{medicine.name}</h3>
-                              <p className="text-sm text-gray-500">
-                                آخر تحديث: {new Date(medicine.lastUpdated).toLocaleDateString('ar-SA')} بواسطة {medicine.updatedBy}
-                              </p>
-                              {medicine.notes && (
-                                <p className="text-sm text-gray-600 mt-1">ملاحظة: {medicine.notes}</p>
+                              {medicine.repeatCount && medicine.repeatCount > 1 && (
+                                <Badge variant="outline" className="flex items-center space-x-1">
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span>{medicine.repeatCount}x {t('shortages.repeated')}</span>
+                                </Badge>
                               )}
                             </div>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 space-x-reverse">
-                            <Badge
-                              variant={medicine.status === 'shortage' ? 'destructive' : 'default'}
-                              className={medicine.status === 'available' ? 'bg-green-500' : ''}
-                            >
-                              {medicine.status === 'shortage' ? 'ناقص' : 'متوفر'}
-                            </Badge>
-                            
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => toggleStatus(medicine)}
-                            >
-                              {medicine.status === 'shortage' ? 'تم توفيره' : 'نفد'}
-                            </Button>
-                            
-                            {(checkPermission('edit_all') || medicine.updatedBy === user?.name) && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleEdit(medicine)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            )}
-                            
-                            {(checkPermission('delete_all') || medicine.updatedBy === user?.name) && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDelete(medicine)}
-                              >
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
-                            )}
+                            <p className="text-sm text-gray-500">
+                              {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.lastUpdated).toLocaleDateString()} 
+                              {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
+                            </p>
                           </div>
                         </div>
+                        
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => toggleStatus(medicine)}
+                            className="bg-green-50 hover:bg-green-100"
+                          >
+                            {t('shortages.provided')}
+                          </Button>
+                        </div>
                       </div>
-                    ))
+                    </div>
+                  ))}
+                  {shortages.length === 0 && (
+                    <p className="text-center text-gray-500 py-8">
+                      {language === 'ar' ? 'لا توجد أدوية ناقصة' : 'No medicines in shortage'}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Available List */}
+            <Card className="card-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-3 space-x-reverse text-green-600">
+                  <CheckCircle className="w-6 h-6" />
+                  <span>{t('dashboard.available')} ({available.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {available.map((medicine) => (
+                    <div key={medicine.id} className="p-4 rounded-lg border-2 border-green-200 bg-green-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 space-x-reverse">
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                          <div>
+                            <h3 className="font-medium text-gray-900">{medicine.name}</h3>
+                            <p className="text-sm text-gray-500">
+                              {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.lastUpdated).toLocaleDateString()} 
+                              {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => toggleStatus(medicine)}
+                            className="bg-red-50 hover:bg-red-100"
+                          >
+                            {t('shortages.outOfStock')}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {available.length === 0 && (
+                    <p className="text-center text-gray-500 py-8">
+                      {language === 'ar' ? 'لا توجد أدوية متوفرة' : 'No available medicines'}
+                    </p>
                   )}
                 </div>
               </CardContent>

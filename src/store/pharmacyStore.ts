@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -9,6 +8,7 @@ export interface Medicine {
   lastUpdated: string;
   updatedBy: string;
   notes?: string;
+  repeatCount?: number; // عدد مرات التكرار
 }
 
 export interface Revenue {
@@ -44,14 +44,38 @@ export const usePharmacyStore = create<PharmacyState>()(
       revenues: [],
       
       addMedicine: (medicine) => {
-        const newMedicine = {
-          ...medicine,
-          id: Date.now().toString()
-        };
-        set((state) => ({
-          medicines: [...state.medicines, newMedicine]
-        }));
-        console.log('تم إضافة دواء:', medicine.name);
+        const existingMedicine = get().medicines.find(m => 
+          m.name.toLowerCase() === medicine.name.toLowerCase()
+        );
+        
+        if (existingMedicine) {
+          // إذا كان الدواء موجود، زيادة عداد التكرار
+          set((state) => ({
+            medicines: state.medicines.map((m) =>
+              m.id === existingMedicine.id 
+                ? { 
+                    ...m, 
+                    repeatCount: (m.repeatCount || 1) + 1,
+                    status: medicine.status,
+                    lastUpdated: medicine.lastUpdated,
+                    updatedBy: medicine.updatedBy,
+                    notes: medicine.notes
+                  }
+                : m
+            )
+          }));
+        } else {
+          // إضافة دواء جديد
+          const newMedicine = {
+            ...medicine,
+            id: Date.now().toString(),
+            repeatCount: 1
+          };
+          set((state) => ({
+            medicines: [...state.medicines, newMedicine]
+          }));
+        }
+        console.log('تم إضافة/تحديث دواء:', medicine.name);
       },
       
       updateMedicine: (id, updates) => {

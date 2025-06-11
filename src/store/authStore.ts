@@ -27,7 +27,7 @@ const predefinedUsers: Record<string, { password: string; user: User }> = {
       email: 'admin@tiryak.com',
       name: 'المدير',
       role: 'admin',
-      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users']
+      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users', 'register_revenue_all']
     }
   },
   'ahmad@tiryak.com': {
@@ -37,7 +37,7 @@ const predefinedUsers: Record<string, { password: string; user: User }> = {
       email: 'ahmad@tiryak.com',
       name: 'أحمد الرجيلي',
       role: 'ahmad_rajili',
-      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf']
+      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'register_revenue_all']
     }
   },
   'morning@tiryak.com': {
