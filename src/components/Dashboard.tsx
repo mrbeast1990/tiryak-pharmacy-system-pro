@@ -58,15 +58,15 @@ const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-8 h-8 pharmacy-gradient rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-md">
                 <img 
                   src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
                   alt="Al-Tiryak Logo" 
-                  className="w-5 h-5"
+                  className="w-8 h-8"
                 />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">{t('pharmacy.name')}</h1>
+                <h1 className="text-xs font-bold text-gray-900">{t('pharmacy.name')}</h1>
                 <p className="text-xs text-gray-500">{t('welcome')} {user?.name}</p>
               </div>
             </div>
@@ -78,8 +78,8 @@ const Dashboard: React.FC = () => {
                 size="sm"
                 className="flex items-center space-x-1 text-xs px-2 py-1"
               >
-                <Globe className="w-3 h-3" />
-                <span>{t('language')}</span>
+                <Globe className="w-2 h-2" />
+                <span className="text-xs">{t('language')}</span>
               </Button>
               
               <Button
@@ -88,8 +88,8 @@ const Dashboard: React.FC = () => {
                 size="sm"
                 className="flex items-center space-x-1 space-x-reverse text-xs px-2 py-1"
               >
-                <LogOut className="w-3 h-3" />
-                <span>{t('logout')}</span>
+                <LogOut className="w-2 h-2" />
+                <span className="text-xs">{t('logout')}</span>
               </Button>
             </div>
           </div>

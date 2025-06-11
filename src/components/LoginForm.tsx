@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { Pill, Lock, Mail, Globe, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -18,25 +19,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
   
   const { login } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    if (isSignUp) {
-      toast({
-        title: language === 'ar' ? "ميزة قريباً" : "Feature Coming Soon",
-        description: language === 'ar' ? "ميزة التسجيل ستكون متاحة قريباً" : "Sign up feature will be available soon",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
     
     const success = await login(email, password, rememberMe);
     
@@ -55,6 +46,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     }
     
     setIsLoading(false);
+  };
+
+  const handleSignUpClick = () => {
+    navigate('/signup');
   };
 
   return (
@@ -83,11 +78,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
       <Card className="w-full max-w-md card-shadow relative z-10">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 pharmacy-gradient rounded-full flex items-center justify-center mx-auto mb-3">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
             <img 
               src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
               alt="Al-Tiryak Logo" 
-              className="w-10 h-10"
+              className="w-16 h-16"
             />
           </div>
           <CardTitle className="text-xl font-bold text-gray-900">
@@ -152,7 +147,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                isSignUp ? (language === 'ar' ? 'إنشاء حساب' : 'Sign Up') : (language === 'ar' ? 'تسجيل الدخول' : 'Sign In')
+                language === 'ar' ? 'تسجيل الدخول' : 'Sign In'
               )}
             </Button>
             
@@ -160,13 +155,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={handleSignUpClick}
             >
               <UserPlus className="w-4 h-4 mr-2" />
-              {isSignUp 
-                ? (language === 'ar' ? 'العودة لتسجيل الدخول' : 'Back to Sign In')
-                : (language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account')
-              }
+              {language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'}
             </Button>
           </form>
         </CardContent>
