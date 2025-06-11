@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -8,13 +9,13 @@ export interface Medicine {
   lastUpdated: string;
   updatedBy: string;
   notes?: string;
-  repeatCount?: number; // عدد مرات التكرار
+  repeatCount?: number;
 }
 
 export interface Revenue {
   id: string;
   date: string;
-  shift: 'morning' | 'evening' | 'night';
+  shift: 'morning' | 'evening' | 'night' | 'ahmad';
   expense: number;
   income: number;
   notes?: string;
@@ -35,6 +36,7 @@ interface PharmacyState {
   getRevenuesByDateRange: (startDate: string, endDate: string) => Revenue[];
   getRevenuesByShift: (shift: string) => Revenue[];
   getTotalDailyRevenue: (date: string) => number;
+  getMedicineSuggestions: (query: string) => string[];
 }
 
 export const usePharmacyStore = create<PharmacyState>()(
@@ -49,7 +51,6 @@ export const usePharmacyStore = create<PharmacyState>()(
         );
         
         if (existingMedicine) {
-          // إذا كان الدواء موجود، زيادة عداد التكرار
           set((state) => ({
             medicines: state.medicines.map((m) =>
               m.id === existingMedicine.id 
@@ -65,7 +66,6 @@ export const usePharmacyStore = create<PharmacyState>()(
             )
           }));
         } else {
-          // إضافة دواء جديد
           const newMedicine = {
             ...medicine,
             id: Date.now().toString(),
@@ -138,6 +138,17 @@ export const usePharmacyStore = create<PharmacyState>()(
       getTotalDailyRevenue: (date) => {
         const dayRevenues = get().revenues.filter((revenue) => revenue.date === date);
         return dayRevenues.reduce((total, revenue) => total + revenue.income - revenue.expense, 0);
+      },
+      
+      getMedicineSuggestions: (query) => {
+        if (query.length < 2) return [];
+        const medicines = get().medicines;
+        return medicines
+          .filter(medicine => 
+            medicine.name.toLowerCase().includes(query.toLowerCase())
+          )
+          .map(medicine => medicine.name)
+          .slice(0, 5);
       }
     }),
     {

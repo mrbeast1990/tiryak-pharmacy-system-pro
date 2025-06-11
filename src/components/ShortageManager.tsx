@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, Edit, Trash2, FileText, RotateCcw } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
@@ -18,13 +18,14 @@ interface ShortageManagerProps {
 const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [medicineName, setMedicineName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [notes, setNotes] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
-  const { medicines, addMedicine, updateMedicine, deleteMedicine } = usePharmacyStore();
+  const { medicines, addMedicine, updateMedicine, deleteMedicine, getMedicineSuggestions } = usePharmacyStore();
   const { toast } = useToast();
+
+  const suggestions = getMedicineSuggestions(medicineName);
 
   const filteredMedicines = useMemo(() => {
     return medicines.filter(medicine =>
@@ -47,34 +48,20 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       return;
     }
 
-    if (editingId) {
-      updateMedicine(editingId, {
-        name: medicineName,
-        notes,
-        lastUpdated: new Date().toISOString(),
-        updatedBy: user?.name || ''
-      });
-      toast({
-        title: language === 'ar' ? "تم التحديث" : "Updated",
-        description: language === 'ar' ? `تم تحديث ${medicineName} بنجاح` : `${medicineName} updated successfully`,
-      });
-      setEditingId(null);
-    } else {
-      addMedicine({
-        name: medicineName,
-        status: 'shortage',
-        notes,
-        lastUpdated: new Date().toISOString(),
-        updatedBy: user?.name || ''
-      });
-      toast({
-        title: language === 'ar' ? "تم الإضافة" : "Added",
-        description: language === 'ar' ? `تم إضافة ${medicineName} كدواء ناقص` : `${medicineName} added as shortage`,
-      });
-    }
+    addMedicine({
+      name: medicineName,
+      status: 'shortage',
+      lastUpdated: new Date().toISOString(),
+      updatedBy: user?.name || ''
+    });
+    
+    toast({
+      title: language === 'ar' ? "تم الإضافة" : "Added",
+      description: language === 'ar' ? `تم إضافة ${medicineName} كدواء ناقص` : `${medicineName} added as shortage`,
+    });
 
     setMedicineName('');
-    setNotes('');
+    setShowSuggestions(false);
   };
 
   const toggleStatus = (medicine: Medicine) => {
@@ -120,7 +107,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       shortages.forEach((medicine, index) => {
         doc.text((index + 1).toString(), 20, yPosition);
         doc.text(medicine.name, 50, yPosition);
-        doc.text('_______', 150, yPosition); // Empty quantity field
+        doc.text('_______', 150, yPosition);
         
         if (medicine.repeatCount && medicine.repeatCount > 1) {
           doc.text(`(Repeated: ${medicine.repeatCount}x)`, 50, yPosition + 10);
@@ -166,21 +153,22 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center">
               <Button
                 onClick={onBack}
                 variant="ghost"
-                className="flex items-center space-x-2 space-x-reverse"
+                size="sm"
+                className="flex items-center space-x-2 space-x-reverse text-sm"
               >
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3 h-3" />
                 <span>{t('back')}</span>
               </Button>
-              <h1 className="text-xl font-bold text-gray-900 mr-4">{t('shortages.title')}</h1>
+              <h1 className="text-lg font-bold text-gray-900 mr-4">{t('shortages.title')}</h1>
             </div>
             
-            <Button onClick={exportShortagesPDF} className="pharmacy-gradient">
-              <FileText className="w-4 h-4 ml-2" />
+            <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-sm px-3 py-1">
+              <FileText className="w-3 h-3 ml-1" />
               {t('shortages.exportPdf')}
             </Button>
           </div>
@@ -194,55 +182,49 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
           <div className="lg:col-span-1">
             <Card className="card-shadow">
               <CardHeader>
-                <CardTitle>
-                  {editingId ? (language === 'ar' ? 'تعديل الدواء' : 'Edit Medicine') : t('shortages.addShortage')}
+                <CardTitle className="text-lg">
+                  {t('shortages.addShortage')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
+                  <div className="relative">
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
                       {t('shortages.medicineName')}
                     </label>
                     <Input
                       value={medicineName}
-                      onChange={(e) => setMedicineName(e.target.value)}
+                      onChange={(e) => {
+                        setMedicineName(e.target.value);
+                        setShowSuggestions(e.target.value.length >= 2);
+                      }}
+                      onFocus={() => setShowSuggestions(medicineName.length >= 2)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                       placeholder={language === 'ar' ? 'أدخل اسم الدواء' : 'Enter medicine name'}
                       className="text-right"
                     />
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      {t('shortages.notes')}
-                    </label>
-                    <Input
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder={language === 'ar' ? 'أدخل ملاحظات إضافية' : 'Enter additional notes'}
-                      className="text-right"
-                    />
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                        {suggestions.map((suggestion, index) => (
+                          <div
+                            key={index}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-right text-sm"
+                            onClick={() => {
+                              setMedicineName(suggestion);
+                              setShowSuggestions(false);
+                            }}
+                          >
+                            {suggestion}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   <Button type="submit" className="w-full pharmacy-gradient">
                     <Plus className="w-4 h-4 ml-2" />
-                    {editingId ? (language === 'ar' ? 'تحديث الدواء' : 'Update Medicine') : t('shortages.addMedicine')}
+                    {t('shortages.addMedicine')}
                   </Button>
-                  
-                  {editingId && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        setEditingId(null);
-                        setMedicineName('');
-                        setNotes('');
-                      }}
-                    >
-                      {t('cancel')}
-                    </Button>
-                  )}
                 </form>
               </CardContent>
             </Card>
@@ -264,41 +246,41 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
             {/* Shortages List */}
             <Card className="card-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-3 space-x-reverse text-red-600">
-                  <AlertCircle className="w-6 h-6" />
+                <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-lg">
+                  <AlertCircle className="w-5 h-5" />
                   <span>{t('dashboard.shortages')} ({shortages.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {shortages.map((medicine) => (
-                    <div key={medicine.id} className="p-4 rounded-lg border-2 border-red-200 bg-red-50">
+                    <div key={medicine.id} className="p-3 rounded-lg border-2 border-red-200 bg-red-50">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 space-x-reverse">
-                          <AlertCircle className="w-5 h-5 text-red-500" />
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <AlertCircle className="w-4 h-4 text-red-500" />
                           <div>
                             <div className="flex items-center space-x-2 space-x-reverse">
-                              <h3 className="font-medium text-gray-900">{medicine.name}</h3>
+                              <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
                               {medicine.repeatCount && medicine.repeatCount > 1 && (
-                                <Badge variant="outline" className="flex items-center space-x-1">
-                                  <RotateCcw className="w-3 h-3" />
+                                <Badge variant="outline" className="flex items-center space-x-1 text-xs">
+                                  <RotateCcw className="w-2 h-2" />
                                   <span>{medicine.repeatCount}x {t('shortages.repeated')}</span>
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs text-gray-500">
                               {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.lastUpdated).toLocaleDateString()} 
                               {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-2 space-x-reverse">
+                        <div className="flex items-center">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => toggleStatus(medicine)}
-                            className="bg-green-50 hover:bg-green-100"
+                            className="bg-green-50 hover:bg-green-100 text-xs px-2 py-1"
                           >
                             {t('shortages.provided')}
                           </Button>
@@ -307,7 +289,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                     </div>
                   ))}
                   {shortages.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-500 py-8 text-sm">
                       {language === 'ar' ? 'لا توجد أدوية ناقصة' : 'No medicines in shortage'}
                     </p>
                   )}
@@ -318,33 +300,33 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
             {/* Available List */}
             <Card className="card-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-3 space-x-reverse text-green-600">
-                  <CheckCircle className="w-6 h-6" />
+                <CardTitle className="flex items-center space-x-2 space-x-reverse text-green-600 text-lg">
+                  <CheckCircle className="w-5 h-5" />
                   <span>{t('dashboard.available')} ({available.length})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {available.map((medicine) => (
-                    <div key={medicine.id} className="p-4 rounded-lg border-2 border-green-200 bg-green-50">
+                    <div key={medicine.id} className="p-3 rounded-lg border-2 border-green-200 bg-green-50">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 space-x-reverse">
-                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
                           <div>
-                            <h3 className="font-medium text-gray-900">{medicine.name}</h3>
-                            <p className="text-sm text-gray-500">
+                            <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
+                            <p className="text-xs text-gray-500">
                               {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.lastUpdated).toLocaleDateString()} 
                               {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-2 space-x-reverse">
+                        <div className="flex items-center">
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => toggleStatus(medicine)}
-                            className="bg-red-50 hover:bg-red-100"
+                            className="bg-red-50 hover:bg-red-100 text-xs px-2 py-1"
                           >
                             {t('shortages.outOfStock')}
                           </Button>
@@ -353,7 +335,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                     </div>
                   ))}
                   {available.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-500 py-8 text-sm">
                       {language === 'ar' ? 'لا توجد أدوية متوفرة' : 'No available medicines'}
                     </p>
                   )}
@@ -363,6 +345,13 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
           </div>
         </div>
       </main>
+      
+      {/* Footer */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 relative z-10">
+        <p>Ahmed A Alrjele</p>
+        <p>Founder & CEO</p>
+        <p>Al-tiryak Al-shafi Pharmacy</p>
+      </div>
     </div>
   );
 };

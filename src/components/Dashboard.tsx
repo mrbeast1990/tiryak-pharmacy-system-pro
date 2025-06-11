@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
-import { LogOut, Pill, TrendingUp, FileText, Users, AlertCircle, CheckCircle, Globe } from 'lucide-react';
+import { LogOut, TrendingUp, Users, AlertCircle, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
@@ -16,11 +16,6 @@ const Dashboard: React.FC = () => {
   const { language, toggleLanguage, t } = useLanguageStore();
   const { medicines, revenues, getTotalDailyRevenue } = usePharmacyStore();
   const { toast } = useToast();
-
-  const shortages = medicines.filter(m => m.status === 'shortage');
-  const available = medicines.filter(m => m.status === 'available');
-  const today = new Date().toISOString().split('T')[0];
-  const todayRevenue = getTotalDailyRevenue(today);
 
   const handleLogout = () => {
     logout();
@@ -61,34 +56,39 @@ const Dashboard: React.FC = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="w-10 h-10 pharmacy-gradient rounded-lg flex items-center justify-center">
-                <Pill className="w-6 h-6 text-white" />
+          <div className="flex justify-between items-center h-14">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-8 h-8 pharmacy-gradient rounded-lg flex items-center justify-center">
+                <img 
+                  src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
+                  alt="Al-Tiryak Logo" 
+                  className="w-5 h-5"
+                />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{t('pharmacy.name')}</h1>
-                <p className="text-sm text-gray-500">{t('welcome')} {user?.name}</p>
+                <h1 className="text-lg font-bold text-gray-900">{t('pharmacy.name')}</h1>
+                <p className="text-xs text-gray-500">{t('welcome')} {user?.name}</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-3 space-x-reverse">
+            <div className="flex items-center space-x-2 space-x-reverse">
               <Button
                 onClick={toggleLanguage}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-1 text-xs px-2 py-1"
               >
-                <Globe className="w-4 h-4" />
+                <Globe className="w-3 h-3" />
                 <span>{t('language')}</span>
               </Button>
               
               <Button
                 onClick={handleLogout}
                 variant="outline"
-                className="flex items-center space-x-2 space-x-reverse"
+                size="sm"
+                className="flex items-center space-x-1 space-x-reverse text-xs px-2 py-1"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3 h-3" />
                 <span>{t('logout')}</span>
               </Button>
             </div>
@@ -98,61 +98,6 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="card-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.shortages')}</CardTitle>
-              <AlertCircle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{shortages.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'أصناف ناقصة' : 'items shortage'}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.available')}</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{available.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'أصناف متوفرة' : 'items available'}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.todayRevenue')}</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{todayRevenue.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'ريال سعودي' : 'SAR'}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="card-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('dashboard.totalRevenues')}</CardTitle>
-              <FileText className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{revenues.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {language === 'ar' ? 'سجل إيراد' : 'revenue records'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" 
@@ -196,13 +141,20 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <Button onClick={generateUserReport} className="pharmacy-gradient">
-                <FileText className="w-4 h-4 ml-2" />
+                <Users className="w-4 h-4 ml-2" />
                 {t('dashboard.exportUserReport')}
               </Button>
             </CardContent>
           </Card>
         )}
       </main>
+      
+      {/* Footer */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 relative z-10">
+        <p>Ahmed A Alrjele</p>
+        <p>Founder & CEO</p>
+        <p>Al-tiryak Al-shafi Pharmacy</p>
+      </div>
     </div>
   );
 };

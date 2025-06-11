@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
-import { Pill, Lock, Mail, Globe } from 'lucide-react';
+import { Pill, Lock, Mail, Globe, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface LoginFormProps {
@@ -18,6 +18,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   
   const { login } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
@@ -26,6 +27,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    if (isSignUp) {
+      toast({
+        title: language === 'ar' ? "ميزة قريباً" : "Feature Coming Soon",
+        description: language === 'ar' ? "ميزة التسجيل ستكون متاحة قريباً" : "Sign up feature will be available soon",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
     
     const success = await login(email, password, rememberMe);
     
@@ -63,21 +74,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       <Button
         onClick={toggleLanguage}
         variant="outline"
+        size="sm"
         className="absolute top-4 right-4 flex items-center space-x-2"
       >
-        <Globe className="w-4 h-4" />
-        <span>{t('language')}</span>
+        <Globe className="w-3 h-3" />
+        <span className="text-sm">{t('language')}</span>
       </Button>
 
-      <Card className="w-full max-w-md card-shadow">
+      <Card className="w-full max-w-md card-shadow relative z-10">
         <CardHeader className="text-center">
-          <div className="w-20 h-20 pharmacy-gradient rounded-full flex items-center justify-center mx-auto mb-4">
-            <Pill className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 pharmacy-gradient rounded-full flex items-center justify-center mx-auto mb-3">
+            <img 
+              src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
+              alt="Al-Tiryak Logo" 
+              className="w-10 h-10"
+            />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
+          <CardTitle className="text-xl font-bold text-gray-900">
             {t('pharmacy.name')}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             {language === 'ar' ? 'نظام إدارة متكامل' : 'Integrated Management System'}
           </CardDescription>
         </CardHeader>
@@ -94,7 +110,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
-                  className="pl-10"
+                  className="pl-10 text-sm"
                   required
                 />
               </div>
@@ -111,7 +127,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
-                  className="pl-10"
+                  className="pl-10 text-sm"
                   required
                 />
               </div>
@@ -136,12 +152,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                language === 'ar' ? 'تسجيل الدخول' : 'Sign In'
+                isSignUp ? (language === 'ar' ? 'إنشاء حساب' : 'Sign Up') : (language === 'ar' ? 'تسجيل الدخول' : 'Sign In')
               )}
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setIsSignUp(!isSignUp)}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              {isSignUp 
+                ? (language === 'ar' ? 'العودة لتسجيل الدخول' : 'Back to Sign In')
+                : (language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account')
+              }
             </Button>
           </form>
         </CardContent>
       </Card>
+      
+      {/* Footer */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600">
+        <p>Ahmed A Alrjele</p>
+        <p>Founder & CEO</p>
+        <p>Al-tiryak Al-shafi Pharmacy</p>
+      </div>
     </div>
   );
 };
