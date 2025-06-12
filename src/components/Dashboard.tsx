@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
-import { LogOut, TrendingUp, Users, Globe, Pill } from 'lucide-react';
+import { LogOut, TrendingUp, Users, Globe, Capsule } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
 import ProfileModal from './ProfileModal';
+import jsPDF from 'jspdf';
 
 const Dashboard: React.FC = () => {
   const [activeView, setActiveView] = useState<'dashboard' | 'shortage' | 'revenue'>('dashboard');
@@ -28,10 +29,129 @@ const Dashboard: React.FC = () => {
   };
 
   const generateUserReport = () => {
-    toast({
-      title: language === 'ar' ? "تصدير التقرير" : "Export Report",
-      description: language === 'ar' ? "سيتم إضافة هذه الميزة قريباً" : "This feature will be added soon",
-    });
+    if (!checkPermission('export_pdf')) {
+      toast({
+        title: language === 'ar' ? "غير مصرح" : "Unauthorized",
+        description: language === 'ar' ? "لا يمكنك تصدير التقارير" : "Cannot export reports",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      // Add logo
+      const logoSize = 20;
+      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
+      
+      // Header
+      doc.setFontSize(16);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 18, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.text('Staff Performance Report', 105, 28, { align: 'center' });
+      
+      // Current Date
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric'
+      });
+      
+      doc.setFontSize(12);
+      doc.text(`Generated: ${currentDate}`, 105, 38, { align: 'center' });
+      
+      // Calculate user performance
+      const userStats: Record<string, { shortages: number, revenues: number }> = {};
+      
+      medicines.forEach(medicine => {
+        if (medicine.updatedBy) {
+          if (!userStats[medicine.updatedBy]) {
+            userStats[medicine.updatedBy] = { shortages: 0, revenues: 0 };
+          }
+          userStats[medicine.updatedBy].shortages++;
+        }
+      });
+      
+      revenues.forEach(revenue => {
+        if (revenue.createdBy) {
+          if (!userStats[revenue.createdBy]) {
+            userStats[revenue.createdBy] = { shortages: 0, revenues: 0 };
+          }
+          userStats[revenue.createdBy].revenues++;
+        }
+      });
+      
+      // Table headers
+      let yPosition = 55;
+      
+      // Draw header background
+      doc.setFillColor(65, 105, 225);
+      doc.rect(20, yPosition - 8, 50, 15, 'F');
+      doc.rect(70, yPosition - 8, 50, 15, 'F');
+      doc.rect(120, yPosition - 8, 50, 15, 'F');
+      
+      // Table headers text
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.text('Staff Name', 45, yPosition, { align: 'center' });
+      doc.text('Shortage Records', 95, yPosition, { align: 'center' });
+      doc.text('Revenue Records', 145, yPosition, { align: 'center' });
+      
+      // Table content
+      doc.setTextColor(0, 0, 0);
+      yPosition += 20;
+      
+      // Draw table data
+      Object.entries(userStats).forEach(([userName, stats], index) => {
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.1);
+        doc.line(20, yPosition - 10, 170, yPosition - 10);
+        doc.line(20, yPosition + 5, 170, yPosition + 5);
+        doc.line(20, yPosition - 10, 20, yPosition + 5);
+        doc.line(70, yPosition - 10, 70, yPosition + 5);
+        doc.line(120, yPosition - 10, 120, yPosition + 5);
+        doc.line(170, yPosition - 10, 170, yPosition + 5);
+        
+        doc.setFontSize(11);
+        doc.text(userName, 45, yPosition - 2, { align: 'center' });
+        doc.text(stats.shortages.toString(), 95, yPosition - 2, { align: 'center' });
+        doc.text(stats.revenues.toString(), 145, yPosition - 2, { align: 'center' });
+        
+        yPosition += 15;
+        
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 20;
+        }
+      });
+      
+      // Summary
+      yPosition += 15;
+      doc.setFontSize(12);
+      doc.text('Performance Summary:', 20, yPosition);
+      yPosition += 10;
+      doc.setFontSize(10);
+      doc.text(`Total Staff: ${Object.keys(userStats).length}`, 20, yPosition);
+      yPosition += 8;
+      doc.text(`Total Shortage Records: ${medicines.length}`, 20, yPosition);
+      yPosition += 8;
+      doc.text(`Total Revenue Records: ${revenues.length}`, 20, yPosition);
+      
+      doc.save(`staff-performance-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast({
+        title: language === 'ar' ? "تم التصدير" : "Exported",
+        description: language === 'ar' ? "تم تصدير تقرير الأداء بنجاح" : "Performance report exported successfully",
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
+        description: language === 'ar' ? "حدث خطأ أثناء تصدير التقرير" : "Error occurred while exporting report",
+        variant: "destructive",
+      });
+    }
   };
 
   if (activeView === 'shortage') {
@@ -61,13 +181,13 @@ const Dashboard: React.FC = () => {
           <div className="flex justify-between items-center h-14">
             <div className="flex items-center space-x-3 space-x-reverse">
               <div 
-                className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shadow-md cursor-pointer"
+                className="cursor-pointer"
                 onClick={() => setShowProfile(true)}
               >
                 <img 
                   src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
                   alt="Al-Tiryak Logo" 
-                  className="w-12 h-12"
+                  className="w-16 h-16"
                 />
               </div>
               <div>
@@ -109,7 +229,7 @@ const Dashboard: React.FC = () => {
                 onClick={() => setActiveView('shortage')}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-3 space-x-reverse">
-                <Pill className="w-6 h-6 text-red-500" />
+                <Capsule className="w-6 h-6 text-red-500" />
                 <span>{t('dashboard.registerShortage')}</span>
               </CardTitle>
               <CardDescription>

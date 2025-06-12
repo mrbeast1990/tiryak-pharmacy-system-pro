@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Capsule } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
@@ -84,16 +84,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Add logo
-      const logoSize = 15;
+      // Add logo - larger size
+      const logoSize = 20;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
-      // Header
-      doc.setFontSize(14);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 15, { align: 'center' });
+      // Header - larger font
+      doc.setFontSize(16);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 18, { align: 'center' });
       
-      doc.setFontSize(12);
-      doc.text('Medicine Shortages List', 105, 25, { align: 'center' });
+      doc.setFontSize(14);
+      doc.text('Medicine Shortages List', 105, 28, { align: 'center' });
       
       // Current Date
       const currentDate = new Date().toLocaleDateString('en-US', {
@@ -102,43 +102,43 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         year: 'numeric'
       });
       
-      doc.setFontSize(10);
-      doc.text(`Date: ${currentDate}`, 105, 35, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Date: ${currentDate}`, 105, 38, { align: 'center' });
       
-      // Table headers
-      let yPosition = 50;
+      // Table headers - smaller table, bigger fonts
+      let yPosition = 55;
       
-      // Draw header background
+      // Draw header background - smaller table
       doc.setFillColor(65, 105, 225);
-      doc.rect(15, yPosition - 8, 25, 15, 'F');
-      doc.rect(40, yPosition - 8, 100, 15, 'F');
-      doc.rect(140, yPosition - 8, 50, 15, 'F');
+      doc.rect(30, yPosition - 8, 20, 15, 'F');
+      doc.rect(50, yPosition - 8, 80, 15, 'F');
+      doc.rect(130, yPosition - 8, 40, 15, 'F');
       
-      // Table headers text
+      // Table headers text - bigger font
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10);
-      doc.text('No.', 27, yPosition, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text('No.', 40, yPosition, { align: 'center' });
       doc.text('Drug Name', 90, yPosition, { align: 'center' });
-      doc.text('Quantity', 165, yPosition, { align: 'center' });
+      doc.text('Quantity', 150, yPosition, { align: 'center' });
       
       // Table content
       doc.setTextColor(0, 0, 0);
       yPosition += 20;
       
-      // Draw table data
+      // Draw table data - bigger font
       shortages.forEach((medicine, index) => {
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.1);
-        doc.line(15, yPosition - 10, 190, yPosition - 10);
-        doc.line(15, yPosition + 5, 190, yPosition + 5);
-        doc.line(15, yPosition - 10, 15, yPosition + 5);
-        doc.line(40, yPosition - 10, 40, yPosition + 5);
-        doc.line(140, yPosition - 10, 140, yPosition + 5);
-        doc.line(190, yPosition - 10, 190, yPosition + 5);
+        doc.line(30, yPosition - 10, 170, yPosition - 10);
+        doc.line(30, yPosition + 5, 170, yPosition + 5);
+        doc.line(30, yPosition - 10, 30, yPosition + 5);
+        doc.line(50, yPosition - 10, 50, yPosition + 5);
+        doc.line(130, yPosition - 10, 130, yPosition + 5);
+        doc.line(170, yPosition - 10, 170, yPosition + 5);
         
-        doc.setFontSize(9);
-        doc.text((index + 1).toString(), 27, yPosition - 2, { align: 'center' });
-        doc.text(medicine.name, 45, yPosition - 2, { align: 'left' });
+        doc.setFontSize(11);
+        doc.text((index + 1).toString(), 40, yPosition - 2, { align: 'center' });
+        doc.text(medicine.name, 55, yPosition - 2, { align: 'left' });
         
         yPosition += 15;
         
@@ -180,19 +180,18 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       <header className="bg-white shadow-sm border-b relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center">
-              <Button
-                onClick={onBack}
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 space-x-reverse text-sm"
-              >
-                <ArrowRight className="w-3 h-3" />
-                <span>{t('back')}</span>
-              </Button>
-            </div>
-            
-            <h1 className="text-lg font-bold text-gray-900 absolute left-1/2 transform -translate-x-1/2">{t('shortages.title')}</h1>
+            <h1 className="text-lg font-bold text-gray-900">{t('shortages.title')}</h1>
+          </div>
+          <div className="pb-4">
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              size="sm"
+              className="flex items-center space-x-2 space-x-reverse text-sm"
+            >
+              <ArrowRight className="w-3 h-3" />
+              <span>{t('back')}</span>
+            </Button>
           </div>
         </div>
       </header>

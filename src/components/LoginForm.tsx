@@ -53,7 +53,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Background Logo */}
       <div 
         className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
@@ -70,7 +70,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         onClick={toggleLanguage}
         variant="outline"
         size="sm"
-        className="absolute top-4 right-4 flex items-center space-x-2"
+        className={`absolute top-4 ${language === 'ar' ? 'left-4' : 'right-4'} flex items-center space-x-2`}
       >
         <Globe className="w-3 h-3" />
         <span className="text-sm">{t('language')}</span>
@@ -78,11 +78,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
       <Card className="w-full max-w-md card-shadow relative z-10">
         <CardHeader className="text-center">
-          <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+          <div className="flex items-center justify-center mx-auto mb-3">
             <img 
               src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
               alt="Al-Tiryak Logo" 
-              className="w-24 h-24"
+              className="w-32 h-32"
             />
           </div>
           <CardTitle className="text-xl font-bold text-gray-900">
@@ -99,13 +99,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
-                  className="pl-10 text-sm"
+                  className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
                   required
                 />
               </div>
@@ -116,13 +116,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 {language === 'ar' ? 'كلمة المرور' : 'Password'}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
-                  className="pl-10 text-sm"
+                  className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
                   required
                 />
               </div>
@@ -157,15 +157,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               className="w-full"
               onClick={handleSignUpClick}
             >
-              <UserPlus className="w-4 h-4 mr-2" />
+              <UserPlus className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
               {language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'}
             </Button>
           </form>
         </CardContent>
       </Card>
       
-      {/* Footer */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600">
+      {/* Footer - moved to front */}
+      <div className={`absolute bottom-4 ${language === 'ar' ? 'right-4' : 'left-4'} text-${language === 'ar' ? 'right' : 'left'} text-sm text-gray-600`}>
         <p>Ahmed A Alrjele</p>
         <p>Founder & CEO</p>
         <p>Al-tiryak Al-shafi Pharmacy</p>

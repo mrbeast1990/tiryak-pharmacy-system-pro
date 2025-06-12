@@ -24,6 +24,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [reportStartDate, setReportStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [reportEndDate, setReportEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDayView, setSelectedDayView] = useState(false);
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -140,39 +141,39 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Add logo
-      const logoSize = 12;
+      // Add logo - larger size
+      const logoSize = 20;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
-      // Header
-      doc.setFontSize(12);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 15, { align: 'center' });
+      // Header - larger font
+      doc.setFontSize(16);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 18, { align: 'center' });
       
-      doc.setFontSize(10);
-      doc.text('Revenue Report', 105, 25, { align: 'center' });
+      doc.setFontSize(14);
+      doc.text('Revenue Report', 105, 28, { align: 'center' });
       
       // Date information
-      doc.setFontSize(9);
-      doc.text(`Date: ${date}`, 20, 40);
+      doc.setFontSize(12);
+      doc.text(`Date: ${date}`, 20, 45);
       
-      // Create table
+      // Create table - smaller table, bigger fonts
       const dayRevenues = revenues.filter(rev => rev.date === date);
-      let yPosition = 55;
+      let yPosition = 60;
       
-      // Draw header background
+      // Draw header background - smaller table
       doc.setFillColor(65, 105, 225);
-      doc.rect(20, yPosition - 8, 40, 15, 'F');
-      doc.rect(60, yPosition - 8, 40, 15, 'F');
-      doc.rect(100, yPosition - 8, 40, 15, 'F');
-      doc.rect(140, yPosition - 8, 40, 15, 'F');
+      doc.rect(30, yPosition - 8, 30, 15, 'F');
+      doc.rect(60, yPosition - 8, 30, 15, 'F');
+      doc.rect(90, yPosition - 8, 30, 15, 'F');
+      doc.rect(120, yPosition - 8, 40, 15, 'F');
       
-      // Header text - white color
+      // Header text - white color, bigger font
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.text('Period', 40, yPosition);
-      doc.text('Change (LYD)', 80, yPosition);
-      doc.text('Revenue (LYD)', 120, yPosition);
-      doc.text('Notes', 160, yPosition);
+      doc.setFontSize(12);
+      doc.text('Period', 45, yPosition);
+      doc.text('Change (LYD)', 75, yPosition);
+      doc.text('Revenue (LYD)', 105, yPosition);
+      doc.text('Notes', 140, yPosition);
       
       // Reset text color to black
       doc.setTextColor(0, 0, 0);
@@ -189,16 +190,16 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         
         // Draw row borders
         doc.setDrawColor(220, 220, 220);
-        doc.rect(20, yPosition - 10, 160, 15);
+        doc.rect(30, yPosition - 10, 130, 15);
         doc.line(60, yPosition - 10, 60, yPosition + 5);
-        doc.line(100, yPosition - 10, 100, yPosition + 5);
-        doc.line(140, yPosition - 10, 140, yPosition + 5);
+        doc.line(90, yPosition - 10, 90, yPosition + 5);
+        doc.line(120, yPosition - 10, 120, yPosition + 5);
         
-        doc.setFontSize(8);
-        doc.text(periodName, 40, yPosition - 2);
-        doc.text(rev.expense.toFixed(2), 80, yPosition - 2);
-        doc.text(rev.income.toFixed(2), 120, yPosition - 2);
-        doc.text(rev.notes || '-', 145, yPosition - 2);
+        doc.setFontSize(11);
+        doc.text(periodName, 45, yPosition - 2);
+        doc.text(rev.expense.toFixed(2), 75, yPosition - 2);
+        doc.text(rev.income.toFixed(2), 105, yPosition - 2);
+        doc.text(rev.notes || '-', 125, yPosition - 2);
         
         totalRevenue += rev.income;
         yPosition += 15;
@@ -206,12 +207,12 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       
       // Daily total
       yPosition += 10;
-      doc.setFontSize(10);
-      doc.text(`Daily Total: ${totalRevenue.toFixed(2)} LYD`, 140, yPosition, { align: 'right' });
+      doc.setFontSize(12);
+      doc.text(`Daily Total: ${totalRevenue.toFixed(2)} LYD`, 120, yPosition, { align: 'right' });
       
       // Generation info
       yPosition += 25;
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.text(`Generated on ${new Date().toLocaleString('en-US')}`, 105, yPosition, { align: 'center' });
       
       yPosition += 12;
@@ -245,20 +246,20 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF('p', 'mm', 'a4');
       
-      // Add logo
-      const logoSize = 12;
+      // Add logo - larger size
+      const logoSize = 20;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
-      // Header
-      doc.setFontSize(12);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      // Header - larger font
+      doc.setFontSize(16);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', doc.internal.pageSize.getWidth() / 2, 18, { align: 'center' });
       
-      doc.setFontSize(10);
-      doc.text('Revenue Report', doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
+      doc.setFontSize(14);
+      doc.text('Revenue Report', doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
       
       // Period information
-      doc.setFontSize(9);
-      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, doc.internal.pageSize.getWidth() / 2, 38, { align: 'center' });
       
       // Group revenues by date
       const periodRevenues = getRevenuesByDateRange(reportStartDate, reportEndDate);
@@ -271,7 +272,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         revenuesByDate[rev.date].push(rev);
       });
       
-      let yPosition = 50;
+      let yPosition = 55;
       let totalRevenue = 0;
       
       Object.keys(revenuesByDate).sort().forEach(currentDate => {
@@ -282,22 +283,22 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           yPosition = 30;
         }
         
-        doc.setFontSize(10);
+        doc.setFontSize(12);
         doc.text(`Date: ${currentDate}`, 20, yPosition);
         yPosition += 15;
         
         doc.setFillColor(65, 105, 225);
-        doc.rect(20, yPosition - 8, 30, 15, 'F');
-        doc.rect(50, yPosition - 8, 30, 15, 'F');
-        doc.rect(80, yPosition - 8, 30, 15, 'F');
-        doc.rect(110, yPosition - 8, 30, 15, 'F');
+        doc.rect(30, yPosition - 8, 25, 15, 'F');
+        doc.rect(55, yPosition - 8, 25, 15, 'F');
+        doc.rect(80, yPosition - 8, 25, 15, 'F');
+        doc.rect(105, yPosition - 8, 35, 15, 'F');
         
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
-        doc.text('Period', 35, yPosition);
-        doc.text('Change (LYD)', 65, yPosition);
-        doc.text('Revenue (LYD)', 95, yPosition);
-        doc.text('Notes', 125, yPosition);
+        doc.setFontSize(11);
+        doc.text('Period', 42, yPosition);
+        doc.text('Change (LYD)', 67, yPosition);
+        doc.text('Revenue (LYD)', 92, yPosition);
+        doc.text('Notes', 122, yPosition);
         
         doc.setTextColor(0, 0, 0);
         
@@ -311,16 +312,16 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
             rev.shift === 'night' ? 'Night' : 'Ahmad Rajili';
           
           doc.setDrawColor(220, 220, 220);
-          doc.rect(20, yPosition - 10, 120, 15);
-          doc.line(50, yPosition - 10, 50, yPosition + 5);
+          doc.rect(30, yPosition - 10, 110, 15);
+          doc.line(55, yPosition - 10, 55, yPosition + 5);
           doc.line(80, yPosition - 10, 80, yPosition + 5);
-          doc.line(110, yPosition - 10, 110, yPosition + 5);
+          doc.line(105, yPosition - 10, 105, yPosition + 5);
           
-          doc.setFontSize(7);
-          doc.text(periodName, 35, yPosition - 2);
-          doc.text(rev.expense.toFixed(2), 65, yPosition - 2);
-          doc.text(rev.income.toFixed(2), 95, yPosition - 2);
-          doc.text(rev.notes || '-', 115, yPosition - 2);
+          doc.setFontSize(10);
+          doc.text(periodName, 42, yPosition - 2);
+          doc.text(rev.expense.toFixed(2), 67, yPosition - 2);
+          doc.text(rev.income.toFixed(2), 92, yPosition - 2);
+          doc.text(rev.notes || '-', 110, yPosition - 2);
           
           dailyTotal += rev.income - rev.expense;
           totalRevenue += rev.income - rev.expense;
@@ -328,19 +329,19 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         });
         
         yPosition += 5;
-        doc.setFontSize(9);
+        doc.setFontSize(11);
         doc.text(`Daily Total: ${dailyTotal.toFixed(2)} LYD`, 120, yPosition, { align: 'right' });
         yPosition += 15;
       });
       
       yPosition += 10;
-      doc.setFontSize(11);
+      doc.setFontSize(13);
       doc.setTextColor(0, 128, 0);
       doc.text(`Total Revenue: ${totalRevenue.toFixed(2)} LYD`, doc.internal.pageSize.getWidth() / 2, yPosition, { align: 'center' });
       
       doc.setTextColor(0, 0, 0);
       yPosition += 15;
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.text(`Generated on ${new Date().toLocaleString('en-US')}`, doc.internal.pageSize.getWidth() / 2, yPosition, { align: 'center' });
       
       yPosition += 12;
@@ -449,7 +450,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                   
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      {language === 'ar' ? 'الصرف (فكة)' : 'Expense (Change)'} (LYD)
+                      <span className="text-blue-600">{language === 'ar' ? 'الصرف (فكة)' : 'Expense (Change)'}</span> (LYD)
                     </label>
                     <Input
                       type="number"
@@ -509,7 +510,12 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  <CardTitle className="text-sm">{language === 'ar' ? `إجمالي يوم ${date}` : `Daily Total ${date}`}</CardTitle>
+                  <CardTitle 
+                    className="text-sm cursor-pointer hover:text-blue-600"
+                    onClick={() => setSelectedDayView(!selectedDayView)}
+                  >
+                    {language === 'ar' ? `إجمالي يوم ${date}` : `Daily Total ${date}`}
+                  </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -521,37 +527,41 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {dayRevenues.map((rev) => (
-                  <div key={rev.id} className="p-2 rounded border bg-gray-50">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">{getShiftLabel(rev.shift)}</span>
-                    </div>
-                    <div className="text-xs space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-blue-600">{language === 'ar' ? 'الصرف:' : 'Expense:'}</span>
-                        <span className="font-medium text-blue-600">{rev.expense.toFixed(2)} LYD</span>
+                {selectedDayView ? (
+                  dayRevenues.map((rev) => (
+                    <div key={rev.id} className="p-2 rounded border bg-gray-50">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium">{getShiftLabel(rev.shift)}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>{language === 'ar' ? 'الإيراد:' : 'Revenue:'}</span>
-                        <span className="font-medium text-green-600">{rev.income.toFixed(2)} LYD</span>
-                      </div>
-                      {rev.notes && (
-                        <div className="text-gray-600">
-                          <span>{language === 'ar' ? 'ملاحظة:' : 'Note:'}</span> {rev.notes}
+                      <div className="text-xs space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-blue-600">{language === 'ar' ? 'الصرف:' : 'Expense:'}</span>
+                          <span className="font-medium text-blue-600">{rev.expense.toFixed(2)} LYD</span>
                         </div>
-                      )}
+                        <div className="flex justify-between">
+                          <span>{language === 'ar' ? 'الإيراد:' : 'Revenue:'}</span>
+                          <span className="font-medium text-green-600">{rev.income.toFixed(2)} LYD</span>
+                        </div>
+                        {rev.notes && (
+                          <div className="text-gray-600">
+                            <span>{language === 'ar' ? 'ملاحظة:' : 'Note:'}</span> {rev.notes}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                <hr />
-                <div className="flex justify-between text-base font-bold">
-                  <span>{t('revenue.dailyTotal')}:</span>
-                  <span className="text-green-600">{todayTotals.daily.toFixed(2)} LYD</span>
-                </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="flex justify-between text-base font-bold">
+                      <span>{t('revenue.dailyTotal')}:</span>
+                      <span className="text-green-600">{todayTotals.daily.toFixed(2)} LYD</span>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
-            {/* Period Report Export */}
+            {/* Period Report Export - moved below Daily Totals */}
             {checkPermission('export_pdf') && (
               <Card className="card-shadow mt-6">
                 <CardHeader>
@@ -631,7 +641,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                                     {language === 'ar' ? 'الإيراد:' : 'Revenue:'} {rev.income.toFixed(2)} LYD
                                   </p>
                                   <p className="font-medium text-blue-600">
-                                    {language === 'ar' ? 'الصرف:' : 'Expense:'} {rev.expense.toFixed(2)} LYD
+                                    {language === 'ar' ? 'الصرف:' : 'Expense:'} <span className="text-blue-600">{rev.expense.toFixed(2)} LYD</span>
                                   </p>
                                   <p className="text-xs">
                                     {language === 'ar' ? 'بواسطة:' : 'By:'} {rev.createdBy}
