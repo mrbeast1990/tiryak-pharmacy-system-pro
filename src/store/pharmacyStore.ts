@@ -15,9 +15,9 @@ export interface Medicine {
 export interface Revenue {
   id: string;
   date: string;
-  shift: 'morning' | 'evening' | 'night' | 'ahmad';
-  expense: number;
-  income: number;
+  period: 'morning' | 'evening' | 'night';
+  type: 'income' | 'expense';
+  amount: number;
   notes?: string;
   createdBy: string;
   createdAt: string;
@@ -29,12 +29,12 @@ interface PharmacyState {
   addMedicine: (medicine: Omit<Medicine, 'id'>) => void;
   updateMedicine: (id: string, updates: Partial<Medicine>) => void;
   deleteMedicine: (id: string) => void;
-  addRevenue: (revenue: Omit<Revenue, 'id'>) => void;
+  addRevenue: (revenue: Omit<Revenue, 'id' | 'createdAt'>) => void;
   updateRevenue: (id: string, updates: Partial<Revenue>) => void;
   deleteRevenue: (id: string) => void;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
   getRevenuesByDateRange: (startDate: string, endDate: string) => Revenue[];
-  getRevenuesByShift: (shift: string) => Revenue[];
+  getRevenuesByPeriod: (period: string) => Revenue[];
   getTotalDailyRevenue: (date: string) => number;
   getMedicineSuggestions: (query: string) => string[];
 }
@@ -97,12 +97,13 @@ export const usePharmacyStore = create<PharmacyState>()(
       addRevenue: (revenue) => {
         const newRevenue = {
           ...revenue,
-          id: Date.now().toString()
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString()
         };
         set((state) => ({
           revenues: [...state.revenues, newRevenue]
         }));
-        console.log('تم إضافة إيراد:', revenue.shift);
+        console.log('تم إضافة إيراد:', revenue.period);
       },
       
       updateRevenue: (id, updates) => {
@@ -131,13 +132,17 @@ export const usePharmacyStore = create<PharmacyState>()(
         );
       },
       
-      getRevenuesByShift: (shift) => {
-        return get().revenues.filter((revenue) => revenue.shift === shift);
+      getRevenuesByPeriod: (period) => {
+        return get().revenues.filter((revenue) => revenue.period === period);
       },
       
       getTotalDailyRevenue: (date) => {
         const dayRevenues = get().revenues.filter((revenue) => revenue.date === date);
-        return dayRevenues.reduce((total, revenue) => total + revenue.income - revenue.expense, 0);
+        return dayRevenues.reduce((total, revenue) => {
+          return revenue.type === 'income' 
+            ? total + revenue.amount 
+            : total - revenue.amount;
+        }, 0);
       },
       
       getMedicineSuggestions: (query) => {
