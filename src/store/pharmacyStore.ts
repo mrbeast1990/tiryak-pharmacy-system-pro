@@ -15,7 +15,7 @@ export interface Medicine {
 export interface Revenue {
   id: string;
   date: string;
-  period: 'morning' | 'evening' | 'night';
+  period: 'morning' | 'evening' | 'night' | 'ahmad_rajili';
   type: 'income' | 'expense';
   amount: number;
   notes?: string;

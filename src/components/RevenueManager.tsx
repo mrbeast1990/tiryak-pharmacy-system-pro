@@ -20,7 +20,7 @@ interface RevenueManagerProps {
 const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('income');
-  const [period, setPeriod] = useState<'morning' | 'evening' | 'night'>('morning');
+  const [period, setPeriod] = useState<'morning' | 'evening' | 'night' | 'ahmad_rajili'>('morning');
   const [notes, setNotes] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
@@ -52,9 +52,12 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       user?.role === 'ahmad_rajili';
 
     if (!canRegisterForPeriod) {
+      const periodText = period === 'morning' ? 'الصباح' : 
+                        period === 'evening' ? 'المساء' : 
+                        period === 'night' ? 'الليل' : 'احمد الرجيلي';
       toast({
         title: language === 'ar' ? "غير مصرح" : "Unauthorized",
-        description: language === 'ar' ? `لا يمكنك تسجيل إيرادات فترة ${period === 'morning' ? 'الصباح' : period === 'evening' ? 'المساء' : 'الليل'}` : `Cannot register ${period} period revenues`,
+        description: language === 'ar' ? `لا يمكنك تسجيل إيرادات فترة ${periodText}` : `Cannot register ${period} period revenues`,
         variant: "destructive",
       });
       return;
@@ -103,9 +106,9 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                 className="flex items-center space-x-2 space-x-reverse text-sm"
               >
                 <ArrowRight className="w-4 h-4" />
-                <span>{t('back')}</span>
+                <span>العودة للرئيسية</span>
               </Button>
-              <h1 className="text-lg font-bold text-gray-900">{t('revenue.addRevenue')}</h1>
+              <h1 className="text-lg font-bold text-gray-900">إدارة الإيرادات</h1>
             </div>
           </div>
         </div>
@@ -117,7 +120,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 text-right block">
-                  {t('revenue.date')}
+                  التاريخ
                 </label>
                 <Input
                   type="date"
@@ -129,46 +132,45 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 text-right block">
-                  {t('revenue.type')}
+                  النوع
                 </label>
                 <Select value={type} onValueChange={(value: 'income' | 'expense') => setType(value)}>
                   <SelectTrigger className="text-sm text-right">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="income">{language === 'ar' ? 'إيراد' : 'Income'}</SelectItem>
-                    <SelectItem value="expense">
-                      <span className="text-blue-600 font-medium">{language === 'ar' ? 'صرف' : 'Expense'}</span>
-                    </SelectItem>
+                    <SelectItem value="income">الإيراد</SelectItem>
+                    <SelectItem value="expense">الصرف</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 text-right block">
-                  {t('revenue.period')}
+                  الفترة
                 </label>
-                <Select value={period} onValueChange={(value: 'morning' | 'evening' | 'night') => setPeriod(value)}>
+                <Select value={period} onValueChange={(value: 'morning' | 'evening' | 'night' | 'ahmad_rajili') => setPeriod(value)}>
                   <SelectTrigger className="text-sm text-right">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="morning">{language === 'ar' ? 'الصباح' : 'Morning'}</SelectItem>
-                    <SelectItem value="evening">{language === 'ar' ? 'المساء' : 'Evening'}</SelectItem>
-                    <SelectItem value="night">{language === 'ar' ? 'الليل' : 'Night'}</SelectItem>
+                    <SelectItem value="morning">صباحية</SelectItem>
+                    <SelectItem value="evening">مسائية</SelectItem>
+                    <SelectItem value="night">ليلية</SelectItem>
+                    <SelectItem value="ahmad_rajili">احمد الرجيلي</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 text-right block">
-                  {t('revenue.amount')} ({language === 'ar' ? 'دينار' : 'JD'})
+                  المبلغ (دينار)
                 </label>
                 <Input
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder={language === 'ar' ? 'أدخل المبلغ' : 'Enter amount'}
+                  placeholder="أدخل المبلغ"
                   className="text-sm text-right"
                   step="0.01"
                 />
@@ -176,12 +178,12 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 text-right block">
-                  {t('revenue.notes')}
+                  ملاحظات
                 </label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder={language === 'ar' ? 'ملاحظات (اختياري)' : 'Notes (optional)'}
+                  placeholder="ملاحظات (اختياري)"
                   className="text-sm text-right resize-none"
                   rows={3}
                 />
@@ -189,7 +191,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
               
               <Button type="submit" className="w-full pharmacy-gradient text-white font-medium py-3">
                 <Plus className="w-4 h-4 ml-2" />
-                {t('revenue.addEntry')}
+                إضافة إدخال
               </Button>
             </form>
           </CardContent>
