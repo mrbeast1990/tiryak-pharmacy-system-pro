@@ -65,27 +65,29 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         }}
       />
       
-      {/* Language Toggle */}
-      <Button
-        onClick={toggleLanguage}
-        variant="outline"
-        size="sm"
-        className={`absolute top-4 ${language === 'ar' ? 'left-4' : 'right-4'} flex items-center space-x-2`}
-      >
-        <Globe className="w-3 h-3" />
-        <span className="text-sm">{t('language')}</span>
-      </Button>
+      {/* Language Toggle - in foreground */}
+      <div className={`absolute top-4 ${language === 'ar' ? 'left-4' : 'right-4'} z-20`}>
+        <Button
+          onClick={toggleLanguage}
+          variant="outline"
+          size="sm"
+          className="flex items-center space-x-2 bg-white shadow-lg"
+        >
+          <Globe className="w-3 h-3" />
+          <span className="text-sm">{t('language')}</span>
+        </Button>
+      </div>
 
       <Card className="w-full max-w-md card-shadow relative z-10">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mx-auto mb-3">
+          <div className="flex items-center justify-center mx-auto mb-2">
             <img 
               src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
               alt="Al-Tiryak Logo" 
-              className="w-32 h-32"
+              className="w-40 h-40"
             />
           </div>
-          <CardTitle className="text-xl font-bold text-gray-900">
+          <CardTitle className="text-xl font-bold text-gray-900 mt-1">
             {t('pharmacy.name')}
           </CardTitle>
           <CardDescription className="text-sm">
@@ -164,9 +166,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         </CardContent>
       </Card>
       
-      {/* Footer - moved to front */}
-      <div className={`absolute bottom-4 ${language === 'ar' ? 'right-4' : 'left-4'} text-${language === 'ar' ? 'right' : 'left'} text-sm text-gray-600`}>
-        <p>Ahmed A Alrjele</p>
+      {/* Footer - in foreground, centered under the create account button */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-700 bg-white/80 px-4 py-2 rounded-lg shadow-lg z-20">
+        <p className="font-semibold">Ahmed A Alrjele</p>
         <p>Founder & CEO</p>
         <p>Al-tiryak Al-shafi Pharmacy</p>
       </div>

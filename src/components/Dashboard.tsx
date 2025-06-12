@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,15 +42,15 @@ const Dashboard: React.FC = () => {
       const doc = new jsPDF();
       
       // Add logo
-      const logoSize = 20;
+      const logoSize = 15;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
       // Header
-      doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 18, { align: 'center' });
+      doc.setFontSize(12);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 15, { align: 'center' });
       
-      doc.setFontSize(14);
-      doc.text('Staff Performance Report', 105, 28, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text('Staff Performance Report - Medicine Shortages', 105, 22, { align: 'center' });
       
       // Current Date
       const currentDate = new Date().toLocaleDateString('en-US', {
@@ -58,91 +59,101 @@ const Dashboard: React.FC = () => {
         year: 'numeric'
       });
       
-      doc.setFontSize(12);
-      doc.text(`Generated: ${currentDate}`, 105, 38, { align: 'center' });
+      doc.setFontSize(9);
+      doc.text(`Generated: ${currentDate}`, 105, 29, { align: 'center' });
       
-      // Calculate user performance
-      const userStats: Record<string, { shortages: number, revenues: number }> = {};
+      // Calculate user shortage statistics
+      const userStats: Record<string, number> = {};
       
       medicines.forEach(medicine => {
         if (medicine.updatedBy) {
           if (!userStats[medicine.updatedBy]) {
-            userStats[medicine.updatedBy] = { shortages: 0, revenues: 0 };
+            userStats[medicine.updatedBy] = 0;
           }
-          userStats[medicine.updatedBy].shortages++;
-        }
-      });
-      
-      revenues.forEach(revenue => {
-        if (revenue.createdBy) {
-          if (!userStats[revenue.createdBy]) {
-            userStats[revenue.createdBy] = { shortages: 0, revenues: 0 };
-          }
-          userStats[revenue.createdBy].revenues++;
+          userStats[medicine.updatedBy]++;
         }
       });
       
       // Table headers
-      let yPosition = 55;
+      let yPosition = 45;
       
-      // Draw header background
+      // Draw smaller header background
       doc.setFillColor(65, 105, 225);
-      doc.rect(20, yPosition - 8, 50, 15, 'F');
-      doc.rect(70, yPosition - 8, 50, 15, 'F');
-      doc.rect(120, yPosition - 8, 50, 15, 'F');
+      doc.rect(30, yPosition - 6, 35, 10, 'F');
+      doc.rect(65, yPosition - 6, 65, 10, 'F');
+      doc.rect(130, yPosition - 6, 40, 10, 'F');
       
       // Table headers text
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.text('Staff Name', 45, yPosition, { align: 'center' });
-      doc.text('Shortage Records', 95, yPosition, { align: 'center' });
-      doc.text('Revenue Records', 145, yPosition, { align: 'center' });
+      doc.setFontSize(9);
+      doc.text('Staff Name', 47.5, yPosition - 1, { align: 'center' });
+      doc.text('Shortage Records', 97.5, yPosition - 1, { align: 'center' });
+      doc.text('Performance', 150, yPosition - 1, { align: 'center' });
       
       // Table content
       doc.setTextColor(0, 0, 0);
-      yPosition += 20;
+      yPosition += 15;
       
       // Draw table data
-      Object.entries(userStats).forEach(([userName, stats], index) => {
+      Object.entries(userStats).forEach(([userName, shortageCount], index) => {
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.1);
-        doc.line(20, yPosition - 10, 170, yPosition - 10);
-        doc.line(20, yPosition + 5, 170, yPosition + 5);
-        doc.line(20, yPosition - 10, 20, yPosition + 5);
-        doc.line(70, yPosition - 10, 70, yPosition + 5);
-        doc.line(120, yPosition - 10, 120, yPosition + 5);
-        doc.line(170, yPosition - 10, 170, yPosition + 5);
+        doc.line(30, yPosition - 8, 170, yPosition - 8);
+        doc.line(30, yPosition + 3, 170, yPosition + 3);
+        doc.line(30, yPosition - 8, 30, yPosition + 3);
+        doc.line(65, yPosition - 8, 65, yPosition + 3);
+        doc.line(130, yPosition - 8, 130, yPosition + 3);
+        doc.line(170, yPosition - 8, 170, yPosition + 3);
         
-        doc.setFontSize(11);
-        doc.text(userName, 45, yPosition - 2, { align: 'center' });
-        doc.text(stats.shortages.toString(), 95, yPosition - 2, { align: 'center' });
-        doc.text(stats.revenues.toString(), 145, yPosition - 2, { align: 'center' });
+        doc.setFontSize(8);
+        doc.text(userName, 47.5, yPosition - 2, { align: 'center' });
+        doc.text(shortageCount.toString(), 97.5, yPosition - 2, { align: 'center' });
         
-        yPosition += 15;
+        // Performance rating
+        let performance = 'Low';
+        if (shortageCount > 10) performance = 'High';
+        else if (shortageCount > 5) performance = 'Medium';
         
-        if (yPosition > 270) {
+        doc.text(performance, 150, yPosition - 2, { align: 'center' });
+        
+        yPosition += 12;
+        
+        if (yPosition > 250) {
           doc.addPage();
           yPosition = 20;
         }
       });
       
-      // Summary
-      yPosition += 15;
-      doc.setFontSize(12);
-      doc.text('Performance Summary:', 20, yPosition);
+      // Chart section (simple text-based chart)
       yPosition += 10;
       doc.setFontSize(10);
-      doc.text(`Total Staff: ${Object.keys(userStats).length}`, 20, yPosition);
+      doc.text('Performance Chart:', 30, yPosition);
       yPosition += 8;
-      doc.text(`Total Shortage Records: ${medicines.length}`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`Total Revenue Records: ${revenues.length}`, 20, yPosition);
       
-      doc.save(`staff-performance-${new Date().toISOString().split('T')[0]}.pdf`);
+      Object.entries(userStats).forEach(([userName, shortageCount]) => {
+        doc.setFontSize(8);
+        const chartBar = '█'.repeat(Math.min(Math.floor(shortageCount / 2), 20));
+        doc.text(`${userName}: ${chartBar} (${shortageCount})`, 30, yPosition);
+        yPosition += 6;
+      });
+      
+      // Summary
+      yPosition += 10;
+      doc.setFontSize(9);
+      doc.text('Summary:', 30, yPosition);
+      yPosition += 6;
+      doc.setFontSize(8);
+      doc.text(`Total Staff: ${Object.keys(userStats).length}`, 30, yPosition);
+      yPosition += 5;
+      doc.text(`Total Shortage Records: ${medicines.length}`, 30, yPosition);
+      yPosition += 5;
+      doc.text(`Average Records per Staff: ${Math.round(medicines.length / Object.keys(userStats).length)}`, 30, yPosition);
+      
+      doc.save(`staff-shortage-performance-${new Date().toISOString().split('T')[0]}.pdf`);
       
       toast({
         title: language === 'ar' ? "تم التصدير" : "Exported",
-        description: language === 'ar' ? "تم تصدير تقرير الأداء بنجاح" : "Performance report exported successfully",
+        description: language === 'ar' ? "تم تصدير تقرير أداء النواقص بنجاح" : "Shortage performance report exported successfully",
       });
     } catch (error) {
       toast({
@@ -168,7 +179,7 @@ const Dashboard: React.FC = () => {
         className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
         style={{
           backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
-          backgroundSize: '600px 600px',
+          backgroundSize: '800px 800px',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
@@ -186,7 +197,7 @@ const Dashboard: React.FC = () => {
                 <img 
                   src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
                   alt="Al-Tiryak Logo" 
-                  className="w-16 h-16"
+                  className="w-20 h-20"
                 />
               </div>
               <div>
@@ -222,6 +233,13 @@ const Dashboard: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        {/* Instruction Text */}
+        <div className="mb-4 text-center">
+          <p className="text-lg font-bold text-gray-800">
+            {language === 'ar' ? 'الترتيب يبدأ من هنا.' : 'The order starts from here.'}
+          </p>
+        </div>
+
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" 
