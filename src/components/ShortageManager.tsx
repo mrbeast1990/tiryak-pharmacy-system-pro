@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Capsule } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 

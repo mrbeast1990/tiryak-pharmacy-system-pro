@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -8,6 +7,7 @@ export interface User {
   name: string;
   role: 'admin' | 'ahmad_rajili' | 'morning_shift' | 'evening_shift' | 'night_shift';
   permissions: string[];
+  lastLogin?: string;
 }
 
 interface AuthState {
@@ -27,7 +27,8 @@ const predefinedUsers: Record<string, { password: string; user: User }> = {
       email: 'admin@tiryak.com',
       name: 'المدير',
       role: 'admin',
-      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users', 'register_revenue_all']
+      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users', 'register_revenue_all'],
+      lastLogin: new Date().toISOString()
     }
   },
   'ahmad@tiryak.com': {
@@ -37,7 +38,8 @@ const predefinedUsers: Record<string, { password: string; user: User }> = {
       email: 'ahmad@tiryak.com',
       name: 'أحمد الرجيلي',
       role: 'ahmad_rajili',
-      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'register_revenue_all']
+      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'register_revenue_all'],
+      lastLogin: new Date().toISOString()
     }
   },
   'morning@tiryak.com': {
@@ -47,7 +49,8 @@ const predefinedUsers: Record<string, { password: string; user: User }> = {
       email: 'morning@tiryak.com',
       name: 'الفترة الصباحية',
       role: 'morning_shift',
-      permissions: ['register_shortage', 'register_revenue_morning', 'view_own']
+      permissions: ['register_shortage', 'register_revenue_morning', 'view_own'],
+      lastLogin: new Date().toISOString()
     }
   },
   'evening@tiryak.com': {
@@ -57,7 +60,8 @@ const predefinedUsers: Record<string, { password: string; user: User }> = {
       email: 'evening@tiryak.com',
       name: 'الفترة المسائية',
       role: 'evening_shift',
-      permissions: ['register_shortage', 'register_revenue_evening', 'view_own']
+      permissions: ['register_shortage', 'register_revenue_evening', 'view_own'],
+      lastLogin: new Date().toISOString()
     }
   },
   'night@tiryak.com': {
@@ -67,7 +71,8 @@ const predefinedUsers: Record<string, { password: string; user: User }> = {
       email: 'night@tiryak.com',
       name: 'الفترة الليلية',
       role: 'night_shift',
-      permissions: ['register_shortage', 'register_revenue_night', 'view_own']
+      permissions: ['register_shortage', 'register_revenue_night', 'view_own'],
+      lastLogin: new Date().toISOString()
     }
   }
 };
@@ -84,12 +89,16 @@ export const useAuthStore = create<AuthState>()(
         
         const userCredentials = predefinedUsers[email];
         if (userCredentials && userCredentials.password === password) {
+          const userWithLastLogin = {
+            ...userCredentials.user,
+            lastLogin: new Date().toISOString()
+          };
           set({
-            user: userCredentials.user,
+            user: userWithLastLogin,
             isAuthenticated: true,
             rememberMe
           });
-          console.log('تم تسجيل الدخول بنجاح:', userCredentials.user.name);
+          console.log('تم تسجيل الدخول بنجاح:', userWithLastLogin.name);
           return true;
         }
         

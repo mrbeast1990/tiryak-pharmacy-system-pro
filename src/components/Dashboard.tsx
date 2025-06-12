@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
-import { LogOut, TrendingUp, Users, Globe, Capsule } from 'lucide-react';
+import { LogOut, TrendingUp, Users, Globe, Pill } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
@@ -229,7 +228,7 @@ const Dashboard: React.FC = () => {
                 onClick={() => setActiveView('shortage')}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-3 space-x-reverse">
-                <Capsule className="w-6 h-6 text-red-500" />
+                <Pill className="w-6 h-6 text-red-500" />
                 <span>{t('dashboard.registerShortage')}</span>
               </CardTitle>
               <CardDescription>
