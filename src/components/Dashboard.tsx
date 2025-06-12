@@ -5,13 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
-import { LogOut, TrendingUp, Users, AlertCircle, Globe } from 'lucide-react';
+import { LogOut, TrendingUp, Users, Globe, Pill } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
+import ProfileModal from './ProfileModal';
 
 const Dashboard: React.FC = () => {
   const [activeView, setActiveView] = useState<'dashboard' | 'shortage' | 'revenue'>('dashboard');
+  const [showProfile, setShowProfile] = useState(false);
   const { user, logout, checkPermission } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
   const { medicines, revenues, getTotalDailyRevenue } = usePharmacyStore();
@@ -58,11 +60,14 @@ const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-md">
+              <div 
+                className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shadow-md cursor-pointer"
+                onClick={() => setShowProfile(true)}
+              >
                 <img 
                   src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
                   alt="Al-Tiryak Logo" 
-                  className="w-8 h-8"
+                  className="w-12 h-12"
                 />
               </div>
               <div>
@@ -76,7 +81,7 @@ const Dashboard: React.FC = () => {
                 onClick={toggleLanguage}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-1 text-xs px-2 py-1"
+                className="flex items-center space-x-1 text-xs px-1 py-1"
               >
                 <Globe className="w-2 h-2" />
                 <span className="text-xs">{t('language')}</span>
@@ -86,7 +91,7 @@ const Dashboard: React.FC = () => {
                 onClick={handleLogout}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-1 space-x-reverse text-xs px-2 py-1"
+                className="flex items-center space-x-1 space-x-reverse text-xs px-1 py-1"
               >
                 <LogOut className="w-2 h-2" />
                 <span className="text-xs">{t('logout')}</span>
@@ -104,7 +109,7 @@ const Dashboard: React.FC = () => {
                 onClick={() => setActiveView('shortage')}>
             <CardHeader>
               <CardTitle className="flex items-center space-x-3 space-x-reverse">
-                <AlertCircle className="w-6 h-6 text-red-500" />
+                <Pill className="w-6 h-6 text-red-500" />
                 <span>{t('dashboard.registerShortage')}</span>
               </CardTitle>
               <CardDescription>
@@ -148,6 +153,9 @@ const Dashboard: React.FC = () => {
           </Card>
         )}
       </main>
+      
+      {/* Profile Modal */}
+      <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
       
       {/* Footer */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 relative z-10">

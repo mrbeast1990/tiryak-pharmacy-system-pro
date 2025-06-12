@@ -78,11 +78,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
       <Card className="w-full max-w-md card-shadow relative z-10">
         <CardHeader className="text-center">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+          <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
             <img 
               src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
               alt="Al-Tiryak Logo" 
-              className="w-16 h-16"
+              className="w-24 h-24"
             />
           </div>
           <CardTitle className="text-xl font-bold text-gray-900">

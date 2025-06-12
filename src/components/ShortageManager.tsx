@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
@@ -84,59 +84,63 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Header
-      doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+      // Add logo
+      const logoSize = 15;
+      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
+      // Header
       doc.setFontSize(14);
-      doc.text('Medicine Shortages List', doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 15, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.text('Medicine Shortages List', 105, 25, { align: 'center' });
       
       // Current Date
       const currentDate = new Date().toLocaleDateString('en-US', {
         day: '2-digit',
-        month: '2-digit',
+        month: '2-digit', 
         year: 'numeric'
       });
       
-      doc.setFontSize(12);
-      doc.text(`Date: ${currentDate}`, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(`Date: ${currentDate}`, 105, 35, { align: 'center' });
       
       // Table headers
-      let yPosition = 70;
+      let yPosition = 50;
       
-      // Draw blue header background
-      doc.setFillColor(41, 121, 255);
-      doc.rect(20, yPosition - 10, 45, 20, 'F');
-      doc.rect(65, yPosition - 10, 80, 20, 'F');
-      doc.rect(145, yPosition - 10, 45, 20, 'F');
+      // Draw header background
+      doc.setFillColor(65, 105, 225);
+      doc.rect(15, yPosition - 8, 25, 15, 'F');
+      doc.rect(40, yPosition - 8, 100, 15, 'F');
+      doc.rect(140, yPosition - 8, 50, 15, 'F');
       
       // Table headers text
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.text('No.', 42, yPosition, { align: 'center' });
-      doc.text('Drug Name', 105, yPosition, { align: 'center' });
-      doc.text('Quantity', 167, yPosition, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text('No.', 27, yPosition, { align: 'center' });
+      doc.text('Drug Name', 90, yPosition, { align: 'center' });
+      doc.text('Quantity', 165, yPosition, { align: 'center' });
       
       // Table content
       doc.setTextColor(0, 0, 0);
-      yPosition += 25;
+      yPosition += 20;
       
-      // Draw table borders
+      // Draw table data
       shortages.forEach((medicine, index) => {
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.1);
-        doc.line(20, yPosition - 15, 190, yPosition - 15); // Top line
-        doc.line(20, yPosition + 5, 190, yPosition + 5); // Bottom line
-        doc.line(20, yPosition - 15, 20, yPosition + 5); // Left line
-        doc.line(65, yPosition - 15, 65, yPosition + 5); // Divider after No
-        doc.line(145, yPosition - 15, 145, yPosition + 5); // Divider after Drug Name
-        doc.line(190, yPosition - 15, 190, yPosition + 5); // Right line
+        doc.line(15, yPosition - 10, 190, yPosition - 10);
+        doc.line(15, yPosition + 5, 190, yPosition + 5);
+        doc.line(15, yPosition - 10, 15, yPosition + 5);
+        doc.line(40, yPosition - 10, 40, yPosition + 5);
+        doc.line(140, yPosition - 10, 140, yPosition + 5);
+        doc.line(190, yPosition - 10, 190, yPosition + 5);
         
-        doc.setFontSize(12);
-        doc.text((index + 1).toString(), 42, yPosition - 5, { align: 'center' });
-        doc.text(medicine.name, 70, yPosition - 5, { align: 'left' });
+        doc.setFontSize(9);
+        doc.text((index + 1).toString(), 27, yPosition - 2, { align: 'center' });
+        doc.text(medicine.name, 45, yPosition - 2, { align: 'left' });
         
-        yPosition += 20;
+        yPosition += 15;
         
         if (yPosition > 270) {
           doc.addPage();
@@ -186,13 +190,9 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                 <ArrowRight className="w-3 h-3" />
                 <span>{t('back')}</span>
               </Button>
-              <h1 className="text-sm font-bold text-gray-900 mr-3">{t('shortages.title')}</h1>
             </div>
             
-            <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
-              <FileText className="w-3 h-3 ml-1" />
-              {t('shortages.exportPdf')}
-            </Button>
+            <h1 className="text-lg font-bold text-gray-900 absolute left-1/2 transform -translate-x-1/2">{t('shortages.title')}</h1>
           </div>
         </div>
       </header>
@@ -268,10 +268,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
             {/* Shortages List */}
             <Card className="card-shadow">
               <CardHeader className="py-3">
-                <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{t('dashboard.shortages')} ({shortages.length})</span>
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{t('dashboard.shortages')} ({shortages.length})</span>
+                  </CardTitle>
+                  <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
+                    <FileText className="w-2 h-2 ml-1" />
+                    {t('shortages.exportPdf')}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -341,17 +347,6 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                               {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
                             </p>
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => toggleStatus(medicine)}
-                            className="bg-red-50 hover:bg-red-100 text-xs px-2 py-1"
-                          >
-                            {t('shortages.outOfStock')}
-                          </Button>
                         </div>
                       </div>
                     </div>

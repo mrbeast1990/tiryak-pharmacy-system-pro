@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Revenue } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, TrendingUp, FileText } from 'lucide-react';
+import { ArrowRight, Plus, TrendingUp, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
@@ -65,6 +64,17 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   };
 
   const todayTotals = getShiftTotals(date);
+  const dayRevenues = revenues.filter(rev => rev.date === date);
+
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const currentDate = new Date(date);
+    if (direction === 'prev') {
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    setDate(currentDate.toISOString().split('T')[0]);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,35 +140,39 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Header
-      doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+      // Add logo
+      const logoSize = 12;
+      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
-      doc.setFontSize(14);
-      doc.text('Revenue Report', doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
+      // Header
+      doc.setFontSize(12);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 15, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.text('Revenue Report', 105, 25, { align: 'center' });
       
       // Date information
-      doc.setFontSize(12);
-      doc.text(`Date: ${date}`, 20, 55);
+      doc.setFontSize(9);
+      doc.text(`Date: ${date}`, 20, 40);
       
       // Create table
       const dayRevenues = revenues.filter(rev => rev.date === date);
-      let yPosition = 70;
+      let yPosition = 55;
       
-      // Draw blue header background
+      // Draw header background
       doc.setFillColor(65, 105, 225);
-      doc.rect(20, yPosition - 10, 60, 20, 'F');
-      doc.rect(80, yPosition - 10, 60, 20, 'F');
-      doc.rect(140, yPosition - 10, 50, 20, 'F');
-      doc.rect(190, yPosition - 10, 50, 20, 'F');
+      doc.rect(20, yPosition - 8, 40, 15, 'F');
+      doc.rect(60, yPosition - 8, 40, 15, 'F');
+      doc.rect(100, yPosition - 8, 40, 15, 'F');
+      doc.rect(140, yPosition - 8, 40, 15, 'F');
       
       // Header text - white color
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.text('Period', 50, yPosition);
-      doc.text('Change (LYD)', 110, yPosition);
-      doc.text('Revenue (LYD)', 165, yPosition);
-      doc.text('Notes', 215, yPosition);
+      doc.setFontSize(9);
+      doc.text('Period', 40, yPosition);
+      doc.text('Change (LYD)', 80, yPosition);
+      doc.text('Revenue (LYD)', 120, yPosition);
+      doc.text('Notes', 160, yPosition);
       
       // Reset text color to black
       doc.setTextColor(0, 0, 0);
@@ -168,7 +182,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       let totalRevenue = 0;
       
       dayRevenues.forEach(rev => {
-        // Get period name in English
         const periodName = 
           rev.shift === 'morning' ? 'Morning' :
           rev.shift === 'evening' ? 'Evening' :
@@ -176,32 +189,33 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         
         // Draw row borders
         doc.setDrawColor(220, 220, 220);
-        doc.rect(20, yPosition - 10, 220, 20);
-        doc.line(80, yPosition - 10, 80, yPosition + 10); // vertical line after period
-        doc.line(140, yPosition - 10, 140, yPosition + 10); // vertical line after change
-        doc.line(190, yPosition - 10, 190, yPosition + 10); // vertical line after revenue
+        doc.rect(20, yPosition - 10, 160, 15);
+        doc.line(60, yPosition - 10, 60, yPosition + 5);
+        doc.line(100, yPosition - 10, 100, yPosition + 5);
+        doc.line(140, yPosition - 10, 140, yPosition + 5);
         
-        doc.text(periodName, 50, yPosition);
-        doc.text(rev.expense.toFixed(2), 110, yPosition);
-        doc.text(rev.income.toFixed(2), 165, yPosition);
-        doc.text(rev.notes || '-', 195, yPosition);
+        doc.setFontSize(8);
+        doc.text(periodName, 40, yPosition - 2);
+        doc.text(rev.expense.toFixed(2), 80, yPosition - 2);
+        doc.text(rev.income.toFixed(2), 120, yPosition - 2);
+        doc.text(rev.notes || '-', 145, yPosition - 2);
         
         totalRevenue += rev.income;
-        yPosition += 20;
+        yPosition += 15;
       });
       
       // Daily total
       yPosition += 10;
-      doc.setFontSize(14);
-      doc.text(`Daily Total: ${totalRevenue.toFixed(2)} LYD`, 160, yPosition, { align: 'right' });
+      doc.setFontSize(10);
+      doc.text(`Daily Total: ${totalRevenue.toFixed(2)} LYD`, 140, yPosition, { align: 'right' });
       
       // Generation info
-      yPosition += 30;
-      doc.setFontSize(10);
-      doc.text(`Generated on ${new Date().toLocaleString('en-US')}`, doc.internal.pageSize.getWidth() / 2, yPosition, { align: 'center' });
+      yPosition += 25;
+      doc.setFontSize(8);
+      doc.text(`Generated on ${new Date().toLocaleString('en-US')}`, 105, yPosition, { align: 'center' });
       
-      yPosition += 15;
-      doc.text('Manager: ___________________', doc.internal.pageSize.getWidth() / 2, yPosition, { align: 'center' });
+      yPosition += 12;
+      doc.text('Manager: ___________________', 105, yPosition, { align: 'center' });
       
       doc.save(`revenue-${date}.pdf`);
       
@@ -231,16 +245,20 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF('p', 'mm', 'a4');
       
-      // Header
-      doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+      // Add logo
+      const logoSize = 12;
+      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
-      doc.setFontSize(14);
-      doc.text('Revenue Report', doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
+      // Header
+      doc.setFontSize(12);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.text('Revenue Report', doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
       
       // Period information
-      doc.setFontSize(12);
-      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
+      doc.setFontSize(9);
+      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
       
       // Group revenues by date
       const periodRevenues = getRevenuesByDateRange(reportStartDate, reportEndDate);
@@ -253,10 +271,9 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         revenuesByDate[rev.date].push(rev);
       });
       
-      let yPosition = 65;
+      let yPosition = 50;
       let totalRevenue = 0;
       
-      // For each date, create a section
       Object.keys(revenuesByDate).sort().forEach(currentDate => {
         const dateRevenues = revenuesByDate[currentDate];
         
@@ -265,77 +282,68 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           yPosition = 30;
         }
         
-        // Date header
-        doc.setFontSize(13);
+        doc.setFontSize(10);
         doc.text(`Date: ${currentDate}`, 20, yPosition);
         yPosition += 15;
         
-        // Draw blue header background
         doc.setFillColor(65, 105, 225);
-        doc.rect(20, yPosition - 10, 40, 20, 'F');
-        doc.rect(60, yPosition - 10, 40, 20, 'F');
-        doc.rect(100, yPosition - 10, 40, 20, 'F');
-        doc.rect(140, yPosition - 10, 40, 20, 'F');
+        doc.rect(20, yPosition - 8, 30, 15, 'F');
+        doc.rect(50, yPosition - 8, 30, 15, 'F');
+        doc.rect(80, yPosition - 8, 30, 15, 'F');
+        doc.rect(110, yPosition - 8, 30, 15, 'F');
         
-        // Header text - white color
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(11);
-        doc.text('Period', 40, yPosition);
-        doc.text('Change (LYD)', 80, yPosition);
-        doc.text('Revenue (LYD)', 120, yPosition);
-        doc.text('Notes', 160, yPosition);
+        doc.setFontSize(8);
+        doc.text('Period', 35, yPosition);
+        doc.text('Change (LYD)', 65, yPosition);
+        doc.text('Revenue (LYD)', 95, yPosition);
+        doc.text('Notes', 125, yPosition);
         
-        // Reset text color to black
         doc.setTextColor(0, 0, 0);
         
-        // Content
         yPosition += 15;
         let dailyTotal = 0;
         
         dateRevenues.forEach(rev => {
-          // Get period name in English
           const periodName = 
             rev.shift === 'morning' ? 'Morning' :
             rev.shift === 'evening' ? 'Evening' :
             rev.shift === 'night' ? 'Night' : 'Ahmad Rajili';
           
-          // Draw row borders
           doc.setDrawColor(220, 220, 220);
-          doc.rect(20, yPosition - 10, 160, 20);
-          doc.line(60, yPosition - 10, 60, yPosition + 10); // vertical line after period
-          doc.line(100, yPosition - 10, 100, yPosition + 10); // vertical line after change
-          doc.line(140, yPosition - 10, 140, yPosition + 10); // vertical line after revenue
+          doc.rect(20, yPosition - 10, 120, 15);
+          doc.line(50, yPosition - 10, 50, yPosition + 5);
+          doc.line(80, yPosition - 10, 80, yPosition + 5);
+          doc.line(110, yPosition - 10, 110, yPosition + 5);
           
-          doc.text(periodName, 40, yPosition);
-          doc.text(rev.expense.toFixed(2), 80, yPosition);
-          doc.text(rev.income.toFixed(2), 120, yPosition);
-          doc.text(rev.notes || '-', 150, yPosition);
+          doc.setFontSize(7);
+          doc.text(periodName, 35, yPosition - 2);
+          doc.text(rev.expense.toFixed(2), 65, yPosition - 2);
+          doc.text(rev.income.toFixed(2), 95, yPosition - 2);
+          doc.text(rev.notes || '-', 115, yPosition - 2);
           
           dailyTotal += rev.income - rev.expense;
           totalRevenue += rev.income - rev.expense;
-          yPosition += 15;
+          yPosition += 12;
         });
         
-        // Daily total
         yPosition += 5;
-        doc.setFontSize(12);
-        doc.text(`Daily Total: ${dailyTotal.toFixed(2)} LYD`, 160, yPosition, { align: 'right' });
-        yPosition += 20;
+        doc.setFontSize(9);
+        doc.text(`Daily Total: ${dailyTotal.toFixed(2)} LYD`, 120, yPosition, { align: 'right' });
+        yPosition += 15;
       });
       
-      // Total Revenue
       yPosition += 10;
-      doc.setFontSize(14);
-      doc.setTextColor(0, 128, 0); // Green color for total
+      doc.setFontSize(11);
+      doc.setTextColor(0, 128, 0);
       doc.text(`Total Revenue: ${totalRevenue.toFixed(2)} LYD`, doc.internal.pageSize.getWidth() / 2, yPosition, { align: 'center' });
       
-      // Generation info
-      doc.setTextColor(0, 0, 0); // Reset to black
-      yPosition += 20;
-      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      yPosition += 15;
+      doc.setFontSize(8);
       doc.text(`Generated on ${new Date().toLocaleString('en-US')}`, doc.internal.pageSize.getWidth() / 2, yPosition, { align: 'center' });
       
-      yPosition += 15;
+      yPosition += 12;
       doc.text('Manager: ___________________', doc.internal.pageSize.getWidth() / 2, yPosition, { align: 'center' });
       
       doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
@@ -392,34 +400,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
               </Button>
               <h1 className="text-sm font-bold text-gray-900 mr-3">{t('revenue.title')}</h1>
             </div>
-            
-            {checkPermission('export_pdf') && (
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <Button onClick={exportTodayReport} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
-                  <FileText className="w-3 h-3 ml-1" />
-                  {language === 'ar' ? 'إيراد اليوم' : 'Today Revenue'}
-                </Button>
-                <Input
-                  type="date"
-                  value={reportStartDate}
-                  onChange={(e) => setReportStartDate(e.target.value)}
-                  className="w-32 text-xs"
-                />
-                <span className="text-xs text-gray-500">
-                  {language === 'ar' ? 'إلى' : 'to'}
-                </span>
-                <Input
-                  type="date"
-                  value={reportEndDate}
-                  onChange={(e) => setReportEndDate(e.target.value)}
-                  className="w-32 text-xs"
-                />
-                <Button onClick={exportPeriodReport} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
-                  <FileText className="w-3 h-3 ml-1" />
-                  {t('revenue.exportReport')}
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </header>
@@ -520,25 +500,49 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
             {/* Daily Totals */}
             <Card className="card-shadow mt-6">
               <CardHeader>
-                <CardTitle className="text-sm">{language === 'ar' ? `إجمالي يوم ${date}` : `Daily Total ${date}`}</CardTitle>
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigateDate('prev')}
+                    className="p-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <CardTitle className="text-sm">{language === 'ar' ? `إجمالي يوم ${date}` : `Daily Total ${date}`}</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigateDate('next')}
+                    className="p-1"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>{getShiftLabel('morning')}:</span>
-                  <span className="font-medium">{todayTotals.morning.toFixed(2)} LYD</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>{getShiftLabel('evening')}:</span>
-                  <span className="font-medium">{todayTotals.evening.toFixed(2)} LYD</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>{getShiftLabel('night')}:</span>
-                  <span className="font-medium">{todayTotals.night.toFixed(2)} LYD</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>{getShiftLabel('ahmad')}:</span>
-                  <span className="font-medium">{todayTotals.ahmad.toFixed(2)} LYD</span>
-                </div>
+                {dayRevenues.map((rev) => (
+                  <div key={rev.id} className="p-2 rounded border bg-gray-50">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium">{getShiftLabel(rev.shift)}</span>
+                    </div>
+                    <div className="text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">{language === 'ar' ? 'الصرف:' : 'Expense:'}</span>
+                        <span className="font-medium text-blue-600">{rev.expense.toFixed(2)} LYD</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{language === 'ar' ? 'الإيراد:' : 'Revenue:'}</span>
+                        <span className="font-medium text-green-600">{rev.income.toFixed(2)} LYD</span>
+                      </div>
+                      {rev.notes && (
+                        <div className="text-gray-600">
+                          <span>{language === 'ar' ? 'ملاحظة:' : 'Note:'}</span> {rev.notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
                 <hr />
                 <div className="flex justify-between text-base font-bold">
                   <span>{t('revenue.dailyTotal')}:</span>
@@ -546,6 +550,42 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Period Report Export */}
+            {checkPermission('export_pdf') && (
+              <Card className="card-shadow mt-6">
+                <CardHeader>
+                  <CardTitle className="text-sm">{t('revenue.exportReport')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button onClick={exportTodayReport} className="w-full pharmacy-gradient text-xs">
+                    <FileText className="w-3 h-3 ml-1" />
+                    {language === 'ar' ? 'إيراد اليوم' : 'Today Revenue'}
+                  </Button>
+                  <div className="flex items-center space-x-2 text-xs">
+                    <Input
+                      type="date"
+                      value={reportStartDate}
+                      onChange={(e) => setReportStartDate(e.target.value)}
+                      className="flex-1"
+                    />
+                    <span className="text-gray-500">
+                      {language === 'ar' ? 'إلى' : 'to'}
+                    </span>
+                    <Input
+                      type="date"
+                      value={reportEndDate}
+                      onChange={(e) => setReportEndDate(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                  <Button onClick={exportPeriodReport} className="w-full pharmacy-gradient text-xs">
+                    <FileText className="w-3 h-3 ml-1" />
+                    {language === 'ar' ? 'تصدير فترة' : 'Export Period'}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Revenue List */}
@@ -580,7 +620,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                               <div>
                                 <div className="flex items-center space-x-2 space-x-reverse mb-1">
                                   <h3 className="font-medium text-gray-900 text-sm">
-                                    {new Date(rev.date).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
+                                    {new Date(rev.date).toLocaleDateString('en-US')}
                                   </h3>
                                   <Badge variant="outline" className="text-xs">
                                     {getShiftLabel(rev.shift)}
@@ -590,7 +630,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                                   <p className="font-medium text-green-600">
                                     {language === 'ar' ? 'الإيراد:' : 'Revenue:'} {rev.income.toFixed(2)} LYD
                                   </p>
-                                  <p className="font-medium text-red-600">
+                                  <p className="font-medium text-blue-600">
                                     {language === 'ar' ? 'الصرف:' : 'Expense:'} {rev.expense.toFixed(2)} LYD
                                   </p>
                                   <p className="text-xs">
