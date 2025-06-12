@@ -78,99 +78,101 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         </Button>
       </div>
 
-      <Card className="w-full max-w-md card-shadow relative z-10">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center mx-auto mb-2">
-            <img 
-              src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
-              alt="Al-Tiryak Logo" 
-              className="w-40 h-40"
-            />
-          </div>
-          <CardTitle className="text-xl font-bold text-gray-900 mt-1">
-            {t('pharmacy.name')}
-          </CardTitle>
-          <CardDescription className="text-sm">
-            {language === 'ar' ? 'نظام إدارة متكامل' : 'Integrated Management System'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-              </label>
-              <div className="relative">
-                <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
-                  className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                {language === 'ar' ? 'كلمة المرور' : 'Password'}
-              </label>
-              <div className="relative">
-                <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
-                  className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+      <div className="flex flex-col items-center space-y-6 relative z-10">
+        <Card className="w-full max-w-md card-shadow">
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center mx-auto mb-2">
+              <img 
+                src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
+                alt="Al-Tiryak Logo" 
+                className="w-48 h-48"
               />
-              <label htmlFor="remember" className="text-sm text-gray-700">
-                {language === 'ar' ? 'تذكرني' : 'Remember me'}
-              </label>
             </div>
-            
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full pharmacy-gradient"
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                language === 'ar' ? 'تسجيل الدخول' : 'Sign In'
-              )}
-            </Button>
-            
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleSignUpClick}
-            >
-              <UserPlus className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
-              {language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-      
-      {/* Footer - in foreground, centered under the create account button */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-700 bg-white/80 px-4 py-2 rounded-lg shadow-lg z-20">
-        <p className="font-semibold">Ahmed A Alrjele</p>
-        <p>Founder & CEO</p>
-        <p>Al-tiryak Al-shafi Pharmacy</p>
+            <CardTitle className="text-xl font-bold text-gray-900 mt-1">
+              {t('pharmacy.name')}
+            </CardTitle>
+            <CardDescription className="text-sm">
+              {language === 'ar' ? 'نظام إدارة متكامل' : 'Integrated Management System'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                </label>
+                <div className="relative">
+                  <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
+                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {language === 'ar' ? 'كلمة المرور' : 'Password'}
+                </label>
+                <div className="relative">
+                  <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
+                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <label htmlFor="remember" className="text-sm text-gray-700">
+                  {language === 'ar' ? 'تذكرني' : 'Remember me'}
+                </label>
+              </div>
+              
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full pharmacy-gradient"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  language === 'ar' ? 'تسجيل الدخول' : 'Sign In'
+                )}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleSignUpClick}
+              >
+                <UserPlus className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                {language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+        
+        {/* Footer - now below the card */}
+        <div className="text-center text-sm text-gray-700 bg-white/90 px-6 py-3 rounded-lg shadow-lg">
+          <p className="font-semibold">Ahmed A Alrjele</p>
+          <p>Founder & CEO</p>
+          <p>Al-tiryak Al-shafi Pharmacy</p>
+        </div>
       </div>
     </div>
   );
