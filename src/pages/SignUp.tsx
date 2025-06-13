@@ -100,133 +100,135 @@ const SignUp: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex items-center justify-center py-12 px-4 relative z-10">
-        <Card className="w-full max-w-md card-shadow">
-          <CardHeader className="text-center">
-            <div className="flex items-center justify-center mx-auto mb-4">
-              <img 
-                src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
-                alt="Al-Tiryak Logo" 
-                className="w-32 h-32"
-              />
-            </div>
-            <CardTitle className="text-xl font-bold text-gray-900">
-              {language === 'ar' ? 'طلب إنشاء حساب جديد' : 'New Account Application'}
-            </CardTitle>
-            <CardDescription className="text-sm">
-              {language === 'ar' 
-                ? 'يرجى ملء النموذج التالي لطلب إنشاء حساب' 
-                : 'Please fill out the following form to request account creation'
-              }
-            </CardDescription>
-          </CardHeader>
+      <div className="flex items-center justify-center py-8 px-4 relative z-10">
+        <div className="w-full max-w-md space-y-6">
+          <Card className="card-shadow">
+            <CardHeader className="text-center">
+              <div className="flex items-center justify-center mx-auto mb-4">
+                <img 
+                  src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
+                  alt="Al-Tiryak Logo" 
+                  className="w-24 h-24"
+                />
+              </div>
+              <CardTitle className="text-lg font-bold text-gray-900">
+                {language === 'ar' ? 'طلب إنشاء حساب جديد' : 'New Account Application'}
+              </CardTitle>
+              <CardDescription className="text-sm">
+                {language === 'ar' 
+                  ? 'يرجى ملء النموذج التالي لطلب إنشاء حساب' 
+                  : 'Please fill out the following form to request account creation'
+                }
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    {language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+                  </label>
+                  <div className="relative">
+                    <User className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                    <Input
+                      value={formData.fullName}
+                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      placeholder={language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
+                      className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                  </label>
+                  <div className="relative">
+                    <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
+                      className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    {language === 'ar' ? 'الرقم السري' : 'Password'}
+                  </label>
+                  <div className="relative">
+                    <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                    <Input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      placeholder={language === 'ar' ? 'أدخل الرقم السري' : 'Enter your password'}
+                      className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    {language === 'ar' ? 'تكرار الرقم السري' : 'Confirm Password'}
+                  </label>
+                  <div className="relative">
+                    <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                    <Input
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      placeholder={language === 'ar' ? 'أعد إدخال الرقم السري' : 'Confirm your password'}
+                      className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                  </label>
+                  <div className="relative">
+                    <Phone className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                    <Input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder={language === 'ar' ? 'أدخل رقم هاتفك' : 'Enter your phone number'}
+                      className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full pharmacy-gradient"
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    language === 'ar' ? 'إرسال الطلب' : 'Submit Application'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
           
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
-                </label>
-                <div className="relative">
-                  <User className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                  <Input
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    placeholder={language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
-                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-                </label>
-                <div className="relative">
-                  <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
-                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {language === 'ar' ? 'الرقم السري' : 'Password'}
-                </label>
-                <div className="relative">
-                  <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                  <Input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    placeholder={language === 'ar' ? 'أدخل الرقم السري' : 'Enter your password'}
-                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {language === 'ar' ? 'تكرار الرقم السري' : 'Confirm Password'}
-                </label>
-                <div className="relative">
-                  <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                  <Input
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    placeholder={language === 'ar' ? 'أعد إدخال الرقم السري' : 'Confirm your password'}
-                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
-                </label>
-                <div className="relative">
-                  <Phone className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                  <Input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder={language === 'ar' ? 'أدخل رقم هاتفك' : 'Enter your phone number'}
-                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                    required
-                  />
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full pharmacy-gradient"
-              >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  language === 'ar' ? 'إرسال الطلب' : 'Submit Application'
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-        
-        {/* Footer */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 bg-white/90 px-6 py-3 rounded-lg shadow-lg">
-          <p className="font-semibold">Ahmed A Alrjele</p>
-          <p>Founder & CEO</p>
-          <p>Al-tiryak Al-shafi Pharmacy</p>
+          {/* Footer - moved below the card */}
+          <div className="text-center text-sm text-gray-600 bg-white/90 px-6 py-3 rounded-lg shadow-lg">
+            <p className="font-semibold">Ahmed A Alrjele</p>
+            <p>Founder & CEO</p>
+            <p>Al-tiryak Al-shafi Pharmacy</p>
+          </div>
         </div>
       </div>
     </div>

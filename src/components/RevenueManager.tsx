@@ -43,7 +43,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     if (expenseAmount === 0 && incomeAmount === 0) {
       toast({
         title: language === 'ar' ? "خطأ" : "Error",
-        description: language === 'ar' ? "يرجى إدخال مبلغ الصرف أو الإيراد" : "Please enter expense or income amount",
+        description: language === 'ar' ? "يرجى إدخال مبلغ الصرف أو الإيراد" : "Please enter cash disbursement or income amount",
         variant: "destructive",
       });
       return;
@@ -68,13 +68,13 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       return;
     }
 
-    // Add expense if entered
+    // Add cash disbursement if entered (فكة - doesn't reduce from income)
     if (expenseAmount > 0) {
       addRevenue({
         amount: expenseAmount,
         type: 'expense',
         period,
-        notes: notes + (notes ? ' - ' : '') + 'صرف',
+        notes: notes + (notes ? ' - ' : '') + 'صرف فكة',
         date: selectedDate,
         createdBy: user?.name || ''
       });
@@ -127,42 +127,57 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
+      // Set font to support Arabic (using built-in fonts for now)
+      doc.setFont('helvetica');
+      
       // Header
       doc.setFontSize(16);
       doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
+      doc.text('صيدلية الترياق الشافي', 105, 30, { align: 'center' });
       
       doc.setFontSize(12);
-      doc.text(`Revenue Report: ${reportStartDate} to ${reportEndDate}`, 105, 30, { align: 'center' });
+      doc.text(`تقرير الإيرادات من ${reportStartDate} إلى ${reportEndDate}`, 105, 40, { align: 'center' });
+      doc.text(`Revenue Report: ${reportStartDate} to ${reportEndDate}`, 105, 50, { align: 'center' });
       
       // Get revenues for the period
       const periodRevenues = revenues.filter(revenue => 
         revenue.date >= reportStartDate && revenue.date <= reportEndDate
       );
       
-      let yPosition = 50;
+      let yPosition = 70;
       let totalIncome = 0;
-      let totalExpenses = 0;
+      let totalCashDisbursement = 0;
       
       doc.setFontSize(10);
-      doc.text('Date', 20, yPosition);
-      doc.text('Period', 50, yPosition);
-      doc.text('Type', 80, yPosition);
-      doc.text('Amount', 110, yPosition);
-      doc.text('Notes', 140, yPosition);
+      // Headers in Arabic and English
+      doc.text('التاريخ / Date', 20, yPosition);
+      doc.text('الفترة / Period', 60, yPosition);
+      doc.text('النوع / Type', 100, yPosition);
+      doc.text('المبلغ / Amount', 130, yPosition);
+      doc.text('ملاحظات / Notes', 160, yPosition);
       
       yPosition += 10;
       
       periodRevenues.forEach(revenue => {
         doc.text(revenue.date, 20, yPosition);
-        doc.text(revenue.period, 50, yPosition);
-        doc.text(revenue.type, 80, yPosition);
-        doc.text(revenue.amount.toString(), 110, yPosition);
-        doc.text(revenue.notes || '', 140, yPosition);
+        
+        // Period in Arabic
+        const periodArabic = revenue.period === 'morning' ? 'صباحية' : 
+                           revenue.period === 'evening' ? 'مسائية' : 
+                           revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي';
+        doc.text(periodArabic, 60, yPosition);
+        
+        // Type in Arabic
+        const typeArabic = revenue.type === 'income' ? 'إيراد' : 'صرف فكة';
+        doc.text(typeArabic, 100, yPosition);
+        
+        doc.text(`${revenue.amount} د.أ`, 130, yPosition);
+        doc.text(revenue.notes || '', 160, yPosition);
         
         if (revenue.type === 'income') {
           totalIncome += revenue.amount;
         } else {
-          totalExpenses += revenue.amount;
+          totalCashDisbursement += revenue.amount;
         }
         
         yPosition += 8;
@@ -173,14 +188,19 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         }
       });
       
-      // Summary
+      // Summary in Arabic and English
       yPosition += 10;
       doc.setFontSize(12);
-      doc.text(`Total Income: ${totalIncome} JD`, 20, yPosition);
+      doc.text(`إجمالي الإيرادات / Total Income: ${totalIncome} د.أ / JD`, 20, yPosition);
       yPosition += 8;
-      doc.text(`Total Expenses: ${totalExpenses} JD`, 20, yPosition);
+      doc.text(`إجمالي صرف الفكة / Total Cash Disbursement: ${totalCashDisbursement} د.أ / JD`, 20, yPosition);
       yPosition += 8;
-      doc.text(`Net Revenue: ${totalIncome - totalExpenses} JD`, 20, yPosition);
+      doc.text(`صافي الإيراد / Net Revenue: ${totalIncome} د.أ / JD`, 20, yPosition);
+      yPosition += 5;
+      doc.setFontSize(10);
+      doc.text('ملاحظة: صرف الفكة لا يُخصم من الإيراد - هو مبلغ للتسهيل على العملاء', 20, yPosition);
+      yPosition += 5;
+      doc.text('Note: Cash disbursement is not deducted from revenue - it is an amount to facilitate customers', 20, yPosition);
       
       doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
       
@@ -265,16 +285,19 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 text-right block">
-                  الصرف (دينار)
+                  صرف الفكة (دينار)
                 </label>
                 <Input
                   type="number"
                   value={expense}
                   onChange={(e) => setExpense(e.target.value)}
-                  placeholder="أدخل مبلغ الصرف"
+                  placeholder="أدخل مبلغ صرف الفكة"
                   className="text-sm text-right"
                   step="0.01"
                 />
+                <p className="text-xs text-gray-500 text-right">
+                  ملاحظة: صرف الفكة لا يُخصم من الإيراد
+                </p>
               </div>
 
               <div className="space-y-2">

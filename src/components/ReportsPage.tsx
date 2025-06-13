@@ -1,12 +1,15 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
-import { ArrowRight, Users, BarChart3, FileText } from 'lucide-react';
+import { ArrowRight, Users, BarChart3, FileText, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
 
 interface ReportsPageProps {
   onBack: () => void;
@@ -16,6 +19,10 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
   const { user } = useAuthStore();
   const { language } = useLanguageStore();
   const { medicines, revenues } = usePharmacyStore();
+  const { toast } = useToast();
+  
+  const [reportStartDate, setReportStartDate] = React.useState('');
+  const [reportEndDate, setReportEndDate] = React.useState('');
 
   // Calculate user statistics
   const userStats = React.useMemo(() => {
@@ -60,6 +67,120 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
+  const generatePerformanceReport = () => {
+    if (!reportStartDate || !reportEndDate) {
+      toast({
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' ? "يرجى تحديد تاريخ البداية والنهاية" : "Please select start and end dates",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFont('helvetica');
+      doc.setFontSize(16);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
+      doc.text('صيدلية الترياق الشافي', 105, 30, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.text(`تقرير أداء الموظفين من ${reportStartDate} إلى ${reportEndDate}`, 105, 40, { align: 'center' });
+      doc.text(`Staff Performance Report: ${reportStartDate} to ${reportEndDate}`, 105, 50, { align: 'center' });
+      
+      // Filter data by date range
+      const filteredMedicines = medicines.filter(medicine => {
+        if (!medicine.createdAt) return false;
+        const medicineDate = medicine.createdAt.split('T')[0];
+        return medicineDate >= reportStartDate && medicineDate <= reportEndDate;
+      });
+      
+      const filteredRevenues = revenues.filter(revenue => 
+        revenue.date >= reportStartDate && revenue.date <= reportEndDate
+      );
+      
+      // Recalculate stats for the period
+      const periodStats: Record<string, { shortages: number; revenues: number }> = {};
+      
+      filteredMedicines.forEach(medicine => {
+        if (medicine.updatedBy) {
+          if (!periodStats[medicine.updatedBy]) {
+            periodStats[medicine.updatedBy] = { shortages: 0, revenues: 0 };
+          }
+          periodStats[medicine.updatedBy].shortages++;
+        }
+      });
+      
+      filteredRevenues.forEach(revenue => {
+        if (revenue.createdBy) {
+          if (!periodStats[revenue.createdBy]) {
+            periodStats[revenue.createdBy] = { shortages: 0, revenues: 0 };
+          }
+          periodStats[revenue.createdBy].revenues++;
+        }
+      });
+      
+      let yPosition = 70;
+      
+      // Headers
+      doc.setFontSize(10);
+      doc.text('اسم الموظف / Staff Name', 20, yPosition);
+      doc.text('النواقص / Shortages', 80, yPosition);
+      doc.text('الإيرادات / Revenues', 120, yPosition);
+      doc.text('المجموع / Total', 160, yPosition);
+      doc.text('التقييم / Rating', 180, yPosition);
+      
+      yPosition += 10;
+      
+      Object.entries(periodStats).forEach(([name, data]) => {
+        const total = data.shortages + data.revenues;
+        const rating = total > 20 ? 'ممتاز/Excellent' : 
+                      total > 10 ? 'جيد/Good' : 'متوسط/Average';
+        
+        doc.text(name, 20, yPosition);
+        doc.text(data.shortages.toString(), 80, yPosition);
+        doc.text(data.revenues.toString(), 120, yPosition);
+        doc.text(total.toString(), 160, yPosition);
+        doc.text(rating, 180, yPosition);
+        
+        yPosition += 8;
+        
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+      });
+      
+      // Summary
+      yPosition += 10;
+      doc.setFontSize(12);
+      const totalStaff = Object.keys(periodStats).length;
+      const totalShortageEntries = Object.values(periodStats).reduce((sum, stat) => sum + stat.shortages, 0);
+      const totalRevenueEntries = Object.values(periodStats).reduce((sum, stat) => sum + stat.revenues, 0);
+      
+      doc.text(`إجمالي الموظفين النشطين / Active Staff: ${totalStaff}`, 20, yPosition);
+      yPosition += 8;
+      doc.text(`إجمالي سجلات النواقص / Total Shortage Records: ${totalShortageEntries}`, 20, yPosition);
+      yPosition += 8;
+      doc.text(`إجمالي سجلات الإيرادات / Total Revenue Records: ${totalRevenueEntries}`, 20, yPosition);
+      
+      doc.save(`staff-performance-report-${reportStartDate}-to-${reportEndDate}.pdf`);
+      
+      toast({
+        title: language === 'ar' ? "تم التصدير" : "Exported",
+        description: language === 'ar' ? "تم تصدير تقرير الأداء بنجاح" : "Performance report exported successfully",
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
+        description: language === 'ar' ? "حدث خطأ أثناء تصدير التقرير" : "Error occurred while exporting report",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Background Logo */}
@@ -94,6 +215,54 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8 relative z-10">
+        {/* Export Section */}
+        <Card className="card-shadow mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-3 space-x-reverse text-right">
+              <Download className="w-6 h-6 text-blue-500" />
+              <span>تصدير تقارير PDF</span>
+            </CardTitle>
+            <CardDescription className="text-right">
+              اختر فترة زمنية لتصدير تقرير أداء مفصل
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end space-x-4 space-x-reverse">
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium text-gray-700 text-right block">
+                  من تاريخ
+                </label>
+                <Input
+                  type="date"
+                  value={reportStartDate}
+                  onChange={(e) => setReportStartDate(e.target.value)}
+                  className="text-sm text-right"
+                />
+              </div>
+              
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium text-gray-700 text-right block">
+                  إلى تاريخ
+                </label>
+                <Input
+                  type="date"
+                  value={reportEndDate}
+                  onChange={(e) => setReportEndDate(e.target.value)}
+                  className="text-sm text-right"
+                />
+              </div>
+              
+              <Button
+                onClick={generatePerformanceReport}
+                className="pharmacy-gradient text-white"
+              >
+                <Download className="w-4 h-4 ml-2" />
+                تصدير PDF
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* User Statistics Table */}
         <Card className="card-shadow mb-8">
           <CardHeader>
