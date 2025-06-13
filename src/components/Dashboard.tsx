@@ -140,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user: propUser }) => 
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {t('dashboard.registerShortage')}
               </h3>
             </CardContent>
@@ -155,22 +155,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user: propUser }) => 
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {t('dashboard.registerRevenue')}
               </h3>
             </CardContent>
           </Card>
 
-          {/* Reports Card - Smaller */}
+          {/* Reports Card */}
           <Card 
             className="card-shadow cursor-pointer hover:shadow-lg transition-shadow" 
             onClick={() => handleNavigation('reports')}
           >
-            <CardContent className="p-4 text-center">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <BarChart3 className="w-4 h-4 text-blue-600" />
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {t('dashboard.reports')}
               </h3>
             </CardContent>
