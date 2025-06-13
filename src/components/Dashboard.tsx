@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
@@ -6,18 +7,26 @@ import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
 import { AlertTriangle, DollarSign, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import RevenueManager from './RevenueManager';
+import ShortageManager from './ShortageManager';
+import ReportsPage from './ReportsPage';
 
 interface DashboardProps {
-  onNavigate: (route: string) => void;
-  user: any;
+  onNavigate?: (route: string) => void;
+  user?: any;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user: propUser }) => {
   const { language, t } = useLanguageStore();
+  const { user: storeUser } = useAuthStore();
   const { medicines, revenues } = usePharmacyStore();
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState('dashboard');
 
-  const shortagesCount = medicines.filter(medicine => medicine.status === 'out_of_stock').length;
+  const user = propUser || storeUser;
+
+  // Fix: Use 'shortage' instead of 'out_of_stock'
+  const shortagesCount = medicines.filter(medicine => medicine.status === 'shortage').length;
   const availableCount = medicines.filter(medicine => medicine.status === 'available').length;
 
   // Calculate today's revenue
@@ -27,6 +36,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
 
   // Calculate total revenues
   const totalRevenues = revenues.reduce((sum, revenue) => sum + revenue.amount, 0);
+
+  const handleNavigation = (route: string) => {
+    if (onNavigate) {
+      onNavigate(route);
+    } else {
+      setCurrentPage(route);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentPage('dashboard');
+  };
+
+  if (currentPage === 'shortages') {
+    return <ShortageManager onBack={handleBack} />;
+  }
+
+  if (currentPage === 'revenue') {
+    return <RevenueManager onBack={handleBack} />;
+  }
+
+  if (currentPage === 'reports') {
+    return <ReportsPage onBack={handleBack} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
@@ -101,13 +134,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
           {/* Medicine Shortages Card */}
           <Card 
             className="card-shadow cursor-pointer hover:shadow-lg transition-shadow" 
-            onClick={() => onNavigate('shortages')}
+            onClick={() => handleNavigation('shortages')}
           >
             <CardContent className="p-6 text-center">
               <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
                 {t('dashboard.registerShortage')}
               </h3>
             </CardContent>
@@ -116,13 +149,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
           {/* Revenue Management Card */}
           <Card 
             className="card-shadow cursor-pointer hover:shadow-lg transition-shadow" 
-            onClick={() => onNavigate('revenue')}
+            onClick={() => handleNavigation('revenue')}
           >
             <CardContent className="p-6 text-center">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
                 {t('dashboard.registerRevenue')}
               </h3>
             </CardContent>
@@ -131,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
           {/* Reports Card - Smaller */}
           <Card 
             className="card-shadow cursor-pointer hover:shadow-lg transition-shadow" 
-            onClick={() => onNavigate('reports')}
+            onClick={() => handleNavigation('reports')}
           >
             <CardContent className="p-4 text-center">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">

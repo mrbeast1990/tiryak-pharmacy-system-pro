@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,11 +90,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
       
       let yPosition = 85;
       
-      // Filter data for the period
-      const periodMedicines = medicines.filter(medicine => 
-        medicine.createdAt >= reportStartDate && medicine.createdAt <= reportEndDate
-      );
-      
+      // Filter data for the period - Fix: Remove createdAt filter since it doesn't exist
       const periodRevenues = revenues.filter(revenue => 
         revenue.date >= reportStartDate && revenue.date <= reportEndDate
       );
