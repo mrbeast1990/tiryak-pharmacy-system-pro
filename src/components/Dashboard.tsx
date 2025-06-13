@@ -9,11 +9,12 @@ import { LogOut, TrendingUp, Users, Globe, Pill } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
+import ReportsPage from './ReportsPage';
 import ProfileModal from './ProfileModal';
 import jsPDF from 'jspdf';
 
 const Dashboard: React.FC = () => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'shortage' | 'revenue'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'shortage' | 'revenue' | 'reports'>('dashboard');
   const [showProfile, setShowProfile] = useState(false);
   const { user, logout, checkPermission } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
@@ -172,6 +173,10 @@ const Dashboard: React.FC = () => {
     return <RevenueManager onBack={() => setActiveView('dashboard')} />;
   }
 
+  if (activeView === 'reports') {
+    return <ReportsPage onBack={() => setActiveView('dashboard')} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative">
       {/* Background Logo */}
@@ -241,15 +246,15 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" 
                 onClick={() => setActiveView('shortage')}>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3 space-x-reverse">
-                <Pill className="w-6 h-6 text-red-500" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-3 space-x-reverse text-sm">
+                <Pill className="w-5 h-5 text-red-500" />
                 <span>{t('dashboard.registerShortage')}</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs">
                 {language === 'ar' ? 'إدارة الأدوية الناقصة والمتوفرة في الصيدلية' : 'Manage shortage and available medicines in pharmacy'}
               </CardDescription>
             </CardHeader>
@@ -257,12 +262,12 @@ const Dashboard: React.FC = () => {
 
           <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => setActiveView('revenue')}>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3 space-x-reverse">
-                <TrendingUp className="w-6 h-6 text-green-500" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-3 space-x-reverse text-sm">
+                <TrendingUp className="w-5 h-5 text-green-500" />
                 <span>{t('dashboard.registerRevenue')}</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs">
                 {language === 'ar' ? 'تسجيل الإيرادات والمصروفات حسب الفترات' : 'Register revenues and expenses by shifts'}
               </CardDescription>
             </CardHeader>
@@ -271,20 +276,20 @@ const Dashboard: React.FC = () => {
 
         {/* Reports Section - Only for Admin and Ahmad */}
         {(checkPermission('export_pdf')) && (
-          <Card className="card-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3 space-x-reverse">
-                <Users className="w-6 h-6 text-blue-500" />
+          <Card className="card-shadow max-w-md mx-auto">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-3 space-x-reverse text-sm">
+                <Users className="w-5 h-5 text-blue-500" />
                 <span>{t('dashboard.reports')}</span>
               </CardTitle>
-              <CardDescription>
-                {language === 'ar' ? 'تصدير تقارير الأداء (متاح للمدير وأحمد الرجيلي فقط)' : 'Export performance reports (Available for admin and Ahmad Rajili only)'}
+              <CardDescription className="text-xs">
+                {language === 'ar' ? 'عرض تقارير الأداء والإحصائيات' : 'View performance reports and statistics'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button onClick={generateUserReport} className="pharmacy-gradient">
+            <CardContent className="pt-0">
+              <Button onClick={() => setActiveView('reports')} className="pharmacy-gradient w-full text-sm py-2">
                 <Users className="w-4 h-4 ml-2" />
-                {t('dashboard.exportUserReport')}
+                عرض التقارير
               </Button>
             </CardContent>
           </Card>

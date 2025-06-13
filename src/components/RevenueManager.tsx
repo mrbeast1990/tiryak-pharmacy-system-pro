@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Revenue } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
@@ -18,14 +18,16 @@ interface RevenueManagerProps {
 }
 
 const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<'income' | 'expense'>('income');
+  const [expense, setExpense] = useState('');
+  const [income, setIncome] = useState('');
   const [period, setPeriod] = useState<'morning' | 'evening' | 'night' | 'ahmad_rajili'>('morning');
   const [notes, setNotes] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
+  const [reportStartDate, setReportStartDate] = useState('');
+  const [reportEndDate, setReportEndDate] = useState('');
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -35,10 +37,13 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!amount || isNaN(Number(amount))) {
+    const expenseAmount = Number(expense) || 0;
+    const incomeAmount = Number(income) || 0;
+
+    if (expenseAmount === 0 && incomeAmount === 0) {
       toast({
         title: language === 'ar' ? "خطأ" : "Error",
-        description: language === 'ar' ? "يرجى إدخال مبلغ صحيح" : "Please enter a valid amount",
+        description: language === 'ar' ? "يرجى إدخال مبلغ الصرف أو الإيراد" : "Please enter expense or income amount",
         variant: "destructive",
       });
       return;
@@ -63,22 +68,133 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       return;
     }
 
-    addRevenue({
-      amount: Number(amount),
-      type,
-      period,
-      notes,
-      date: selectedDate,
-      createdBy: user?.name || ''
-    });
+    // Add expense if entered
+    if (expenseAmount > 0) {
+      addRevenue({
+        amount: expenseAmount,
+        type: 'expense',
+        period,
+        notes: notes + (notes ? ' - ' : '') + 'صرف',
+        date: selectedDate,
+        createdBy: user?.name || ''
+      });
+    }
+
+    // Add income if entered
+    if (incomeAmount > 0) {
+      addRevenue({
+        amount: incomeAmount,
+        type: 'income',
+        period,
+        notes: notes + (notes ? ' - ' : '') + 'إيراد',
+        date: selectedDate,
+        createdBy: user?.name || ''
+      });
+    }
     
     toast({
       title: language === 'ar' ? "تم الإضافة" : "Added",
-      description: language === 'ar' ? `تم تسجيل ${type === 'income' ? 'إيراد' : 'صرف'} بمبلغ ${amount} دينار` : `${type === 'income' ? 'Income' : 'Expense'} of ${amount} JD registered`,
+      description: language === 'ar' ? `تم تسجيل العملية بنجاح` : `Transaction registered successfully`,
     });
 
-    setAmount('');
+    setExpense('');
+    setIncome('');
     setNotes('');
+  };
+
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const currentDate = new Date(selectedDate);
+    if (direction === 'prev') {
+      currentDate.setDate(currentDate.getDate() - 1);
+    } else {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    setSelectedDate(currentDate.toISOString().split('T')[0]);
+  };
+
+  const dailyRevenue = getTotalDailyRevenue(selectedDate);
+
+  const generatePeriodReport = () => {
+    if (!reportStartDate || !reportEndDate) {
+      toast({
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' ? "يرجى تحديد تاريخ البداية والنهاية" : "Please select start and end dates",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      // Header
+      doc.setFontSize(16);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.text(`Revenue Report: ${reportStartDate} to ${reportEndDate}`, 105, 30, { align: 'center' });
+      
+      // Get revenues for the period
+      const periodRevenues = revenues.filter(revenue => 
+        revenue.date >= reportStartDate && revenue.date <= reportEndDate
+      );
+      
+      let yPosition = 50;
+      let totalIncome = 0;
+      let totalExpenses = 0;
+      
+      doc.setFontSize(10);
+      doc.text('Date', 20, yPosition);
+      doc.text('Period', 50, yPosition);
+      doc.text('Type', 80, yPosition);
+      doc.text('Amount', 110, yPosition);
+      doc.text('Notes', 140, yPosition);
+      
+      yPosition += 10;
+      
+      periodRevenues.forEach(revenue => {
+        doc.text(revenue.date, 20, yPosition);
+        doc.text(revenue.period, 50, yPosition);
+        doc.text(revenue.type, 80, yPosition);
+        doc.text(revenue.amount.toString(), 110, yPosition);
+        doc.text(revenue.notes || '', 140, yPosition);
+        
+        if (revenue.type === 'income') {
+          totalIncome += revenue.amount;
+        } else {
+          totalExpenses += revenue.amount;
+        }
+        
+        yPosition += 8;
+        
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+      });
+      
+      // Summary
+      yPosition += 10;
+      doc.setFontSize(12);
+      doc.text(`Total Income: ${totalIncome} JD`, 20, yPosition);
+      yPosition += 8;
+      doc.text(`Total Expenses: ${totalExpenses} JD`, 20, yPosition);
+      yPosition += 8;
+      doc.text(`Net Revenue: ${totalIncome - totalExpenses} JD`, 20, yPosition);
+      
+      doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
+      
+      toast({
+        title: language === 'ar' ? "تم التصدير" : "Exported",
+        description: language === 'ar' ? "تم تصدير التقرير بنجاح" : "Report exported successfully",
+      });
+    } catch (error) {
+      toast({
+        title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
+        description: language === 'ar' ? "حدث خطأ أثناء تصدير التقرير" : "Error occurred while exporting report",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -115,7 +231,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       </header>
 
       <main className="max-w-md mx-auto px-4 py-8 relative z-10">
-        <Card className="card-shadow">
+        <Card className="card-shadow mb-6">
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
@@ -128,21 +244,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                   onChange={(e) => setSelectedDate(e.target.value)}
                   className="text-sm text-right"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 text-right block">
-                  النوع
-                </label>
-                <Select value={type} onValueChange={(value: 'income' | 'expense') => setType(value)}>
-                  <SelectTrigger className="text-sm text-right">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="income">الإيراد</SelectItem>
-                    <SelectItem value="expense">الصرف</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">
@@ -164,13 +265,27 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 text-right block">
-                  المبلغ (دينار)
+                  الصرف (دينار)
                 </label>
                 <Input
                   type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="أدخل المبلغ"
+                  value={expense}
+                  onChange={(e) => setExpense(e.target.value)}
+                  placeholder="أدخل مبلغ الصرف"
+                  className="text-sm text-right"
+                  step="0.01"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 text-right block">
+                  الإيراد (دينار)
+                </label>
+                <Input
+                  type="number"
+                  value={income}
+                  onChange={(e) => setIncome(e.target.value)}
+                  placeholder="أدخل مبلغ الإيراد"
                   className="text-sm text-right"
                   step="0.01"
                 />
@@ -194,6 +309,81 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                 إضافة إدخال
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Daily Revenue Display */}
+        <Card className="card-shadow mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                onClick={() => navigateDate('prev')}
+                variant="outline"
+                size="sm"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-600">إيراد اليوم</p>
+                <p className="text-lg font-bold text-green-600">{dailyRevenue} دينار</p>
+                <p className="text-xs text-gray-500">{selectedDate}</p>
+              </div>
+              
+              <Button
+                onClick={() => navigateDate('next')}
+                variant="outline"
+                size="sm"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Period Report Export */}
+        <Card className="card-shadow">
+          <CardContent className="pt-6">
+            <h3 className="text-sm font-medium text-gray-700 text-right mb-4">
+              إصدار تقرير فترة معينة
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-700 text-right block">
+                    من
+                  </label>
+                  <Input
+                    type="date"
+                    value={reportStartDate}
+                    onChange={(e) => setReportStartDate(e.target.value)}
+                    className="text-xs text-right"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-gray-700 text-right block">
+                    الى
+                  </label>
+                  <Input
+                    type="date"
+                    value={reportEndDate}
+                    onChange={(e) => setReportEndDate(e.target.value)}
+                    className="text-xs text-right"
+                  />
+                </div>
+              </div>
+              
+              <Button
+                onClick={generatePeriodReport}
+                className="w-full pharmacy-gradient text-white"
+                size="sm"
+              >
+                <Download className="w-4 h-4 ml-2" />
+                تصدير PDF
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </main>

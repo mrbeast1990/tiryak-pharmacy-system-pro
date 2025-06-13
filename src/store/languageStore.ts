@@ -5,6 +5,7 @@ import { persist } from 'zustand/middleware';
 interface LanguageState {
   language: 'ar' | 'en';
   toggleLanguage: () => void;
+  setLanguage: (lang: 'ar' | 'en') => void;
   t: (key: string) => string;
 }
 
@@ -119,14 +120,20 @@ export const useLanguageStore = create<LanguageState>()(
       language: 'ar',
       
       toggleLanguage: () => {
-        set((state) => ({
-          language: state.language === 'ar' ? 'en' : 'ar'
-        }));
+        const currentLang = get().language;
+        const newLang = currentLang === 'ar' ? 'en' : 'ar';
+        
+        set({ language: newLang });
         
         // Update document direction and language
-        const newLang = get().language;
         document.documentElement.lang = newLang;
         document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+      },
+
+      setLanguage: (lang: 'ar' | 'en') => {
+        set({ language: lang });
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
       },
       
       t: (key: string) => {

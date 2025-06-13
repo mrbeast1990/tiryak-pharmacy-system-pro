@@ -3,10 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { useLanguageStore } from '@/store/languageStore';
-import { ArrowRight, User, Mail, Lock, Phone, Globe, MapPin, FileText } from 'lucide-react';
+import { ArrowRight, User, Mail, Lock, Phone, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,12 +12,9 @@ const SignUp: React.FC = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    phone: '',
-    address: '',
-    experience: '',
-    previousWork: '',
-    reason: '',
-    references: ''
+    password: '',
+    confirmPassword: '',
+    phone: ''
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +31,16 @@ const SignUp: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' ? "كلمات المرور غير متطابقة" : "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     // Simulate API call
@@ -96,7 +101,7 @@ const SignUp: React.FC = () => {
       </header>
 
       <div className="flex items-center justify-center py-12 px-4 relative z-10">
-        <Card className="w-full max-w-2xl card-shadow">
+        <Card className="w-full max-w-md card-shadow">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center mx-auto mb-4">
               <img 
@@ -105,159 +110,100 @@ const SignUp: React.FC = () => {
                 className="w-32 h-32"
               />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
+            <CardTitle className="text-xl font-bold text-gray-900">
               {language === 'ar' ? 'طلب إنشاء حساب جديد' : 'New Account Application'}
             </CardTitle>
             <CardDescription className="text-sm">
               {language === 'ar' 
-                ? 'يرجى ملء النموذج التالي لطلب إنشاء حساب في نظام صيدلية الترياق الشافي' 
-                : 'Please fill out the following form to request account creation in Al-Tiryak Al-Shafi Pharmacy System'
+                ? 'يرجى ملء النموذج التالي لطلب إنشاء حساب' 
+                : 'Please fill out the following form to request account creation'
               }
             </CardDescription>
           </CardHeader>
           
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2 space-x-reverse">
-                  <User className="w-5 h-5" />
-                  <span>{language === 'ar' ? 'المعلومات الشخصية' : 'Personal Information'}</span>
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
-                    </label>
-                    <div className="relative">
-                      <User className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                      <Input
-                        value={formData.fullName}
-                        onChange={(e) => handleInputChange('fullName', e.target.value)}
-                        placeholder={language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
-                        className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-                    </label>
-                    <div className="relative">
-                      <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                      <Input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
-                        className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
-                    </label>
-                    <div className="relative">
-                      <Phone className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                      <Input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder={language === 'ar' ? 'أدخل رقم هاتفك' : 'Enter your phone number'}
-                        className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'العنوان' : 'Address'}
-                    </label>
-                    <div className="relative">
-                      <MapPin className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                      <Input
-                        value={formData.address}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        placeholder={language === 'ar' ? 'أدخل عنوانك' : 'Enter your address'}
-                        className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                        required
-                      />
-                    </div>
-                  </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+                </label>
+                <div className="relative">
+                  <User className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                  <Input
+                    value={formData.fullName}
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    placeholder={language === 'ar' ? 'أدخل اسمك الكامل' : 'Enter your full name'}
+                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    required
+                  />
                 </div>
               </div>
 
-              {/* Professional Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2 space-x-reverse">
-                  <FileText className="w-5 h-5" />
-                  <span>{language === 'ar' ? 'المعلومات المهنية' : 'Professional Information'}</span>
-                </h3>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+                </label>
+                <div className="relative">
+                  <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
+                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    required
+                  />
+                </div>
+              </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'سنوات الخبرة في مجال الصيدلة' : 'Years of Experience in Pharmacy'}
-                    </label>
-                    <Select value={formData.experience} onValueChange={(value) => handleInputChange('experience', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={language === 'ar' ? 'اختر سنوات الخبرة' : 'Select years of experience'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0-1">{language === 'ar' ? 'أقل من سنة' : 'Less than 1 year'}</SelectItem>
-                        <SelectItem value="1-3">{language === 'ar' ? '1-3 سنوات' : '1-3 years'}</SelectItem>
-                        <SelectItem value="3-5">{language === 'ar' ? '3-5 سنوات' : '3-5 years'}</SelectItem>
-                        <SelectItem value="5+">{language === 'ar' ? 'أكثر من 5 سنوات' : 'More than 5 years'}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {language === 'ar' ? 'الرقم السري' : 'Password'}
+                </label>
+                <div className="relative">
+                  <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                  <Input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    placeholder={language === 'ar' ? 'أدخل الرقم السري' : 'Enter your password'}
+                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    required
+                  />
+                </div>
+              </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'أماكن العمل السابقة' : 'Previous Work Places'}
-                    </label>
-                    <Textarea
-                      value={formData.previousWork}
-                      onChange={(e) => handleInputChange('previousWork', e.target.value)}
-                      placeholder={language === 'ar' ? 'اذكر أماكن عملك السابقة والمدة' : 'Mention your previous workplaces and duration'}
-                      className="text-right text-sm"
-                      rows={3}
-                    />
-                  </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {language === 'ar' ? 'تكرار الرقم السري' : 'Confirm Password'}
+                </label>
+                <div className="relative">
+                  <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                  <Input
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    placeholder={language === 'ar' ? 'أعد إدخال الرقم السري' : 'Confirm your password'}
+                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    required
+                  />
+                </div>
+              </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'سبب الرغبة في العمل مع صيدلية الترياق الشافي' : 'Reason for wanting to work with Al-Tiryak Al-Shafi Pharmacy'}
-                    </label>
-                    <Textarea
-                      value={formData.reason}
-                      onChange={(e) => handleInputChange('reason', e.target.value)}
-                      placeholder={language === 'ar' ? 'وضح سبب رغبتك في الانضمام لفريقنا' : 'Explain why you want to join our team'}
-                      className="text-right text-sm"
-                      rows={3}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      {language === 'ar' ? 'المراجع (اختياري)' : 'References (Optional)'}
-                    </label>
-                    <Textarea
-                      value={formData.references}
-                      onChange={(e) => handleInputChange('references', e.target.value)}
-                      placeholder={language === 'ar' ? 'أسماء وأرقام هواتف المراجع' : 'Names and phone numbers of references'}
-                      className="text-right text-sm"
-                      rows={2}
-                    />
-                  </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  {language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                </label>
+                <div className="relative">
+                  <Phone className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
+                  <Input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    placeholder={language === 'ar' ? 'أدخل رقم هاتفك' : 'Enter your phone number'}
+                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    required
+                  />
                 </div>
               </div>
 
@@ -275,13 +221,13 @@ const SignUp: React.FC = () => {
             </form>
           </CardContent>
         </Card>
-      </div>
-      
-      {/* Footer */}
-      <div className={`absolute bottom-4 ${language === 'ar' ? 'right-4' : 'left-4'} text-${language === 'ar' ? 'right' : 'left'} text-sm text-gray-600 relative z-10`}>
-        <p>Ahmed A Alrjele</p>
-        <p>Founder & CEO</p>
-        <p>Al-tiryak Al-shafi Pharmacy</p>
+        
+        {/* Footer */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 bg-white/90 px-6 py-3 rounded-lg shadow-lg">
+          <p className="font-semibold">Ahmed A Alrjele</p>
+          <p>Founder & CEO</p>
+          <p>Al-tiryak Al-shafi Pharmacy</p>
+        </div>
       </div>
     </div>
   );
