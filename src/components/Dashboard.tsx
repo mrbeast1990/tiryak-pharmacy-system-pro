@@ -1,190 +1,41 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
-import { LogOut, TrendingUp, Users, Globe, Pill } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import ShortageManager from './ShortageManager';
-import RevenueManager from './RevenueManager';
-import ReportsPage from './ReportsPage';
-import ProfileModal from './ProfileModal';
-import jsPDF from 'jspdf';
+import { AlertTriangle, DollarSign, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const Dashboard: React.FC = () => {
-  const [activeView, setActiveView] = useState<'dashboard' | 'shortage' | 'revenue' | 'reports'>('dashboard');
-  const [showProfile, setShowProfile] = useState(false);
-  const { user, logout, checkPermission } = useAuthStore();
-  const { language, toggleLanguage, t } = useLanguageStore();
-  const { medicines, revenues, getTotalDailyRevenue } = usePharmacyStore();
-  const { toast } = useToast();
+interface DashboardProps {
+  onNavigate: (route: string) => void;
+  user: any;
+}
 
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: language === 'ar' ? "تم تسجيل الخروج" : "Logged Out",
-      description: language === 'ar' ? "شكراً لاستخدامك نظام صيدلية الترياق الشافي" : "Thank you for using Al-Tiryak Al-Shafi System",
-    });
-  };
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
+  const { language, t } = useLanguageStore();
+  const { medicines, revenues } = usePharmacyStore();
+  const navigate = useNavigate();
 
-  const generateUserReport = () => {
-    if (!checkPermission('export_pdf')) {
-      toast({
-        title: language === 'ar' ? "غير مصرح" : "Unauthorized",
-        description: language === 'ar' ? "لا يمكنك تصدير التقارير" : "Cannot export reports",
-        variant: "destructive",
-      });
-      return;
-    }
+  const shortagesCount = medicines.filter(medicine => medicine.status === 'out_of_stock').length;
+  const availableCount = medicines.filter(medicine => medicine.status === 'available').length;
 
-    try {
-      const doc = new jsPDF();
-      
-      // Add logo
-      const logoSize = 15;
-      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
-      
-      // Header
-      doc.setFontSize(12);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 15, { align: 'center' });
-      
-      doc.setFontSize(10);
-      doc.text('Staff Performance Report - Medicine Shortages', 105, 22, { align: 'center' });
-      
-      // Current Date
-      const currentDate = new Date().toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric'
-      });
-      
-      doc.setFontSize(9);
-      doc.text(`Generated: ${currentDate}`, 105, 29, { align: 'center' });
-      
-      // Calculate user shortage statistics
-      const userStats: Record<string, number> = {};
-      
-      medicines.forEach(medicine => {
-        if (medicine.updatedBy) {
-          if (!userStats[medicine.updatedBy]) {
-            userStats[medicine.updatedBy] = 0;
-          }
-          userStats[medicine.updatedBy]++;
-        }
-      });
-      
-      // Table headers
-      let yPosition = 45;
-      
-      // Draw smaller header background
-      doc.setFillColor(65, 105, 225);
-      doc.rect(30, yPosition - 6, 35, 10, 'F');
-      doc.rect(65, yPosition - 6, 65, 10, 'F');
-      doc.rect(130, yPosition - 6, 40, 10, 'F');
-      
-      // Table headers text
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.text('Staff Name', 47.5, yPosition - 1, { align: 'center' });
-      doc.text('Shortage Records', 97.5, yPosition - 1, { align: 'center' });
-      doc.text('Performance', 150, yPosition - 1, { align: 'center' });
-      
-      // Table content
-      doc.setTextColor(0, 0, 0);
-      yPosition += 15;
-      
-      // Draw table data
-      Object.entries(userStats).forEach(([userName, shortageCount], index) => {
-        doc.setDrawColor(220, 220, 220);
-        doc.setLineWidth(0.1);
-        doc.line(30, yPosition - 8, 170, yPosition - 8);
-        doc.line(30, yPosition + 3, 170, yPosition + 3);
-        doc.line(30, yPosition - 8, 30, yPosition + 3);
-        doc.line(65, yPosition - 8, 65, yPosition + 3);
-        doc.line(130, yPosition - 8, 130, yPosition + 3);
-        doc.line(170, yPosition - 8, 170, yPosition + 3);
-        
-        doc.setFontSize(8);
-        doc.text(userName, 47.5, yPosition - 2, { align: 'center' });
-        doc.text(shortageCount.toString(), 97.5, yPosition - 2, { align: 'center' });
-        
-        // Performance rating
-        let performance = 'Low';
-        if (shortageCount > 10) performance = 'High';
-        else if (shortageCount > 5) performance = 'Medium';
-        
-        doc.text(performance, 150, yPosition - 2, { align: 'center' });
-        
-        yPosition += 12;
-        
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
-        }
-      });
-      
-      // Chart section (simple text-based chart)
-      yPosition += 10;
-      doc.setFontSize(10);
-      doc.text('Performance Chart:', 30, yPosition);
-      yPosition += 8;
-      
-      Object.entries(userStats).forEach(([userName, shortageCount]) => {
-        doc.setFontSize(8);
-        const chartBar = '█'.repeat(Math.min(Math.floor(shortageCount / 2), 20));
-        doc.text(`${userName}: ${chartBar} (${shortageCount})`, 30, yPosition);
-        yPosition += 6;
-      });
-      
-      // Summary
-      yPosition += 10;
-      doc.setFontSize(9);
-      doc.text('Summary:', 30, yPosition);
-      yPosition += 6;
-      doc.setFontSize(8);
-      doc.text(`Total Staff: ${Object.keys(userStats).length}`, 30, yPosition);
-      yPosition += 5;
-      doc.text(`Total Shortage Records: ${medicines.length}`, 30, yPosition);
-      yPosition += 5;
-      doc.text(`Average Records per Staff: ${Math.round(medicines.length / Object.keys(userStats).length)}`, 30, yPosition);
-      
-      doc.save(`staff-shortage-performance-${new Date().toISOString().split('T')[0]}.pdf`);
-      
-      toast({
-        title: language === 'ar' ? "تم التصدير" : "Exported",
-        description: language === 'ar' ? "تم تصدير تقرير أداء النواقص بنجاح" : "Shortage performance report exported successfully",
-      });
-    } catch (error) {
-      toast({
-        title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
-        description: language === 'ar' ? "حدث خطأ أثناء تصدير التقرير" : "Error occurred while exporting report",
-        variant: "destructive",
-      });
-    }
-  };
+  // Calculate today's revenue
+  const today = new Date().toISOString().split('T')[0];
+  const todayRevenue = revenues.filter(revenue => revenue.date === today)
+                             .reduce((sum, revenue) => sum + revenue.amount, 0);
 
-  if (activeView === 'shortage') {
-    return <ShortageManager onBack={() => setActiveView('dashboard')} />;
-  }
-
-  if (activeView === 'revenue') {
-    return <RevenueManager onBack={() => setActiveView('dashboard')} />;
-  }
-
-  if (activeView === 'reports') {
-    return <ReportsPage onBack={() => setActiveView('dashboard')} />;
-  }
+  // Calculate total revenues
+  const totalRevenues = revenues.reduce((sum, revenue) => sum + revenue.amount, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Background Logo */}
       <div 
         className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
         style={{
           backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
-          backgroundSize: '800px 800px',
+          backgroundSize: '600px 600px',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
@@ -193,118 +44,106 @@ const Dashboard: React.FC = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14">
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <div 
-                className="cursor-pointer"
-                onClick={() => setShowProfile(true)}
-              >
-                <img 
-                  src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
-                  alt="Al-Tiryak Logo" 
-                  className="w-20 h-20"
-                />
-              </div>
-              <div>
-                <h1 className="text-xs font-bold text-gray-900">{t('pharmacy.name')}</h1>
-                <p className="text-xs text-gray-500">{t('welcome')} {user?.name}</p>
-              </div>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">{t('welcome')} {user?.name}</h1>
             </div>
-            
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Button
-                onClick={toggleLanguage}
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-1 text-xs px-1 py-1"
-              >
-                <Globe className="w-2 h-2" />
-                <span className="text-xs">{t('language')}</span>
-              </Button>
-              
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-1 space-x-reverse text-xs px-1 py-1"
-              >
-                <LogOut className="w-2 h-2" />
-                <span className="text-xs">{t('logout')}</span>
+            <div>
+              <Button onClick={() => {
+                localStorage.removeItem('auth');
+                navigate('/');
+              }} variant="destructive" size="sm">
+                {t('logout')}
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        {/* Instruction Text */}
-        <div className="mb-4 text-center">
-          <p className="text-lg font-bold text-gray-800">
-            {language === 'ar' ? 'الترتيب يبدأ من هنا.' : 'The order starts from here.'}
-          </p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" 
-                onClick={() => setActiveView('shortage')}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-3 space-x-reverse text-sm">
-                <Pill className="w-5 h-5 text-red-500" />
-                <span>{t('dashboard.registerShortage')}</span>
-              </CardTitle>
-              <CardDescription className="text-xs">
-                {language === 'ar' ? 'إدارة الأدوية الناقصة والمتوفرة في الصيدلية' : 'Manage shortage and available medicines in pharmacy'}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => setActiveView('revenue')}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-3 space-x-reverse text-sm">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-                <span>{t('dashboard.registerRevenue')}</span>
-              </CardTitle>
-              <CardDescription className="text-xs">
-                {language === 'ar' ? 'تسجيل الإيرادات والمصروفات حسب الفترات' : 'Register revenues and expenses by shifts'}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-
-        {/* Reports Section - Only for Admin and Ahmad */}
-        {(checkPermission('export_pdf')) && (
-          <Card className="card-shadow max-w-md mx-auto">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-3 space-x-reverse text-sm">
-                <Users className="w-5 h-5 text-blue-500" />
-                <span>{t('dashboard.reports')}</span>
-              </CardTitle>
-              <CardDescription className="text-xs">
-                {language === 'ar' ? 'عرض تقارير الأداء والإحصائيات' : 'View performance reports and statistics'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <Button onClick={() => setActiveView('reports')} className="pharmacy-gradient w-full text-sm py-2">
-                <Users className="w-4 h-4 ml-2" />
-                عرض التقارير
-              </Button>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Shortages */}
+          <Card className="card-shadow">
+            <CardContent className="p-4 text-center">
+              <div className="text-3xl font-bold text-red-600">{shortagesCount}</div>
+              <div className="text-sm text-gray-600">{t('dashboard.shortages')}</div>
             </CardContent>
           </Card>
-        )}
+
+          {/* Available */}
+          <Card className="card-shadow">
+            <CardContent className="p-4 text-center">
+              <div className="text-3xl font-bold text-green-600">{availableCount}</div>
+              <div className="text-sm text-gray-600">{t('dashboard.available')}</div>
+            </CardContent>
+          </Card>
+
+          {/* Today Revenue */}
+          <Card className="card-shadow">
+            <CardContent className="p-4 text-center">
+              <div className="text-3xl font-bold text-blue-600">{todayRevenue} JD</div>
+              <div className="text-sm text-gray-600">{t('dashboard.todayRevenue')}</div>
+            </CardContent>
+          </Card>
+
+          {/* Total Revenues */}
+          <Card className="card-shadow">
+            <CardContent className="p-4 text-center">
+              <div className="text-3xl font-bold text-purple-600">{totalRevenues} JD</div>
+              <div className="text-sm text-gray-600">{t('dashboard.totalRevenues')}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Medicine Shortages Card */}
+          <Card 
+            className="card-shadow cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => onNavigate('shortages')}
+          >
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {t('dashboard.registerShortage')}
+              </h3>
+            </CardContent>
+          </Card>
+
+          {/* Revenue Management Card */}
+          <Card 
+            className="card-shadow cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => onNavigate('revenue')}
+          >
+            <CardContent className="p-6 text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <DollarSign className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                {t('dashboard.registerRevenue')}
+              </h3>
+            </CardContent>
+          </Card>
+
+          {/* Reports Card - Smaller */}
+          <Card 
+            className="card-shadow cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => onNavigate('reports')}
+          >
+            <CardContent className="p-4 text-center">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <BarChart3 className="w-4 h-4 text-blue-600" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                {t('dashboard.reports')}
+              </h3>
+            </CardContent>
+          </Card>
+        </div>
       </main>
-      
-      {/* Profile Modal */}
-      <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
-      
-      {/* Footer */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 relative z-10">
-        <p>Ahmed A Alrjele</p>
-        <p>Founder & CEO</p>
-        <p>Al-tiryak Al-shafi Pharmacy</p>
-      </div>
     </div>
   );
 };

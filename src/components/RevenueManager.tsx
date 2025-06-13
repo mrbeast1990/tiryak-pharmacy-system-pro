@@ -127,36 +127,54 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Header
-      doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
+      // Add Arabic font support
+      doc.setFont('helvetica');
       
-      doc.setFontSize(12);
-      doc.text(`Revenue Report: ${reportStartDate} to ${reportEndDate}`, 105, 30, { align: 'center' });
+      // Header
+      doc.setFontSize(18);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
+      doc.text('صيدلية الترياق الشافي', 105, 35, { align: 'center' });
+      
+      doc.setFontSize(14);
+      doc.text(`Revenue Report / تقرير الإيرادات`, 105, 50, { align: 'center' });
+      doc.text(`${reportStartDate} إلى ${reportEndDate}`, 105, 65, { align: 'center' });
       
       // Get revenues for the period
       const periodRevenues = revenues.filter(revenue => 
         revenue.date >= reportStartDate && revenue.date <= reportEndDate
       );
       
-      let yPosition = 50;
+      let yPosition = 85;
       let totalIncome = 0;
       let totalExpenses = 0;
       
-      doc.setFontSize(10);
-      doc.text('Date', 20, yPosition);
-      doc.text('Period', 50, yPosition);
-      doc.text('Type', 80, yPosition);
-      doc.text('Amount', 110, yPosition);
-      doc.text('Notes', 140, yPosition);
+      // Table headers
+      doc.setFontSize(12);
+      doc.text('التاريخ/Date', 20, yPosition);
+      doc.text('الفترة/Period', 50, yPosition);
+      doc.text('النوع/Type', 80, yPosition);
+      doc.text('المبلغ/Amount', 110, yPosition);
+      doc.text('الملاحظات/Notes', 140, yPosition);
       
-      yPosition += 10;
+      yPosition += 15;
+      
+      // Draw line under headers
+      doc.line(15, yPosition - 5, 195, yPosition - 5);
       
       periodRevenues.forEach(revenue => {
+        doc.setFontSize(10);
         doc.text(revenue.date, 20, yPosition);
-        doc.text(revenue.period, 50, yPosition);
-        doc.text(revenue.type, 80, yPosition);
-        doc.text(revenue.amount.toString(), 110, yPosition);
+        
+        const periodText = revenue.period === 'morning' ? 'صباحية' :
+                          revenue.period === 'evening' ? 'مسائية' :
+                          revenue.period === 'night' ? 'ليلية' :
+                          'احمد الرجيلي';
+        doc.text(periodText, 50, yPosition);
+        
+        const typeText = revenue.type === 'income' ? 'إيراد' : 'صرف';
+        doc.text(typeText, 80, yPosition);
+        
+        doc.text(`${revenue.amount} دينار`, 110, yPosition);
         doc.text(revenue.notes || '', 140, yPosition);
         
         if (revenue.type === 'income') {
@@ -165,7 +183,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           totalExpenses += revenue.amount;
         }
         
-        yPosition += 8;
+        yPosition += 12;
         
         if (yPosition > 250) {
           doc.addPage();
@@ -173,14 +191,23 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         }
       });
       
-      // Summary
-      yPosition += 10;
+      // Summary section
+      yPosition += 15;
+      doc.line(15, yPosition, 195, yPosition);
+      yPosition += 15;
+      
+      doc.setFontSize(14);
+      doc.text('الملخص / Summary', 105, yPosition, { align: 'center' });
+      yPosition += 15;
+      
       doc.setFontSize(12);
-      doc.text(`Total Income: ${totalIncome} JD`, 20, yPosition);
+      doc.text(`إجمالي الإيرادات / Total Income: ${totalIncome} دينار`, 20, yPosition);
+      yPosition += 12;
+      doc.text(`إجمالي الصرف / Total Cash Exchange: ${totalExpenses} دينار`, 20, yPosition);
+      yPosition += 12;
+      doc.text(`صافي الإيراد / Net Revenue: ${totalIncome} دينار`, 20, yPosition);
       yPosition += 8;
-      doc.text(`Total Expenses: ${totalExpenses} JD`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`Net Revenue: ${totalIncome - totalExpenses} JD`, 20, yPosition);
+      doc.text(`(ملاحظة: الصرف هو فكة ولا يخصم من الإيراد)`, 20, yPosition);
       
       doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
       

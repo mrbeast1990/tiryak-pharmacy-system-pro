@@ -100,17 +100,17 @@ const SignUp: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex items-center justify-center py-12 px-4 relative z-10">
-        <Card className="w-full max-w-md card-shadow">
-          <CardHeader className="text-center">
-            <div className="flex items-center justify-center mx-auto mb-4">
+      <div className="flex flex-col items-center justify-center py-8 px-4 relative z-10 min-h-[calc(100vh-56px)]">
+        <Card className="w-full max-w-md card-shadow mb-6">
+          <CardHeader className="text-center pb-4">
+            <div className="flex items-center justify-center mx-auto mb-3">
               <img 
                 src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
                 alt="Al-Tiryak Logo" 
-                className="w-32 h-32"
+                className="w-24 h-24"
               />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900">
+            <CardTitle className="text-lg font-bold text-gray-900">
               {language === 'ar' ? 'طلب إنشاء حساب جديد' : 'New Account Application'}
             </CardTitle>
             <CardDescription className="text-sm">
@@ -200,7 +200,7 @@ const SignUp: React.FC = () => {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder={language === 'ar' ? 'أدخل رقم هاتفك' : 'Enter your phone number'}
+                    placeholder={language === 'ar' ? 'أدخل رقम هاتفك' : 'Enter your phone number'}
                     className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
                     required
                   />
@@ -222,8 +222,8 @@ const SignUp: React.FC = () => {
           </CardContent>
         </Card>
         
-        {/* Footer */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 bg-white/90 px-6 py-3 rounded-lg shadow-lg">
+        {/* Footer - moved below submit button */}
+        <div className="text-center text-sm text-gray-600 bg-white/90 px-6 py-3 rounded-lg shadow-lg">
           <p className="font-semibold">Ahmed A Alrjele</p>
           <p>Founder & CEO</p>
           <p>Al-tiryak Al-shafi Pharmacy</p>
