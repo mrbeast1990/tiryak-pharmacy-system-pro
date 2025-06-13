@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
-import { ArrowRight, Users, BarChart3, FileText, Download } from 'lucide-react';
+import { ArrowRight, Users, BarChart3, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
 
 interface ReportsPageProps {
   onBack: () => void;
@@ -18,10 +16,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
   const { user } = useAuthStore();
   const { language } = useLanguageStore();
   const { medicines, revenues } = usePharmacyStore();
-  const { toast } = useToast();
-  
-  const [reportStartDate, setReportStartDate] = useState('');
-  const [reportEndDate, setReportEndDate] = useState('');
 
   // Calculate user statistics
   const userStats = React.useMemo(() => {
@@ -66,96 +60,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-  const generatePerformanceReport = () => {
-    if (!reportStartDate || !reportEndDate) {
-      toast({
-        title: "خطأ",
-        description: "يرجى تحديد تاريخ البداية والنهاية",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-      
-      // Header
-      doc.setFontSize(18);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
-      doc.text('صيدلية الترياق الشافي', 105, 35, { align: 'center' });
-      
-      doc.setFontSize(14);
-      doc.text(`Performance Report / تقرير الأداء`, 105, 50, { align: 'center' });
-      doc.text(`${reportStartDate} إلى ${reportEndDate}`, 105, 65, { align: 'center' });
-      
-      let yPosition = 85;
-      
-      // Filter data for the period - Fix: Remove createdAt filter since it doesn't exist
-      const periodRevenues = revenues.filter(revenue => 
-        revenue.date >= reportStartDate && revenue.date <= reportEndDate
-      );
-      
-      // User performance table
-      doc.setFontSize(16);
-      doc.text('أداء المستخدمين / User Performance', 20, yPosition);
-      yPosition += 20;
-      
-      // Table headers
-      doc.setFontSize(12);
-      doc.text('اسم المستخدم/User', 20, yPosition);
-      doc.text('النواقص/Shortages', 80, yPosition);
-      doc.text('الإيرادات/Revenues', 130, yPosition);
-      doc.text('المجموع/Total', 170, yPosition);
-      
-      yPosition += 15;
-      doc.line(15, yPosition - 5, 195, yPosition - 5);
-      
-      userStats.forEach(userStat => {
-        doc.setFontSize(10);
-        doc.text(userStat.name, 20, yPosition);
-        doc.text(userStat.shortages.toString(), 80, yPosition);
-        doc.text(userStat.revenues.toString(), 130, yPosition);
-        doc.text(userStat.total.toString(), 170, yPosition);
-        
-        yPosition += 12;
-        
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
-        }
-      });
-      
-      // Summary
-      yPosition += 15;
-      doc.line(15, yPosition, 195, yPosition);
-      yPosition += 15;
-      
-      doc.setFontSize(14);
-      doc.text('الملخص / Summary', 105, yPosition, { align: 'center' });
-      yPosition += 15;
-      
-      doc.setFontSize(12);
-      doc.text(`إجمالي المستخدمين النشطين: ${userStats.length}`, 20, yPosition);
-      yPosition += 12;
-      doc.text(`إجمالي سجلات النواقص: ${medicines.length}`, 20, yPosition);
-      yPosition += 12;
-      doc.text(`إجمالي سجلات الإيرادات: ${revenues.length}`, 20, yPosition);
-      
-      doc.save(`performance-report-${reportStartDate}-to-${reportEndDate}.pdf`);
-      
-      toast({
-        title: "تم التصدير",
-        description: "تم تصدير تقرير الأداء بنجاح",
-      });
-    } catch (error) {
-      toast({
-        title: "خطأ في التصدير",
-        description: "حدث خطأ أثناء تصدير التقرير",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Background Logo */}
@@ -190,54 +94,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8 relative z-10">
-        {/* PDF Export Section */}
-        <Card className="card-shadow mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-3 space-x-reverse text-right">
-              <Download className="w-6 h-6 text-purple-500" />
-              <span>تصدير تقرير الأداء</span>
-            </CardTitle>
-            <CardDescription className="text-right">
-              اختر الفترة الزمنية لتصدير تقرير الأداء
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label className="text-sm font-medium text-gray-700 text-right block mb-2">
-                  من تاريخ
-                </label>
-                <Input
-                  type="date"
-                  value={reportStartDate}
-                  onChange={(e) => setReportStartDate(e.target.value)}
-                  className="text-right"
-                />
-              </div>
-              
-              <div className="flex-1">
-                <label className="text-sm font-medium text-gray-700 text-right block mb-2">
-                  إلى تاريخ
-                </label>
-                <Input
-                  type="date"
-                  value={reportEndDate}
-                  onChange={(e) => setReportEndDate(e.target.value)}
-                  className="text-right"
-                />
-              </div>
-              
-              <Button
-                onClick={generatePerformanceReport}
-                className="pharmacy-gradient text-white"
-              >
-                <Download className="w-4 h-4 ml-2" />
-                تصدير PDF
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* User Statistics Table */}
         <Card className="card-shadow mb-8">
           <CardHeader>

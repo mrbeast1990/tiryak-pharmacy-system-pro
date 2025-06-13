@@ -47,7 +47,7 @@ const Index = () => {
       {!isAuthenticated ? (
         <LoginForm onLogin={handleSuccessfulLogin} />
       ) : (
-        <Dashboard user={user} />
+        <Dashboard />
       )}
     </>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +53,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative pt-6" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative pt-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Background Logo */}
       <div 
         className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
@@ -80,21 +81,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       <div className="flex flex-col items-center space-y-4 relative z-10 w-full max-w-md px-4">
         <Card className="w-full card-shadow">
           <CardHeader className="text-center pb-4">
-            <div className="flex items-center justify-center mx-auto mb-2">
+            <div className="flex items-center justify-center mx-auto mb-1">
               <img 
                 src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
                 alt="Al-Tiryak Logo" 
-                className="w-32 h-32"
+                className="w-40 h-40"
               />
             </div>
-            <CardTitle className="text-xl font-bold text-gray-900 mb-3">
+            <CardTitle className="text-lg font-bold text-gray-900">
               {t('pharmacy.name')}
             </CardTitle>
-            <CardDescription className="text-sm leading-relaxed">
-              {language === 'ar' 
-                ? 'مرحباً بك في عالم حيث التفاصيل الصغيرة تصنع فارقاً كبيراً.... تسجيل دخولك اليوم هو بداية لرعاية أفضل....'
-                : 'Welcome to a world where small details make a big difference.... Your login today is the beginning of better care....'
-              }
+            <CardDescription className="text-sm">
+              {language === 'ar' ? 'نظام إدارة متكامل' : 'Integrated Management System'}
             </CardDescription>
           </CardHeader>
           <CardContent>
