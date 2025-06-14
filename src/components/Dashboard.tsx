@@ -93,31 +93,59 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <h1 className="text-xl font-bold text-gray-900">
                   {t('pharmacy.name')}
                 </h1>
-                <p className="text-sm text-gray-600">
-                  {t('welcome')} {user?.name}
-                </p>
+                <div className="flex items-center space-x-4 space-x-reverse mt-1">
+                  <p className="text-sm text-gray-600">
+                    {t('welcome')} {user?.name}
+                  </p>
+                  <Button
+                    onClick={toggleLanguage}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs px-2 py-1 h-6"
+                  >
+                    {t('language')}
+                  </Button>
+                  
+                  <Button
+                    onClick={() => setShowProfileModal(true)}
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center space-x-1 space-x-reverse text-xs px-2 py-1 h-6"
+                  >
+                    <User className="w-3 h-3" />
+                    <span>{user?.name}</span>
+                  </Button>
+                </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <Button
-                onClick={toggleLanguage}
-                variant="outline"
-                size="sm"
-                className="text-sm"
-              >
-                {t('language')}
-              </Button>
-              
-              <Button
-                onClick={() => setShowProfileModal(true)}
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 space-x-reverse"
-              >
-                <User className="w-4 h-4" />
-                <span className="text-sm">{user?.name}</span>
-              </Button>
+            <div className="flex items-center space-x-2 space-x-reverse">
+              {(checkPermission('manage_shortages') || user?.role === 'admin') && (
+                <Button
+                  onClick={() => handleNavigate('shortages')}
+                  className="pharmacy-gradient text-white font-medium"
+                  size="sm"
+                >
+                  <Pill className="w-4 h-4 ml-2" />
+                  {t('dashboard.registerShortage')}
+                </Button>
+              )}
+
+              {(checkPermission('register_revenue_all') || 
+                checkPermission('register_revenue_morning') || 
+                checkPermission('register_revenue_evening') || 
+                checkPermission('register_revenue_night') || 
+                user?.role === 'admin' || 
+                user?.role === 'ahmad_rajili') && (
+                <Button
+                  onClick={() => handleNavigate('revenue')}
+                  className="pharmacy-gradient text-white font-medium"
+                  size="sm"
+                >
+                  <DollarSign className="w-4 h-4 ml-2" />
+                  {t('dashboard.registerRevenue')}
+                </Button>
+              )}
               
               <Button
                 onClick={handleLogout}
@@ -165,7 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
             </CardContent>
           </Card>
 
-          <Card className="card-shadow">
+          <Card className="card-shadow cursor-pointer" onClick={() => handleNavigate('revenue')}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -194,54 +222,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
           </Card>
         </div>
 
-        {/* Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(checkPermission('manage_shortages') || user?.role === 'admin') && (
-            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('shortages')}>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <div className="p-3 bg-orange-100 rounded-full">
-                    <Pill className="w-8 h-8 text-orange-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {t('dashboard.registerShortage')}
-                    </h3>
-                    <p className="text-base text-gray-600">
-                      {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {(checkPermission('register_revenue_all') || 
-            checkPermission('register_revenue_morning') || 
-            checkPermission('register_revenue_evening') || 
-            checkPermission('register_revenue_night') || 
-            user?.role === 'admin' || 
-            user?.role === 'ahmad_rajili') && (
-            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('revenue')}>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <DollarSign className="w-8 h-8 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {t('dashboard.registerRevenue')}
-                    </h3>
-                    <p className="text-base text-gray-600">
-                      {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {(checkPermission('view_reports') || user?.role === 'admin') && (
+        {/* Reports Card */}
+        {(checkPermission('view_reports') || user?.role === 'admin') && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('reports')}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4 space-x-reverse">
@@ -259,9 +242,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 </div>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </div>
+        )}
       </main>
+
+      {/* Footer */}
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center text-sm text-gray-600 relative z-10">
+        <p>Ahmed A Alrjele</p>
+        <p>Founder & CEO</p>
+        <p>Al-tiryak Al-shafi Pharmacy</p>
+      </div>
 
       {/* Profile Modal */}
       {showProfileModal && (

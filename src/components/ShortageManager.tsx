@@ -84,16 +84,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Add logo - larger size
-      const logoSize = 20;
+      // Add logo - much larger size
+      const logoSize = 30;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
       // Header - larger font
       doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 18, { align: 'center' });
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
       
       doc.setFontSize(14);
-      doc.text('Medicine Shortages List', 105, 28, { align: 'center' });
+      doc.text('Medicine Shortages List', 105, 30, { align: 'center' });
       
       // Current Date
       const currentDate = new Date().toLocaleDateString('en-US', {
@@ -103,16 +103,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       });
       
       doc.setFontSize(12);
-      doc.text(`Date: ${currentDate}`, 105, 38, { align: 'center' });
+      doc.text(`Date: ${currentDate}`, 105, 40, { align: 'center' });
       
       // Table headers - smaller table, bigger fonts
-      let yPosition = 55;
+      let yPosition = 60;
       
       // Draw header background - smaller table
       doc.setFillColor(65, 105, 225);
-      doc.rect(30, yPosition - 8, 20, 15, 'F');
-      doc.rect(50, yPosition - 8, 80, 15, 'F');
-      doc.rect(130, yPosition - 8, 40, 15, 'F');
+      doc.rect(30, yPosition - 6, 20, 10, 'F');
+      doc.rect(50, yPosition - 6, 80, 10, 'F');
+      doc.rect(130, yPosition - 6, 40, 10, 'F');
       
       // Table headers text - bigger font
       doc.setTextColor(255, 255, 255);
@@ -123,24 +123,24 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       
       // Table content
       doc.setTextColor(0, 0, 0);
-      yPosition += 20;
+      yPosition += 15;
       
-      // Draw table data - bigger font
+      // Draw table data - smaller rows
       shortages.forEach((medicine, index) => {
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.1);
-        doc.line(30, yPosition - 10, 170, yPosition - 10);
-        doc.line(30, yPosition + 5, 170, yPosition + 5);
-        doc.line(30, yPosition - 10, 30, yPosition + 5);
-        doc.line(50, yPosition - 10, 50, yPosition + 5);
-        doc.line(130, yPosition - 10, 130, yPosition + 5);
-        doc.line(170, yPosition - 10, 170, yPosition + 5);
+        doc.line(30, yPosition - 8, 170, yPosition - 8);
+        doc.line(30, yPosition + 2, 170, yPosition + 2);
+        doc.line(30, yPosition - 8, 30, yPosition + 2);
+        doc.line(50, yPosition - 8, 50, yPosition + 2);
+        doc.line(130, yPosition - 8, 130, yPosition + 2);
+        doc.line(170, yPosition - 8, 170, yPosition + 2);
         
-        doc.setFontSize(11);
+        doc.setFontSize(10);
         doc.text((index + 1).toString(), 40, yPosition - 2, { align: 'center' });
         doc.text(medicine.name, 55, yPosition - 2, { align: 'left' });
         
-        yPosition += 15;
+        yPosition += 10; // Smaller row height
         
         if (yPosition > 270) {
           doc.addPage();

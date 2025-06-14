@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Revenue } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ArrowLeft, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
@@ -28,6 +28,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   });
   const [reportStartDate, setReportStartDate] = useState('');
   const [reportEndDate, setReportEndDate] = useState('');
+  const [showDailyDetails, setShowDailyDetails] = useState(false);
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -113,6 +114,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   };
 
   const dailyRevenue = getTotalDailyRevenue(selectedDate);
+  const dailyRevenues = revenues.filter(revenue => revenue.date === selectedDate);
 
   const generatePeriodReport = () => {
     if (!reportStartDate || !reportEndDate) {
@@ -127,52 +129,67 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Set font to support Arabic (using built-in fonts for now)
-      doc.setFont('helvetica');
+      // Add logo
+      const logoSize = 25;
+      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
       // Header
       doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
-      doc.text('صيدلية الترياق الشافي', 105, 30, { align: 'center' });
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 25, { align: 'center' });
       
       doc.setFontSize(12);
-      doc.text(`تقرير الإيرادات من ${reportStartDate} إلى ${reportEndDate}`, 105, 40, { align: 'center' });
-      doc.text(`Revenue Report: ${reportStartDate} to ${reportEndDate}`, 105, 50, { align: 'center' });
+      doc.text(`Revenue Report: ${reportStartDate} to ${reportEndDate}`, 105, 40, { align: 'center' });
       
       // Get revenues for the period
       const periodRevenues = revenues.filter(revenue => 
         revenue.date >= reportStartDate && revenue.date <= reportEndDate
       );
       
-      let yPosition = 70;
+      let yPosition = 60;
       let totalIncome = 0;
       let totalCashDisbursement = 0;
       
+      // Table headers
       doc.setFontSize(10);
-      // Headers in Arabic and English
-      doc.text('التاريخ / Date', 20, yPosition);
-      doc.text('الفترة / Period', 60, yPosition);
-      doc.text('النوع / Type', 100, yPosition);
-      doc.text('المبلغ / Amount', 130, yPosition);
-      doc.text('ملاحظات / Notes', 160, yPosition);
+      doc.setFillColor(65, 105, 225);
+      doc.rect(20, yPosition - 5, 30, 8, 'F');
+      doc.rect(50, yPosition - 5, 30, 8, 'F');
+      doc.rect(80, yPosition - 5, 25, 8, 'F');
+      doc.rect(105, yPosition - 5, 25, 8, 'F');
+      doc.rect(130, yPosition - 5, 50, 8, 'F');
       
-      yPosition += 10;
+      doc.setTextColor(255, 255, 255);
+      doc.text('Date', 35, yPosition, { align: 'center' });
+      doc.text('Period', 65, yPosition, { align: 'center' });
+      doc.text('Type', 92.5, yPosition, { align: 'center' });
+      doc.text('Amount', 117.5, yPosition, { align: 'center' });
+      doc.text('Notes', 155, yPosition, { align: 'center' });
+      
+      doc.setTextColor(0, 0, 0);
+      yPosition += 15;
       
       periodRevenues.forEach(revenue => {
-        doc.text(revenue.date, 20, yPosition);
+        // Draw row borders
+        doc.setDrawColor(200, 200, 200);
+        doc.line(20, yPosition - 3, 180, yPosition - 3);
+        doc.line(20, yPosition + 5, 180, yPosition + 5);
         
-        // Period in Arabic
-        const periodArabic = revenue.period === 'morning' ? 'صباحية' : 
-                           revenue.period === 'evening' ? 'مسائية' : 
-                           revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي';
-        doc.text(periodArabic, 60, yPosition);
+        doc.text(revenue.date, 35, yPosition, { align: 'center' });
         
-        // Type in Arabic
-        const typeArabic = revenue.type === 'income' ? 'إيراد' : 'صرف فكة';
-        doc.text(typeArabic, 100, yPosition);
+        const periodText = revenue.period === 'morning' ? 'Morning' : 
+                          revenue.period === 'evening' ? 'Evening' : 
+                          revenue.period === 'night' ? 'Night' : 'Ahmad Rajili';
+        doc.text(periodText, 65, yPosition, { align: 'center' });
         
-        doc.text(`${revenue.amount} د.أ`, 130, yPosition);
-        doc.text(revenue.notes || '', 160, yPosition);
+        const typeText = revenue.type === 'income' ? 'Income' : 'Cash Change';
+        doc.text(typeText, 92.5, yPosition, { align: 'center' });
+        
+        doc.text(`${revenue.amount} JD`, 117.5, yPosition, { align: 'center' });
+        
+        // Notes in Arabic if they exist
+        if (revenue.notes) {
+          doc.text(revenue.notes, 155, yPosition, { align: 'center' });
+        }
         
         if (revenue.type === 'income') {
           totalIncome += revenue.amount;
@@ -180,7 +197,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           totalCashDisbursement += revenue.amount;
         }
         
-        yPosition += 8;
+        yPosition += 10;
         
         if (yPosition > 250) {
           doc.addPage();
@@ -188,19 +205,17 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         }
       });
       
-      // Summary in Arabic and English
-      yPosition += 10;
+      // Summary
+      yPosition += 15;
       doc.setFontSize(12);
-      doc.text(`إجمالي الإيرادات / Total Income: ${totalIncome} د.أ / JD`, 20, yPosition);
+      doc.text(`Total Income: ${totalIncome} JD`, 20, yPosition);
       yPosition += 8;
-      doc.text(`إجمالي صرف الفكة / Total Cash Disbursement: ${totalCashDisbursement} د.أ / JD`, 20, yPosition);
+      doc.text(`Total Cash Disbursement: ${totalCashDisbursement} JD`, 20, yPosition);
       yPosition += 8;
-      doc.text(`صافي الإيراد / Net Revenue: ${totalIncome} د.أ / JD`, 20, yPosition);
-      yPosition += 5;
+      doc.text(`Net Revenue: ${totalIncome} JD`, 20, yPosition);
+      yPosition += 10;
       doc.setFontSize(10);
-      doc.text('ملاحظة: صرف الفكة لا يُخصم من الإيراد - هو مبلغ للتسهيل على العملاء', 20, yPosition);
-      yPosition += 5;
-      doc.text('Note: Cash disbursement is not deducted from revenue - it is an amount to facilitate customers', 20, yPosition);
+      doc.text('Note: Cash disbursement is not deducted from revenue - it facilitates customers', 20, yPosition);
       
       doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
       
@@ -216,6 +231,80 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       });
     }
   };
+
+  if (showDailyDetails) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        {/* Background Logo */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
+          style={{
+            backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
+            backgroundSize: '600px 600px',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        />
+
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <Button
+                  onClick={() => setShowDailyDetails(false)}
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center space-x-2 space-x-reverse text-sm"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  <span>العودة</span>
+                </Button>
+                <h1 className="text-lg font-bold text-gray-900">تفاصيل إيراد {selectedDate}</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-4xl mx-auto px-4 py-8 relative z-10">
+          <div className="space-y-4">
+            {dailyRevenues.map((revenue) => (
+              <Card key={revenue.id} className="card-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium text-gray-900">
+                        {revenue.period === 'morning' ? 'صباحية' : 
+                         revenue.period === 'evening' ? 'مسائية' : 
+                         revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي'}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {revenue.type === 'income' ? 'إيراد' : 'صرف فكة'}: {revenue.amount} دينار
+                      </p>
+                      {revenue.notes && (
+                        <p className="text-sm text-gray-500 mt-1">{revenue.notes}</p>
+                      )}
+                    </div>
+                    <Badge variant={revenue.type === 'income' ? 'default' : 'secondary'}>
+                      {revenue.type === 'income' ? 'إيراد' : 'صرف'}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {dailyRevenues.length === 0 && (
+              <Card className="card-shadow">
+                <CardContent className="p-8 text-center">
+                  <p className="text-gray-500">لا توجد معاملات في هذا التاريخ</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
@@ -340,25 +429,25 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
               <Button
-                onClick={() => navigateDate('prev')}
+                onClick={() => navigateDate('next')}
                 variant="outline"
                 size="sm"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ArrowLeft className="w-4 h-4" />
               </Button>
               
-              <div className="text-center">
+              <div className="text-center cursor-pointer" onClick={() => setShowDailyDetails(true)}>
                 <p className="text-sm text-gray-600">إيراد اليوم</p>
                 <p className="text-lg font-bold text-green-600">{dailyRevenue} دينار</p>
                 <p className="text-xs text-gray-500">{selectedDate}</p>
               </div>
               
               <Button
-                onClick={() => navigateDate('next')}
+                onClick={() => navigateDate('prev')}
                 variant="outline"
                 size="sm"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </CardContent>
