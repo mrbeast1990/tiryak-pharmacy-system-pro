@@ -12,6 +12,7 @@ import { usePharmacyStore, Revenue } from '@/store/pharmacyStore';
 import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ArrowLeft, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface RevenueManagerProps {
   onBack: () => void;
@@ -35,7 +36,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
-  const { revenues, addRevenue, getTotalDailyRevenue } = usePharmacyStore();
+  const { revenues, addRevenue, getTotalDailyRevenue, getTodayRevenue } = usePharmacyStore();
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -118,6 +119,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
   const dailyRevenue = getTotalDailyRevenue(selectedDate);
   const dailyRevenues = revenues.filter(revenue => revenue.date === selectedDate);
+  const todayRevenue = getTodayRevenue();
 
   const getPeriodRevenue = () => {
     if (!periodStartDate || !periodEndDate) return 0;
@@ -361,33 +363,33 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           <div className="space-y-4">
             {periodRevenues
               .filter(revenue => revenue.type === 'income')
-              .map((revenue) => (
-              <Card key={revenue.id} className="card-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        {revenue.period === 'morning' ? 'صباحية' : 
-                         revenue.period === 'evening' ? 'مسائية' : 
-                         revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي'}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        الإيراد: {revenue.amount} دينار
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        التاريخ: {revenue.date}
-                      </p>
-                      {revenue.notes && (
-                        <p className="text-sm text-gray-500 mt-1">{revenue.notes}</p>
-                      )}
-                    </div>
-                    <Badge variant="default">
-                      إيراد
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+              .map((revenue) => {
+                const cleanedNotes = revenue.notes ? revenue.notes.replace('- إيراد', '').replace('- صرف فكة', '').trim() : '';
+                return (
+                  <Card key={revenue.id} className="card-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {revenue.period === 'morning' ? 'صباحية' : 
+                             revenue.period === 'evening' ? 'مسائية' : 
+                             revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي'}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            الإيراد: {revenue.amount} دينار
+                          </p>
+                          {cleanedNotes && (
+                            <p className="text-sm text-gray-500 mt-1">الملاحظات: {cleanedNotes}</p>
+                          )}
+                        </div>
+                        <Badge variant="default">
+                          إيراد
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             
             {periodRevenues.filter(revenue => revenue.type === 'income').length === 0 && (
               <Card className="card-shadow">
@@ -605,93 +607,85 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           </CardContent>
         </Card>
 
-        {/* Revenue Display Tabs */}
-        <Tabs defaultValue="daily" className="mb-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="daily">إيراد اليوم</TabsTrigger>
-            <TabsTrigger value="period">إيراد من تاريخ إلى تاريخ</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="daily">
-            <Card className="card-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <Button
-                    onClick={() => navigateDate('next')}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </Button>
-                  
-                  <div className="text-center cursor-pointer" onClick={() => setShowDailyDetails(true)}>
-                    <p className="text-sm text-gray-600">إيراد اليوم</p>
-                    <p className="text-lg font-bold text-green-600">{dailyRevenue} دينار</p>
-                    <p className="text-xs text-gray-500">{selectedDate}</p>
+        {/* Revenue Display Card */}
+        <Card className="card-shadow mb-6">
+          <CardHeader>
+            <CardTitle>عرض الإيرادات</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Daily Revenue */}
+            <div className="border-b pb-4 mb-4">
+              <h3 className="text-base font-medium text-gray-700 text-right mb-2">
+                إيراد اليوم
+              </h3>
+              <div className="flex items-center justify-between">
+                <Button
+                  onClick={() => navigateDate('next')}
+                  variant="outline"
+                  size="sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                
+                <div className="text-center cursor-pointer" onClick={() => setShowDailyDetails(true)}>
+                  <p className="text-lg font-bold text-green-600">{dailyRevenue} دينار</p>
+                  <p className="text-xs text-gray-500">{selectedDate}</p>
+                </div>
+                
+                <Button
+                  onClick={() => navigateDate('prev')}
+                  variant="outline"
+                  size="sm"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Period Revenue */}
+            <div>
+              <h3 className="text-base font-medium text-gray-700 text-right mb-2">
+                إيراد من تاريخ إلى تاريخ
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-gray-700 text-right block">
+                      من
+                    </label>
+                    <Input
+                      type="date"
+                      value={periodStartDate}
+                      onChange={(e) => setPeriodStartDate(e.target.value)}
+                      className="text-xs text-right"
+                    />
                   </div>
                   
-                  <Button
-                    onClick={() => navigateDate('prev')}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="period">
-            <Card className="card-shadow">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-700 text-right block">
-                        من
-                      </label>
-                      <Input
-                        type="date"
-                        value={periodStartDate}
-                        onChange={(e) => setPeriodStartDate(e.target.value)}
-                        className="text-xs text-right"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-700 text-right block">
-                        إلى
-                      </label>
-                      <Input
-                        type="date"
-                        value={periodEndDate}
-                        onChange={(e) => setPeriodEndDate(e.target.value)}
-                        className="text-xs text-right"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-gray-700 text-right block">
+                      إلى
+                    </label>
+                    <Input
+                      type="date"
+                      value={periodEndDate}
+                      onChange={(e) => setPeriodEndDate(e.target.value)}
+                      className="text-xs text-right"
+                    />
                   </div>
-                  
-                  <Button
-                    onClick={showPeriodRevenue}
-                    className="w-full pharmacy-gradient text-white"
-                    size="sm"
-                  >
-                    <TrendingUp className="w-4 h-4 ml-2" />
-                    عرض الإيراد
-                  </Button>
-                  
-                  {periodStartDate && periodEndDate && (
-                    <div className="text-center pt-4 border-t">
-                      <p className="text-sm text-gray-600">إجمالي الإيراد للفترة</p>
-                      <p className="text-lg font-bold text-green-600">{getPeriodRevenue()} دينار</p>
-                    </div>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                
+                <Button
+                  onClick={showPeriodRevenue}
+                  className="w-full pharmacy-gradient text-white"
+                  size="sm"
+                >
+                  <TrendingUp className="w-4 h-4 ml-2" />
+                  عرض الإيراد
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Period Report Export */}
         <Card className="card-shadow">

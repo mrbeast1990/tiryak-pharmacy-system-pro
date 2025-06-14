@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,31 +86,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <img 
                 src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
                 alt="Al-Tiryak Logo" 
-                className="w-10 h-10"
+                className="w-10 h-10 cursor-pointer"
+                onClick={() => setShowProfileModal(true)}
               />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
                   {t('pharmacy.name')}
                 </h1>
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <p className="text-sm text-gray-600">
-                    {t('welcome')} {user?.name}
-                  </p>
-                  <Button
-                    onClick={handleLogout}
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center space-x-1 space-x-reverse text-red-600 hover:text-red-700 text-xs px-2 py-1 h-6"
-                  >
-                    <LogOut className="w-3 h-3" />
-                    <span className="text-xs">{t('logout')}</span>
-                  </Button>
-                </div>
+                <p className="text-sm text-gray-600">
+                  {t('welcome')} {user?.name}
+                </p>
               </div>
             </div>
             
-            {/* User Controls - moved to the right */}
-            <div className="flex items-center space-x-4 space-x-reverse">
+            <div className="flex items-center space-x-2 space-x-reverse">
               <Button
                 onClick={toggleLanguage}
                 variant="outline"
@@ -122,13 +110,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               </Button>
               
               <Button
-                onClick={() => setShowProfileModal(true)}
+                onClick={handleLogout}
                 variant="ghost"
                 size="sm"
-                className="flex items-center space-x-1 space-x-reverse text-xs px-2 py-1 h-6"
+                className="flex items-center space-x-1 space-x-reverse text-red-600 hover:text-red-700 text-xs px-2 py-1 h-6"
               >
-                <User className="w-3 h-3" />
-                <span>{user?.name}</span>
+                <LogOut className="w-3 h-3" />
+                <span className="text-xs">{t('logout')}</span>
               </Button>
             </div>
           </div>
@@ -137,43 +125,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        {/* Statistics Cards - Top section with action buttons integrated */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="card-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">تسجيل نواقص الأدوية</p>
-                  <p className="text-lg font-bold text-red-600">{shortageCount}</p>
-                </div>
-                <div className="p-3 bg-red-100 rounded-full">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-shadow cursor-pointer" onClick={() => handleNavigate('revenue')}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">تسجيل الإيرادات</p>
-                  <p className="text-lg font-bold text-blue-600">{todayRevenue} LYD</p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Cards integrated in the statistics row */}
+        {/* Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {(checkPermission('manage_shortages') || user?.role === 'admin') && (
             <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('shortages')}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-base font-medium text-gray-700">تسجيل نواقص الأدوية</p>
+                    <p className="text-lg font-medium text-gray-700">تسجيل نواقص الأدوية</p>
                     <p className="text-xs text-gray-500">
                       {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
                     </p>
@@ -196,7 +155,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-base font-medium text-gray-700">تسجيل الإيرادات</p>
+                    <p className="text-lg font-medium text-gray-700">تسجيل الإيرادات</p>
                     <p className="text-xs text-gray-500">
                       {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
                     </p>
@@ -210,7 +169,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
           )}
         </div>
 
-        {/* Reports Card - Separate row if user has permission */}
+        {/* Reports Card */}
         {(checkPermission('view_reports') || user?.role === 'admin') && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('reports')}>
