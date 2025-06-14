@@ -204,10 +204,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                     <Pill className="w-8 h-8 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
                       {t('dashboard.registerShortage')}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-base text-gray-600">
                       {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
                     </p>
                   </div>
@@ -229,10 +229,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                     <DollarSign className="w-8 h-8 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
                       {t('dashboard.registerRevenue')}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-base text-gray-600">
                       {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
                     </p>
                   </div>
@@ -267,7 +267,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
       {showProfileModal && (
         <ProfileModal
           isOpen={showProfileModal}
-          onClose={()اء setShowProfileModal(false)}
+          onClose={() => setShowProfileModal(false)}
           user={user}
         />
       )}
