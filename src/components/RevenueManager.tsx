@@ -44,6 +44,28 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     fetchRevenues();
   }, [fetchRevenues]);
 
+  useEffect(() => {
+    if (user) {
+      switch (user.role) {
+        case 'morning_shift':
+          setPeriod('morning');
+          break;
+        case 'evening_shift':
+          setPeriod('evening');
+          break;
+        case 'night_shift':
+          setPeriod('night');
+          break;
+        case 'ahmad_rajili':
+          setPeriod('ahmad_rajili');
+          break;
+        default:
+          setPeriod('morning');
+          break;
+      }
+    }
+  }, [user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormSubmitting(true);
@@ -318,6 +340,21 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     }
   };
 
+  const canSelectPeriod = useMemo(() => {
+    if (!user) return false;
+    return checkPermission('register_revenue_all');
+  }, [user, checkPermission]);
+
+  const periodDisplayName = useMemo(() => {
+    switch (period) {
+      case 'morning': return 'صباحية';
+      case 'evening': return 'مسائية';
+      case 'night': return 'ليلية';
+      case 'ahmad_rajili': return 'احمد الرجيلي';
+      default: return '';
+    }
+  }, [period]);
+
   if (revenuesLoading && !showDailyDetails && !showPeriodDetails) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
@@ -555,17 +592,26 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                 <label className="text-sm font-medium text-gray-700 text-right block">
                   الفترة
                 </label>
-                <Select value={period} onValueChange={(value: 'morning' | 'evening' | 'night' | 'ahmad_rajili') => setPeriod(value)}>
-                  <SelectTrigger className="text-sm text-right">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="morning">صباحية</SelectItem>
-                    <SelectItem value="evening">مسائية</SelectItem>
-                    <SelectItem value="night">ليلية</SelectItem>
-                    <SelectItem value="ahmad_rajili">احمد الرجيلي</SelectItem>
-                  </SelectContent>
-                </Select>
+                {canSelectPeriod ? (
+                  <Select value={period} onValueChange={(value: 'morning' | 'evening' | 'night' | 'ahmad_rajili') => setPeriod(value)}>
+                    <SelectTrigger className="text-sm text-right">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="morning">صباحية</SelectItem>
+                      <SelectItem value="evening">مسائية</SelectItem>
+                      <SelectItem value="night">ليلية</SelectItem>
+                      <SelectItem value="ahmad_rajili">احمد الرجيلي</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    type="text"
+                    value={periodDisplayName}
+                    disabled
+                    className="text-sm text-right bg-gray-100"
+                  />
+                )}
               </div>
 
               <div className="space-y-2">
