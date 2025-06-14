@@ -1,5 +1,7 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface User {
   id: string;
@@ -19,61 +21,31 @@ interface AuthState {
   checkPermission: (permission: string) => boolean;
 }
 
-const predefinedUsers: Record<string, { password: string; user: User }> = {
+const userRolesAndPermissions: Record<string, Omit<User, 'id' | 'email' | 'lastLogin'>> = {
   'admin@tiryak.com': {
-    password: 'admin123',
-    user: {
-      id: '1',
-      email: 'admin@tiryak.com',
-      name: 'المدير',
-      role: 'admin',
-      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users', 'register_revenue_all'],
-      lastLogin: new Date().toISOString()
-    }
+    name: 'المدير',
+    role: 'admin',
+    permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users', 'register_revenue_all', 'manage_shortages', 'view_reports'],
   },
   'ahmad@tiryak.com': {
-    password: 'ahmad123',
-    user: {
-      id: '2',
-      email: 'ahmad@tiryak.com',
-      name: 'أحمد الرجيلي',
-      role: 'ahmad_rajili',
-      permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'register_revenue_all'],
-      lastLogin: new Date().toISOString()
-    }
+    name: 'أحمد الرجيلي',
+    role: 'ahmad_rajili',
+    permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'register_revenue_all', 'manage_shortages', 'view_reports'],
   },
   'morning@tiryak.com': {
-    password: 'morning123',
-    user: {
-      id: '3',
-      email: 'morning@tiryak.com',
-      name: 'الفترة الصباحية',
-      role: 'morning_shift',
-      permissions: ['register_shortage', 'register_revenue_morning', 'view_own'],
-      lastLogin: new Date().toISOString()
-    }
+    name: 'الفترة الصباحية',
+    role: 'morning_shift',
+    permissions: ['manage_shortages', 'register_revenue_morning', 'view_own'],
   },
   'evening@tiryak.com': {
-    password: 'evening123',
-    user: {
-      id: '4',
-      email: 'evening@tiryak.com',
-      name: 'الفترة المسائية',
-      role: 'evening_shift',
-      permissions: ['register_shortage', 'register_revenue_evening', 'view_own'],
-      lastLogin: new Date().toISOString()
-    }
+    name: 'الفترة المسائية',
+    role: 'evening_shift',
+    permissions: ['manage_shortages', 'register_revenue_evening', 'view_own'],
   },
   'night@tiryak.com': {
-    password: 'night123',
-    user: {
-      id: '5',
-      email: 'night@tiryak.com',
-      name: 'الفترة الليلية',
-      role: 'night_shift',
-      permissions: ['register_shortage', 'register_revenue_night', 'view_own'],
-      lastLogin: new Date().toISOString()
-    }
+    name: 'الفترة الليلية',
+    role: 'night_shift',
+    permissions: ['manage_shortages', 'register_revenue_night', 'view_own'],
   }
 };
 
@@ -85,28 +57,39 @@ export const useAuthStore = create<AuthState>()(
       rememberMe: false,
       
       login: async (email: string, password: string, rememberMe: boolean) => {
-        console.log('محاولة تسجيل الدخول:', email);
+        console.log('محاولة تسجيل الدخول عبر Supabase:', email);
         
-        const userCredentials = predefinedUsers[email];
-        if (userCredentials && userCredentials.password === password) {
-          const userWithLastLogin = {
-            ...userCredentials.user,
-            lastLogin: new Date().toISOString()
-          };
-          set({
-            user: userWithLastLogin,
-            isAuthenticated: true,
-            rememberMe
-          });
-          console.log('تم تسجيل الدخول بنجاح:', userWithLastLogin.name);
-          return true;
+        const userConfig = userRolesAndPermissions[email];
+        if (!userConfig) {
+          console.log('فشل في تسجيل الدخول: مستخدم غير معروف');
+          return false;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error || !data.user) {
+          console.log('فشل في تسجيل الدخول عبر Supabase:', error?.message);
+          return false;
         }
         
-        console.log('فشل في تسجيل الدخول');
-        return false;
+        const userWithLastLogin: User = {
+          id: data.user.id,
+          email: data.user.email!,
+          lastLogin: new Date().toISOString(),
+          ...userConfig
+        };
+        
+        set({
+          user: userWithLastLogin,
+          isAuthenticated: true,
+          rememberMe
+        });
+        console.log('تم تسجيل الدخول بنجاح:', userWithLastLogin.name);
+        return true;
       },
       
-      logout: () => {
+      logout: async () => {
+        await supabase.auth.signOut();
         set({
           user: null,
           isAuthenticated: false,
@@ -117,6 +100,7 @@ export const useAuthStore = create<AuthState>()(
       
       checkPermission: (permission: string) => {
         const { user } = get();
+        if (user?.role === 'admin') return true;
         return user?.permissions.includes(permission) || false;
       }
     }),
