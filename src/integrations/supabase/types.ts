@@ -226,6 +226,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      send_notification_to_role: {
+        Args: {
+          p_title: string
+          p_message: string
+          p_recipient_role: string
+          p_sender_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
