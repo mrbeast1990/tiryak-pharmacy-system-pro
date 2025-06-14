@@ -142,19 +142,17 @@ export const usePharmacyStore = create<PharmacyState>()(
       
       getTotalDailyRevenue: (date) => {
         const dayRevenues = get().revenues.filter((revenue) => revenue.date === date);
+        // Only sum income, don't subtract expenses (cash disbursement doesn't reduce revenue)
         return dayRevenues.reduce((total, revenue) => {
-          return revenue.type === 'income' 
-            ? total + revenue.amount 
-            : total - revenue.amount;
+          return revenue.type === 'income' ? total + revenue.amount : total;
         }, 0);
       },
 
       getTotalRevenue: () => {
         const revenues = get().revenues;
+        // Only sum income, don't subtract expenses (cash disbursement doesn't reduce revenue)
         return revenues.reduce((total, revenue) => {
-          return revenue.type === 'income' 
-            ? total + revenue.amount 
-            : total - revenue.amount;
+          return revenue.type === 'income' ? total + revenue.amount : total;
         }, 0);
       },
 

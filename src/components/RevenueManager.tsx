@@ -137,73 +137,105 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       doc.setFontSize(16);
       doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 25, { align: 'center' });
       
+      doc.setFontSize(14);
+      doc.text('Revenue Report', 105, 35, { align: 'center' });
+      
       doc.setFontSize(12);
-      doc.text(`Revenue Report: ${reportStartDate} to ${reportEndDate}`, 105, 40, { align: 'center' });
+      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, 105, 45, { align: 'center' });
       
       // Get revenues for the period
       const periodRevenues = revenues.filter(revenue => 
         revenue.date >= reportStartDate && revenue.date <= reportEndDate
       );
       
+      // Group revenues by date
+      const revenuesByDate = periodRevenues.reduce((acc, revenue) => {
+        if (!acc[revenue.date]) {
+          acc[revenue.date] = [];
+        }
+        acc[revenue.date].push(revenue);
+        return acc;
+      }, {} as Record<string, Revenue[]>);
+      
       let yPosition = 60;
-      let totalIncome = 0;
-      let totalCashDisbursement = 0;
+      let totalRevenue = 0;
+      let totalChange = 0;
       
-      // Table headers
-      doc.setFontSize(10);
-      doc.setFillColor(65, 105, 225);
-      doc.rect(20, yPosition - 5, 30, 8, 'F');
-      doc.rect(50, yPosition - 5, 30, 8, 'F');
-      doc.rect(80, yPosition - 5, 25, 8, 'F');
-      doc.rect(105, yPosition - 5, 25, 8, 'F');
-      doc.rect(130, yPosition - 5, 50, 8, 'F');
-      
-      doc.setTextColor(255, 255, 255);
-      doc.text('Date', 35, yPosition, { align: 'center' });
-      doc.text('Period', 65, yPosition, { align: 'center' });
-      doc.text('Type', 92.5, yPosition, { align: 'center' });
-      doc.text('Amount', 117.5, yPosition, { align: 'center' });
-      doc.text('Notes', 155, yPosition, { align: 'center' });
-      
-      doc.setTextColor(0, 0, 0);
-      yPosition += 15;
-      
-      periodRevenues.forEach(revenue => {
-        // Draw row borders
-        doc.setDrawColor(200, 200, 200);
-        doc.line(20, yPosition - 3, 180, yPosition - 3);
-        doc.line(20, yPosition + 5, 180, yPosition + 5);
+      // Process each date
+      Object.keys(revenuesByDate).sort().forEach(date => {
+        const dayRevenues = revenuesByDate[date];
         
-        doc.text(revenue.date, 35, yPosition, { align: 'center' });
+        // Date header
+        doc.setFontSize(12);
+        doc.setFillColor(240, 240, 240);
+        doc.rect(20, yPosition - 5, 170, 8, 'F');
+        doc.text(`Date: ${date}`, 25, yPosition, { align: 'left' });
+        yPosition += 15;
         
-        const periodText = revenue.period === 'morning' ? 'Morning' : 
-                          revenue.period === 'evening' ? 'Evening' : 
-                          revenue.period === 'night' ? 'Night' : 'Ahmad Rajili';
-        doc.text(periodText, 65, yPosition, { align: 'center' });
+        // Table headers for this date
+        doc.setFontSize(10);
+        doc.setFillColor(70, 130, 180);
+        doc.rect(20, yPosition - 5, 40, 8, 'F');
+        doc.rect(60, yPosition - 5, 40, 8, 'F');
+        doc.rect(100, yPosition - 5, 40, 8, 'F');
+        doc.rect(140, yPosition - 5, 50, 8, 'F');
         
-        const typeText = revenue.type === 'income' ? 'Income' : 'Cash Change';
-        doc.text(typeText, 92.5, yPosition, { align: 'center' });
+        doc.setTextColor(255, 255, 255);
+        doc.text('Period', 40, yPosition, { align: 'center' });
+        doc.text('Change (LYD)', 80, yPosition, { align: 'center' });
+        doc.text('Revenue (LYD)', 120, yPosition, { align: 'center' });
+        doc.text('Notes', 165, yPosition, { align: 'center' });
         
-        doc.text(`${revenue.amount} JD`, 117.5, yPosition, { align: 'center' });
-        
-        // Notes in Arabic if they exist
-        if (revenue.notes) {
-          const hasArabic = /[\u0600-\u06FF]/.test(revenue.notes);
-          if (hasArabic) {
-            // For Arabic notes, we'll display them as they are
-            doc.text(revenue.notes, 155, yPosition, { align: 'center' });
-          } else {
-            doc.text(revenue.notes, 155, yPosition, { align: 'center' });
-          }
-        }
-        
-        if (revenue.type === 'income') {
-          totalIncome += revenue.amount;
-        } else {
-          totalCashDisbursement += revenue.amount;
-        }
-        
+        doc.setTextColor(0, 0, 0);
         yPosition += 10;
+        
+        let dailyTotal = 0;
+        let dailyChange = 0;
+        
+        dayRevenues.forEach(revenue => {
+          // Draw row borders
+          doc.setDrawColor(200, 200, 200);
+          doc.line(20, yPosition - 3, 190, yPosition - 3);
+          doc.line(20, yPosition + 5, 190, yPosition + 5);
+          
+          const periodText = revenue.period === 'morning' ? 'Morning' : 
+                            revenue.period === 'evening' ? 'Evening' : 
+                            revenue.period === 'night' ? 'Night' : 'Ahmad Rajili';
+          doc.text(periodText, 40, yPosition, { align: 'center' });
+          
+          if (revenue.type === 'expense') {
+            doc.text(`${revenue.amount}.00`, 80, yPosition, { align: 'center' });
+            doc.text('-', 120, yPosition, { align: 'center' });
+            dailyChange += revenue.amount;
+            totalChange += revenue.amount;
+          } else {
+            doc.text('-', 80, yPosition, { align: 'center' });
+            doc.text(`${revenue.amount}.00`, 120, yPosition, { align: 'center' });
+            dailyTotal += revenue.amount;
+            totalRevenue += revenue.amount;
+          }
+          
+          // Notes - support Arabic
+          if (revenue.notes) {
+            const noteText = revenue.notes.replace('- إيراد', '').replace('- صرف فكة', '').trim();
+            if (noteText) {
+              doc.text(noteText, 165, yPosition, { align: 'center' });
+            } else {
+              doc.text('-', 165, yPosition, { align: 'center' });
+            }
+          } else {
+            doc.text('-', 165, yPosition, { align: 'center' });
+          }
+          
+          yPosition += 10;
+        });
+        
+        // Daily total
+        doc.setFontSize(11);
+        doc.setFillColor(220, 220, 220);
+        doc.rect(20, yPosition - 3, 170, 8, 'F');
+        doc.text(`Daily Total: ${dailyTotal}.00 LYD`, 105, yPosition, { align: 'center' });
+        yPosition += 20;
         
         if (yPosition > 250) {
           doc.addPage();
@@ -212,16 +244,20 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       });
       
       // Summary
-      yPosition += 15;
-      doc.setFontSize(12);
-      doc.text(`Total Income: ${totalIncome} JD`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`Total Cash Disbursement: ${totalCashDisbursement} JD`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`Net Revenue: ${totalIncome} JD`, 20, yPosition);
       yPosition += 10;
+      doc.setFontSize(14);
+      doc.setFillColor(34, 139, 34);
+      doc.rect(20, yPosition - 5, 170, 10, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.text(`Total Revenue: ${totalRevenue}.00 LYD`, 105, yPosition, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      yPosition += 20;
+      
+      // Footer
       doc.setFontSize(10);
-      doc.text('Note: Cash disbursement is not deducted from revenue - it facilitates customers', 20, yPosition);
+      doc.text(`Generated on ${new Date().toLocaleDateString('en-US')}, ${new Date().toLocaleTimeString('en-US')}`, 105, yPosition, { align: 'center' });
+      yPosition += 10;
+      doc.text('Manager: ________________', 105, yPosition, { align: 'center' });
       
       doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
       
