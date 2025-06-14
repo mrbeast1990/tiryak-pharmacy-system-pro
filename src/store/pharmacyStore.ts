@@ -10,6 +10,7 @@ export interface Medicine {
   updatedBy: string;
   notes?: string;
   repeatCount?: number;
+  createdAt?: string;
 }
 
 export interface Revenue {
@@ -36,6 +37,8 @@ interface PharmacyState {
   getRevenuesByDateRange: (startDate: string, endDate: string) => Revenue[];
   getRevenuesByPeriod: (period: string) => Revenue[];
   getTotalDailyRevenue: (date: string) => number;
+  getTotalRevenue: () => number;
+  getTodayRevenue: () => number;
   getMedicineSuggestions: (query: string) => string[];
 }
 
@@ -69,7 +72,8 @@ export const usePharmacyStore = create<PharmacyState>()(
           const newMedicine = {
             ...medicine,
             id: Date.now().toString(),
-            repeatCount: 1
+            repeatCount: 1,
+            createdAt: new Date().toISOString()
           };
           set((state) => ({
             medicines: [...state.medicines, newMedicine]
@@ -143,6 +147,20 @@ export const usePharmacyStore = create<PharmacyState>()(
             ? total + revenue.amount 
             : total - revenue.amount;
         }, 0);
+      },
+
+      getTotalRevenue: () => {
+        const revenues = get().revenues;
+        return revenues.reduce((total, revenue) => {
+          return revenue.type === 'income' 
+            ? total + revenue.amount 
+            : total - revenue.amount;
+        }, 0);
+      },
+
+      getTodayRevenue: () => {
+        const today = new Date().toISOString().split('T')[0];
+        return get().getTotalDailyRevenue(today);
       },
       
       getMedicineSuggestions: (query) => {

@@ -13,11 +13,11 @@ import { useToast } from '@/hooks/use-toast';
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  user: any;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) => {
   const [fingerprintEnabled, setFingerprintEnabled] = useState(false);
-  const { user } = useAuthStore();
   const { language } = useLanguageStore();
   const { toast } = useToast();
 

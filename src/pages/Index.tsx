@@ -27,6 +27,10 @@ const Index = () => {
     console.log('تم تسجيل الدخول بنجاح');
   };
 
+  const handleNavigate = (page: string) => {
+    console.log('Navigation to:', page);
+  };
+
   if (!isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100">
@@ -47,7 +51,7 @@ const Index = () => {
       {!isAuthenticated ? (
         <LoginForm onLogin={handleSuccessfulLogin} />
       ) : (
-        <Dashboard />
+        <Dashboard onNavigate={handleNavigate} user={user} />
       )}
     </>
   );
