@@ -7,6 +7,7 @@ import { useLanguageStore } from '@/store/languageStore';
 import { ArrowRight, User, Mail, Lock, Phone, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const SignUp: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -43,17 +44,30 @@ const SignUp: React.FC = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    const { error } = await supabase.from('account_requests').insert({
+      full_name: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+    });
+    
+    if (error) {
+      console.error('Error submitting account request:', error);
+      toast({
+        title: language === 'ar' ? "خطأ في الإرسال" : "Submission Error",
+        description: language === 'ar' ? "حدث خطأ أثناء إرسال طلبك. قد يكون البريد الإلكتروني مسجلاً بالفعل." : "An error occurred while submitting your request. The email might already be registered.",
+        variant: "destructive",
+      });
+    } else {
       toast({
         title: language === 'ar' ? "تم إرسال الطلب" : "Application Submitted",
         description: language === 'ar' 
           ? "تم إرسال طلب إنشاء الحساب بنجاح. سيتم مراجعته من قبل الإدارة." 
           : "Your account creation request has been submitted successfully. It will be reviewed by management.",
       });
-      setIsLoading(false);
       navigate('/');
-    }, 2000);
+    }
+    
+    setIsLoading(false);
   };
 
   const handleBack = () => {
