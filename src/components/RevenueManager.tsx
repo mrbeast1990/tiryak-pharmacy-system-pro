@@ -129,8 +129,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Add logo
-      const logoSize = 25;
+      // Add logo - larger size
+      const logoSize = 30;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
       // Header
@@ -188,7 +188,13 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         
         // Notes in Arabic if they exist
         if (revenue.notes) {
-          doc.text(revenue.notes, 155, yPosition, { align: 'center' });
+          const hasArabic = /[\u0600-\u06FF]/.test(revenue.notes);
+          if (hasArabic) {
+            // For Arabic notes, we'll display them as they are
+            doc.text(revenue.notes, 155, yPosition, { align: 'center' });
+          } else {
+            doc.text(revenue.notes, 155, yPosition, { align: 'center' });
+          }
         }
         
         if (revenue.type === 'income') {
