@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -129,9 +128,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Configure font for Arabic support
-      doc.setLanguage("ar");
-      
       // Add logo - larger size
       const logoSize = 50;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
@@ -218,19 +214,11 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           if (revenue.notes) {
             let noteText = revenue.notes.replace('- إيراد', '').replace('- صرف فكة', '').trim();
             if (noteText) {
-              // For Arabic text, we need to handle it differently
-              // Since jsPDF doesn't natively support Arabic, we'll encode it properly
+              // For Arabic text, we'll display it as is since jsPDF has basic Arabic support
               try {
-                // Check if the text contains Arabic characters
-                const hasArabic = /[\u0600-\u06FF]/.test(noteText);
-                if (hasArabic) {
-                  // For Arabic text, we'll use a different approach
-                  doc.text(noteText, 165, yPosition, { align: 'center', lang: 'ar' });
-                } else {
-                  doc.text(noteText, 165, yPosition, { align: 'center' });
-                }
+                doc.text(noteText, 165, yPosition, { align: 'center' });
               } catch (error) {
-                // Fallback if Arabic rendering fails
+                // Fallback if rendering fails
                 doc.text('[Arabic Text]', 165, yPosition, { align: 'center' });
               }
             } else {
