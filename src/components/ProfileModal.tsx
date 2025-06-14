@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +8,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { User, Shield, Clock, Fingerprint, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { NativeBiometric } from 'capacitor-native-biometric';
+import { Preferences } from '@capacitor/preferences';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -18,17 +19,69 @@ interface ProfileModalProps {
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) => {
   const [fingerprintEnabled, setFingerprintEnabled] = useState(false);
+  const [isCheckingFingerprint, setIsCheckingFingerprint] = useState(true);
   const { language } = useLanguageStore();
   const { toast } = useToast();
 
-  const handleFingerprintToggle = (enabled: boolean) => {
-    setFingerprintEnabled(enabled);
-    toast({
-      title: language === 'ar' ? (enabled ? "تم تفعيل البصمة" : "تم إلغاء تفعيل البصمة") : (enabled ? "Fingerprint Enabled" : "Fingerprint Disabled"),
-      description: language === 'ar' ? 
-        (enabled ? "تم تفعيل تسجيل الدخول بالبصمة بنجاح" : "تم إلغاء تفعيل تسجيل الدخول بالبصمة") :
-        (enabled ? "Fingerprint login has been enabled" : "Fingerprint login has been disabled"),
-    });
+  useEffect(() => {
+    const checkFingerprintStatus = async () => {
+      setIsCheckingFingerprint(true);
+      const { value } = await Preferences.get({ key: 'fingerprint-enabled' });
+      setFingerprintEnabled(value === 'true');
+      setIsCheckingFingerprint(false);
+    };
+
+    if (isOpen) {
+      checkFingerprintStatus();
+    }
+  }, [isOpen]);
+
+  const handleFingerprintToggle = async (enabled: boolean) => {
+    setFingerprintEnabled(enabled); // Optimistic UI update
+
+    try {
+      const { isAvailable } = await NativeBiometric.isAvailable();
+      if (!isAvailable) {
+        toast({
+          title: language === 'ar' ? "البصمة غير متاحة" : "Biometrics Not Available",
+          description: language === 'ar' ? "جهازك لا يدعم المصادقة بالبصمة." : "Your device does not support biometric authentication.",
+          variant: "destructive",
+        });
+        setFingerprintEnabled(false);
+        return;
+      }
+
+      if (enabled) {
+        await NativeBiometric.verifyIdentity({
+          reason: language === 'ar' ? 'للسماح بتسجيل الدخول السريع' : 'To allow quick sign-in',
+          title: language === 'ar' ? 'تأكيد الهوية' : 'Confirm Identity',
+        });
+        
+        await Preferences.set({ key: 'fingerprint-enabled', value: 'true' });
+        await Preferences.set({ key: 'fingerprint-user-id', value: user.id });
+
+        toast({
+          title: language === 'ar' ? "تم تفعيل البصمة" : "Fingerprint Enabled",
+          description: language === 'ar' ? "يمكنك الآن تسجيل الدخول باستخدام بصمتك." : "You can now log in using your fingerprint.",
+        });
+      } else {
+        await Preferences.remove({ key: 'fingerprint-enabled' });
+        await Preferences.remove({ key: 'fingerprint-user-id' });
+
+        toast({
+          title: language === 'ar' ? "تم إلغاء تفعيل البصمة" : "Fingerprint Disabled",
+        });
+      }
+    } catch (error) {
+      setFingerprintEnabled(!enabled); // Revert on error
+      
+      toast({
+        title: language === 'ar' ? "فشل التحقق" : "Verification Failed",
+        description: language === 'ar' ? "لم نتمكن من التحقق من هويتك. يرجى المحاولة مرة أخرى." : "Could not verify your identity. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Biometric Error:", error);
+    }
   };
 
   const getRoleLabel = (role: string) => {
@@ -36,7 +89,11 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
       admin: language === 'ar' ? 'مدير' : 'Admin',
       manager: language === 'ar' ? 'مدير فرع' : 'Manager',
       user: language === 'ar' ? 'مستخدم' : 'User',
-      ahmad: language === 'ar' ? 'أحمد الرجيلي' : 'Ahmad Rajili'
+      ahmad: language === 'ar' ? 'أحمد الرجيلي' : 'Ahmad Rajili',
+      ahmad_rajili: language === 'ar' ? 'أحمد الرجيلي' : 'Ahmad Rajili',
+      morning_shift: language === 'ar' ? 'فترة صباحية' : 'Morning Shift',
+      evening_shift: language === 'ar' ? 'فترة مسائية' : 'Evening Shift',
+      night_shift: language === 'ar' ? 'فترة ليلية' : 'Night Shift',
     };
     return roleLabels[role as keyof typeof roleLabels] || role;
   };
@@ -115,10 +172,17 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
                 <Switch
                   checked={fingerprintEnabled}
                   onCheckedChange={handleFingerprintToggle}
+                  disabled={isCheckingFingerprint}
                 />
               </div>
               
-              {fingerprintEnabled && (
+              {isCheckingFingerprint ? (
+                 <div className="mt-3 p-2 bg-yellow-50 rounded-lg text-center">
+                  <span className="text-sm text-yellow-700">
+                    {language === 'ar' ? 'جارٍ التحقق من حالة البصمة...' : 'Checking fingerprint status...'}
+                  </span>
+                </div>
+              ) : fingerprintEnabled && (
                 <div className="mt-3 p-2 bg-green-50 rounded-lg">
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Check className="w-4 h-4 text-green-600" />
