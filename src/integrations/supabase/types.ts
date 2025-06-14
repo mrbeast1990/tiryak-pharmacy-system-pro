@@ -9,16 +9,113 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      medicines: {
+        Row: {
+          created_at: string
+          id: string
+          last_updated: string
+          name: string
+          notes: string | null
+          repeat_count: number | null
+          status: string
+          updated_by_id: string | null
+          updated_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          name: string
+          notes?: string | null
+          repeat_count?: number | null
+          status: string
+          updated_by_id?: string | null
+          updated_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          name?: string
+          notes?: string | null
+          repeat_count?: number | null
+          status?: string
+          updated_by_id?: string | null
+          updated_by_name?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          id: string
+          name: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          id: string
+          name?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      revenues: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by_id: string
+          created_by_name: string
+          date: string
+          id: string
+          notes: string | null
+          period: string
+          type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by_id: string
+          created_by_name: string
+          date: string
+          id?: string
+          notes?: string | null
+          period: string
+          type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by_id?: string
+          created_by_name?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          period?: string
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin"
+        | "ahmad_rajili"
+        | "morning_shift"
+        | "evening_shift"
+        | "night_shift"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +230,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin",
+        "ahmad_rajili",
+        "morning_shift",
+        "evening_shift",
+        "night_shift",
+      ],
+    },
   },
 } as const

@@ -1,13 +1,15 @@
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
+
+export type UserRole = Tables<'profiles'>['role'];
 
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'ahmad_rajili' | 'morning_shift' | 'evening_shift' | 'night_shift';
+  role: UserRole;
   permissions: string[];
   lastLogin?: string;
 }
@@ -21,32 +23,12 @@ interface AuthState {
   checkPermission: (permission: string) => boolean;
 }
 
-const userRolesAndPermissions: Record<string, Omit<User, 'id' | 'email' | 'lastLogin'>> = {
-  'admin@tiryak.com': {
-    name: 'المدير',
-    role: 'admin',
-    permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users', 'register_revenue_all', 'manage_shortages', 'view_reports'],
-  },
-  'ahmad@tiryak.com': {
-    name: 'أحمد الرجيلي',
-    role: 'ahmad_rajili',
-    permissions: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'register_revenue_all', 'manage_shortages', 'view_reports'],
-  },
-  'morning@tiryak.com': {
-    name: 'الفترة الصباحية',
-    role: 'morning_shift',
-    permissions: ['manage_shortages', 'register_revenue_morning', 'view_own'],
-  },
-  'evening@tiryak.com': {
-    name: 'الفترة المسائية',
-    role: 'evening_shift',
-    permissions: ['manage_shortages', 'register_revenue_evening', 'view_own'],
-  },
-  'night@tiryak.com': {
-    name: 'الفترة الليلية',
-    role: 'night_shift',
-    permissions: ['manage_shortages', 'register_revenue_night', 'view_own'],
-  }
+const permissionsByRole: Record<UserRole, string[]> = {
+  admin: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'manage_users', 'register_revenue_all', 'manage_shortages', 'view_reports'],
+  ahmad_rajili: ['view_all', 'edit_all', 'delete_all', 'export_pdf', 'register_revenue_all', 'manage_shortages', 'view_reports'],
+  morning_shift: ['manage_shortages', 'register_revenue_morning', 'view_own'],
+  evening_shift: ['manage_shortages', 'register_revenue_evening', 'view_own'],
+  night_shift: ['manage_shortages', 'register_revenue_night', 'view_own'],
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -59,32 +41,40 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string, rememberMe: boolean) => {
         console.log('محاولة تسجيل الدخول عبر Supabase:', email);
         
-        const userConfig = userRolesAndPermissions[email];
-        if (!userConfig) {
-          console.log('فشل في تسجيل الدخول: مستخدم غير معروف');
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (authError || !authData.user) {
+          console.error('فشل في تسجيل الدخول عبر Supabase:', authError?.message);
           return false;
         }
 
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('name, role')
+          .eq('id', authData.user.id)
+          .single();
 
-        if (error || !data.user) {
-          console.log('فشل في تسجيل الدخول عبر Supabase:', error?.message);
+        if (profileError || !profile) {
+          console.error('فشل في جلب ملف المستخدم:', profileError?.message);
+          await supabase.auth.signOut();
           return false;
         }
         
-        const userWithLastLogin: User = {
-          id: data.user.id,
-          email: data.user.email!,
+        const userWithPermissions: User = {
+          id: authData.user.id,
+          email: authData.user.email!,
+          name: profile.name || 'مستخدم',
+          role: profile.role,
+          permissions: permissionsByRole[profile.role] || [],
           lastLogin: new Date().toISOString(),
-          ...userConfig
         };
         
         set({
-          user: userWithLastLogin,
+          user: userWithPermissions,
           isAuthenticated: true,
           rememberMe
         });
-        console.log('تم تسجيل الدخول بنجاح:', userWithLastLogin.name);
+        console.log('تم تسجيل الدخول بنجاح:', userWithPermissions.name);
         return true;
       },
       
@@ -100,8 +90,10 @@ export const useAuthStore = create<AuthState>()(
       
       checkPermission: (permission: string) => {
         const { user } = get();
-        if (user?.role === 'admin') return true;
-        return user?.permissions.includes(permission) || false;
+        if (!user) return false;
+        // The admin role defined in the DB now grants all permissions implicitly
+        if (user.role === 'admin') return true;
+        return user.permissions.includes(permission);
       }
     }),
     {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Revenue } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ArrowLeft, Download } from 'lucide-react';
+import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ArrowLeft, Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -33,14 +33,20 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const [showPeriodDetails, setShowPeriodDetails] = useState(false);
   const [periodStartDate, setPeriodStartDate] = useState('');
   const [periodEndDate, setPeriodEndDate] = useState('');
+  const [formSubmitting, setFormSubmitting] = useState(false);
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
-  const { revenues, addRevenue, getTotalDailyRevenue, getTodayRevenue } = usePharmacyStore();
+  const { revenues, addRevenue, getTotalDailyRevenue, getTodayRevenue, fetchRevenues, revenuesLoading } = usePharmacyStore();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchRevenues();
+  }, [fetchRevenues]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormSubmitting(true);
     
     const expenseAmount = Number(expense) || 0;
     const incomeAmount = Number(income) || 0;
@@ -75,25 +81,23 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
     // Add cash disbursement if entered (فكة - doesn't reduce from income)
     if (expenseAmount > 0) {
-      addRevenue({
+      await addRevenue({
         amount: expenseAmount,
         type: 'expense',
         period,
         notes: notes + (notes ? ' - ' : '') + 'صرف فكة',
         date: selectedDate,
-        createdBy: user?.name || ''
       });
     }
 
     // Add income if entered
     if (incomeAmount > 0) {
-      addRevenue({
+      await addRevenue({
         amount: incomeAmount,
         type: 'income',
         period,
         notes: notes + (notes ? ' - ' : '') + 'إيراد',
         date: selectedDate,
-        createdBy: user?.name || ''
       });
     }
     
@@ -105,6 +109,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     setExpense('');
     setIncome('');
     setNotes('');
+    setFormSubmitting(false);
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -312,6 +317,14 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       });
     }
   };
+
+  if (revenuesLoading && !showDailyDetails && !showPeriodDetails) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      </div>
+    );
+  }
 
   if (showPeriodDetails) {
     const periodRevenues = getPeriodRevenues();
@@ -599,8 +612,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
                 />
               </div>
               
-              <Button type="submit" className="w-full pharmacy-gradient text-white font-medium py-3">
-                <Plus className="w-4 h-4 ml-2" />
+              <Button type="submit" className="w-full pharmacy-gradient text-white font-medium py-3" disabled={formSubmitting}>
+                {formSubmitting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Plus className="w-4 h-4 ml-2" />}
                 إضافة إدخال
               </Button>
             </form>
