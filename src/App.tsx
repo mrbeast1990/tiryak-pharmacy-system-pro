@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,13 +7,10 @@ import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 import AccountRequests from "./pages/Admin/AccountRequests";
-import { useAdminRedirect } from "@/hooks/useAdminRedirect";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  useAdminRedirect();
-
   return (
     <Routes>
       <Route path="/" element={<Index />} />
