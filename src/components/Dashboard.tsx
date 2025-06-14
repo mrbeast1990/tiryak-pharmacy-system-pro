@@ -90,7 +90,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 onClick={() => setShowProfileModal(true)}
               />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-lg font-bold text-gray-900">
                   {t('pharmacy.name')}
                 </h1>
                 <p className="text-sm text-gray-600">
@@ -104,7 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 onClick={toggleLanguage}
                 variant="outline"
                 size="sm"
-                className="text-xs px-2 py-1 h-6"
+                className="text-xs px-1.5 py-0.5 h-5"
               >
                 {t('language')}
               </Button>
@@ -113,10 +113,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 onClick={handleLogout}
                 variant="ghost"
                 size="sm"
-                className="flex items-center space-x-1 space-x-reverse text-red-600 hover:text-red-700 text-xs px-2 py-1 h-6"
+                className="flex items-center space-x-1 space-x-reverse text-red-600 hover:text-red-700 text-xs px-1.5 py-0.5 h-5"
               >
                 <LogOut className="w-3 h-3" />
-                <span className="text-xs">{t('logout')}</span>
+                <span>{t('logout')}</span>
               </Button>
             </div>
           </div>
