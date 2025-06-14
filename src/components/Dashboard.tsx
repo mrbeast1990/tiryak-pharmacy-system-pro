@@ -115,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 size="sm"
                 className="text-xs px-1.5 py-0.5 h-5"
               >
-                {t('language')}
+                {language === 'ar' ? 'English' : 'عربي'}
               </Button>
               
               <Button
