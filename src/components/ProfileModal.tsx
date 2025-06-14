@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
 
   const handleFingerprintToggle = async (enabled: boolean) => {
     setFingerprintEnabled(enabled); // Optimistic UI update
+
+    if (!NativeBiometric) {
+      toast({
+        title: language === 'ar' ? 'غير مدعوم' : 'Not Supported',
+        description: language === 'ar' ? 'تسجيل الدخول بالبصمة متاح فقط على تطبيق الجوال.' : 'Fingerprint login is only available on the mobile app.',
+        variant: 'destructive',
+      });
+      setFingerprintEnabled(false);
+      return;
+    }
 
     try {
       const { isAvailable } = await NativeBiometric.isAvailable();
