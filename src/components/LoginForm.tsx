@@ -91,7 +91,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             <CardTitle className="text-lg font-bold text-gray-900">
               {t('pharmacy.name')}
             </CardTitle>
-            <CardDescription className="text-sm leading-relaxed">
+            <CardDescription className="text-xs leading-relaxed">
               {language === 'ar' 
                 ? 'مرحباً بك في عالم حيث التفاصيل الصغيرة تصنع فارقاً كبيراً... تسجيل دخولك اليوم هو بداية لرعاية أفضل...' 
                 : 'Welcome to a world where small details make a big difference... Your login today is the start of better care...'

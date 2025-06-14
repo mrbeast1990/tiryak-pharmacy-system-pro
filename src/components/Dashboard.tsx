@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -92,7 +93,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <h1 className="text-xl font-bold text-gray-900">
                   {t('pharmacy.name')}
                 </h1>
-                <div className="flex items-center space-x-4 space-x-reverse">
+                <div className="flex items-center space-x-2 space-x-reverse">
                   <p className="text-sm text-gray-600">
                     {t('welcome')} {user?.name}
                   </p>
@@ -108,28 +109,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 </div>
               </div>
             </div>
-          </div>
-          
-          {/* User Controls Below Header */}
-          <div className="pb-4 flex items-center justify-end space-x-4 space-x-reverse">
-            <Button
-              onClick={toggleLanguage}
-              variant="outline"
-              size="sm"
-              className="text-xs px-2 py-1 h-6"
-            >
-              {t('language')}
-            </Button>
             
-            <Button
-              onClick={() => setShowProfileModal(true)}
-              variant="ghost"
-              size="sm"
-              className="flex items-center space-x-1 space-x-reverse text-xs px-2 py-1 h-6"
-            >
-              <User className="w-3 h-3" />
-              <span>{user?.name}</span>
-            </Button>
+            {/* User Controls - moved to the right */}
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <Button
+                onClick={toggleLanguage}
+                variant="outline"
+                size="sm"
+                className="text-xs px-2 py-1 h-6"
+              >
+                {t('language')}
+              </Button>
+              
+              <Button
+                onClick={() => setShowProfileModal(true)}
+                variant="ghost"
+                size="sm"
+                className="flex items-center space-x-1 space-x-reverse text-xs px-2 py-1 h-6"
+              >
+                <User className="w-3 h-3" />
+                <span>{user?.name}</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -142,8 +143,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{t('dashboard.shortages')}</p>
-                  <p className="text-2xl font-bold text-red-600">{shortageCount}</p>
+                  <p className="text-sm font-medium text-gray-600">تسجيل نواقص الأدوية</p>
+                  <p className="text-lg font-bold text-red-600">{shortageCount}</p>
                 </div>
                 <div className="p-3 bg-red-100 rounded-full">
                   <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -156,8 +157,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{t('dashboard.todayRevenue')}</p>
-                  <p className="text-2xl font-bold text-blue-600">{todayRevenue} {language === 'ar' ? 'د.أ' : 'JD'}</p>
+                  <p className="text-sm font-medium text-gray-600">تسجيل الإيرادات</p>
+                  <p className="text-lg font-bold text-blue-600">{todayRevenue} LYD</p>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-full">
                   <TrendingUp className="w-6 h-6 text-blue-600" />
@@ -172,7 +173,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">{t('dashboard.registerShortage')}</p>
+                    <p className="text-base font-medium text-gray-700">تسجيل نواقص الأدوية</p>
                     <p className="text-xs text-gray-500">
                       {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
                     </p>
@@ -195,7 +196,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">{t('dashboard.registerRevenue')}</p>
+                    <p className="text-base font-medium text-gray-700">تسجيل الإيرادات</p>
                     <p className="text-xs text-gray-500">
                       {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
                     </p>
