@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    exclude: ['capacitor-native-biometric'],
+  },
   build: {
     rollupOptions: {
       external: ["capacitor-native-biometric"],
