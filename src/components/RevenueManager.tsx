@@ -1,18 +1,19 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Revenue } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, TrendingUp, DollarSign, Calendar, FileText, ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+
+import DailyRevenueDetails from './revenue/DailyRevenueDetails';
+import PeriodRevenueDetails from './revenue/PeriodRevenueDetails';
+import RevenueForm from './revenue/RevenueForm';
+import RevenueDisplay from './revenue/RevenueDisplay';
+import RevenueReportExporter from './revenue/RevenueReportExporter';
 
 interface RevenueManagerProps {
   onBack: () => void;
@@ -36,8 +37,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const [formSubmitting, setFormSubmitting] = useState(false);
   
   const { user, checkPermission } = useAuthStore();
-  const { language, t } = useLanguageStore();
-  const { revenues, addRevenue, getTotalDailyRevenue, getTodayRevenue, fetchRevenues, revenuesLoading } = usePharmacyStore();
+  const { language } = useLanguageStore();
+  const { revenues, addRevenue, getTotalDailyRevenue, fetchRevenues, revenuesLoading } = usePharmacyStore();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -79,6 +80,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         description: language === 'ar' ? "يرجى إدخال مبلغ الصرف أو الإيراد" : "Please enter cash disbursement or income amount",
         variant: "destructive",
       });
+      setFormSubmitting(false);
       return;
     }
 
@@ -98,6 +100,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         description: language === 'ar' ? `لا يمكنك تسجيل إيرادات فترة ${periodText}` : `Cannot register ${period} period revenues`,
         variant: "destructive",
       });
+      setFormSubmitting(false);
       return;
     }
 
@@ -146,7 +149,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
   const dailyRevenue = getTotalDailyRevenue(selectedDate);
   const dailyRevenues = revenues.filter(revenue => revenue.date === selectedDate);
-  const todayRevenue = getTodayRevenue();
 
   const getPeriodRevenue = () => {
     if (!periodStartDate || !periodEndDate) return 0;
@@ -366,176 +368,27 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   if (showPeriodDetails) {
     const periodRevenues = getPeriodRevenues();
     const periodRevenue = getPeriodRevenue();
-    
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-        {/* Background Logo */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
-          style={{
-            backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
-            backgroundSize: '600px 600px',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <Button
-                  onClick={() => setShowPeriodDetails(false)}
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center space-x-2 space-x-reverse text-sm"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                  <span>العودة</span>
-                </Button>
-                <h1 className="text-lg font-bold text-gray-900">إيراد من {periodStartDate} إلى {periodEndDate}</h1>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="max-w-4xl mx-auto px-4 py-8 relative z-10">
-          <Card className="card-shadow mb-6">
-            <CardContent className="pt-6">
-              <div className="text-center mb-4">
-                <p className="text-sm text-gray-600">إجمالي الإيراد للفترة</p>
-                <p className="text-2xl font-bold text-green-600">{periodRevenue} دينار</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-4">
-            {periodRevenues
-              .filter(revenue => revenue.type === 'income')
-              .map((revenue) => {
-                const cleanedNotes = revenue.notes ? revenue.notes.replace('- إيراد', '').replace('- صرف فكة', '').trim() : '';
-                return (
-                  <Card key={revenue.id} className="card-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            {revenue.period === 'morning' ? 'صباحية' : 
-                             revenue.period === 'evening' ? 'مسائية' : 
-                             revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي'}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            الإيراد: {revenue.amount} دينار
-                          </p>
-                          {cleanedNotes && (
-                            <p className="text-sm text-gray-500 mt-1">الملاحظات: {cleanedNotes}</p>
-                          )}
-                        </div>
-                        <Badge variant="default">
-                          إيراد
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            
-            {periodRevenues.filter(revenue => revenue.type === 'income').length === 0 && (
-              <Card className="card-shadow">
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-500">لا توجد إيرادات في هذه الفترة</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </main>
-      </div>
+      <PeriodRevenueDetails
+        onBack={() => setShowPeriodDetails(false)}
+        periodStartDate={periodStartDate}
+        periodEndDate={periodEndDate}
+        periodRevenue={periodRevenue}
+        periodRevenues={periodRevenues}
+        language={language}
+      />
     );
   }
 
   if (showDailyDetails) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-        {/* Background Logo */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
-          style={{
-            backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
-            backgroundSize: '600px 600px',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        />
-
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b relative z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <Button
-                  onClick={() => setShowDailyDetails(false)}
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center space-x-2 space-x-reverse text-sm"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                  <span>العودة</span>
-                </Button>
-                <h1 className="text-lg font-bold text-gray-900">إيراد {selectedDate}</h1>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="max-w-4xl mx-auto px-4 py-8 relative z-10">
-          <Card className="card-shadow mb-6">
-            <CardContent className="pt-6">
-              <div className="text-center mb-4">
-                <p className="text-sm text-gray-600">إيراد اليوم</p>
-                <p className="text-2xl font-bold text-green-600">{dailyRevenue} دينار</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-4">
-            {dailyRevenues
-              .filter(revenue => revenue.type === 'income')
-              .map((revenue) => (
-              <Card key={revenue.id} className="card-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900">
-                        {revenue.period === 'morning' ? 'صباحية' : 
-                         revenue.period === 'evening' ? 'مسائية' : 
-                         revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي'}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        الإيراد: {revenue.amount} دينار
-                      </p>
-                      {revenue.notes && (
-                        <p className="text-sm text-gray-500 mt-1">{revenue.notes}</p>
-                      )}
-                    </div>
-                    <Badge variant="default">
-                      إيراد
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {dailyRevenues.filter(revenue => revenue.type === 'income').length === 0 && (
-              <Card className="card-shadow">
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-500">لا توجد إيرادات في هذا التاريخ</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </main>
-      </div>
+      <DailyRevenueDetails
+        onBack={() => setShowDailyDetails(false)}
+        selectedDate={selectedDate}
+        dailyRevenue={dailyRevenue}
+        dailyRevenues={dailyRevenues}
+        language={language}
+      />
     );
   }
 
@@ -573,224 +426,42 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       </header>
 
       <main className="max-w-md mx-auto px-4 py-8 relative z-10">
-        <Card className="card-shadow mb-6">
-          <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 text-right block">
-                  التاريخ
-                </label>
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="text-sm text-right"
-                />
-              </div>
+        <RevenueForm
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          period={period}
+          setPeriod={setPeriod}
+          canSelectPeriod={canSelectPeriod}
+          periodDisplayName={periodDisplayName}
+          expense={expense}
+          setExpense={setExpense}
+          income={income}
+          setIncome={setIncome}
+          notes={notes}
+          setNotes={setNotes}
+          handleSubmit={handleSubmit}
+          formSubmitting={formSubmitting}
+        />
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 text-right block">
-                  الفترة
-                </label>
-                {canSelectPeriod ? (
-                  <Select value={period} onValueChange={(value: 'morning' | 'evening' | 'night' | 'ahmad_rajili') => setPeriod(value)}>
-                    <SelectTrigger className="text-sm text-right">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="morning">صباحية</SelectItem>
-                      <SelectItem value="evening">مسائية</SelectItem>
-                      <SelectItem value="night">ليلية</SelectItem>
-                      <SelectItem value="ahmad_rajili">احمد الرجيلي</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    type="text"
-                    value={periodDisplayName}
-                    disabled
-                    className="text-sm text-right bg-gray-100"
-                  />
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 text-right block">
-                  صرف الفكة (دينار)
-                </label>
-                <Input
-                  type="number"
-                  value={expense}
-                  onChange={(e) => setExpense(e.target.value)}
-                  placeholder="أدخل مبلغ صرف الفكة"
-                  className="text-sm text-right"
-                  step="0.01"
-                />
-                <p className="text-xs text-gray-500 text-right">
-                  ملاحظة: صرف الفكة لا يُخصم من الإيراد
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 text-right block">
-                  الإيراد (دينار)
-                </label>
-                <Input
-                  type="number"
-                  value={income}
-                  onChange={(e) => setIncome(e.target.value)}
-                  placeholder="أدخل مبلغ الإيراد"
-                  className="text-sm text-right"
-                  step="0.01"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 text-right block">
-                  ملاحظات
-                </label>
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="ملاحظات (اختياري)"
-                  className="text-sm text-right resize-none"
-                  rows={3}
-                />
-              </div>
-              
-              <Button type="submit" className="w-full pharmacy-gradient text-white font-medium py-3" disabled={formSubmitting}>
-                {formSubmitting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Plus className="w-4 h-4 ml-2" />}
-                إضافة إدخال
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Revenue Display Card */}
-        <Card className="card-shadow mb-6">
-          <CardHeader>
-            <CardTitle>عرض الإيرادات</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Daily Revenue */}
-            <div className="border-b pb-4 mb-4">
-              <h3 className="text-base font-medium text-gray-700 text-right mb-2">
-                إيراد اليوم
-              </h3>
-              <div className="flex items-center justify-between">
-                <Button
-                  onClick={() => navigateDate('next')}
-                  variant="outline"
-                  size="sm"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-                
-                <div className="text-center cursor-pointer" onClick={() => setShowDailyDetails(true)}>
-                  <p className="text-lg font-bold text-green-600">{dailyRevenue} دينار</p>
-                  <p className="text-xs text-gray-500">{selectedDate}</p>
-                </div>
-                
-                <Button
-                  onClick={() => navigateDate('prev')}
-                  variant="outline"
-                  size="sm"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Period Revenue */}
-            <div>
-              <h3 className="text-base font-medium text-gray-700 text-right mb-2">
-                إيراد من تاريخ إلى تاريخ
-              </h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-700 text-right block">
-                      من
-                    </label>
-                    <Input
-                      type="date"
-                      value={periodStartDate}
-                      onChange={(e) => setPeriodStartDate(e.target.value)}
-                      className="text-xs text-right"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-700 text-right block">
-                      إلى
-                    </label>
-                    <Input
-                      type="date"
-                      value={periodEndDate}
-                      onChange={(e) => setPeriodEndDate(e.target.value)}
-                      className="text-xs text-right"
-                    />
-                  </div>
-                </div>
-                
-                <Button
-                  onClick={showPeriodRevenue}
-                  className="w-full pharmacy-gradient text-white"
-                  size="sm"
-                >
-                  <TrendingUp className="w-4 h-4 ml-2" />
-                  عرض الإيراد
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Period Report Export */}
-        <Card className="card-shadow">
-          <CardContent className="pt-6">
-            <h3 className="text-sm font-medium text-gray-700 text-right mb-4">
-              إصدار تقرير فترة معينة
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-700 text-right block">
-                    من
-                  </label>
-                  <Input
-                    type="date"
-                    value={reportStartDate}
-                    onChange={(e) => setReportStartDate(e.target.value)}
-                    className="text-xs text-right"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-gray-700 text-right block">
-                    الى
-                  </label>
-                  <Input
-                    type="date"
-                    value={reportEndDate}
-                    onChange={(e) => setReportEndDate(e.target.value)}
-                    className="text-xs text-right"
-                  />
-                </div>
-              </div>
-              
-              <Button
-                onClick={generatePeriodReport}
-                className="w-full pharmacy-gradient text-white"
-                size="sm"
-              >
-                <Download className="w-4 h-4 ml-2" />
-                تصدير PDF
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <RevenueDisplay
+          dailyRevenue={dailyRevenue}
+          selectedDate={selectedDate}
+          navigateDate={navigateDate}
+          setShowDailyDetails={setShowDailyDetails}
+          periodStartDate={periodStartDate}
+          setPeriodStartDate={setPeriodStartDate}
+          periodEndDate={periodEndDate}
+          setPeriodEndDate={setPeriodEndDate}
+          showPeriodRevenue={showPeriodRevenue}
+        />
+        
+        <RevenueReportExporter
+          reportStartDate={reportStartDate}
+          setReportStartDate={setReportStartDate}
+          reportEndDate={reportEndDate}
+          setReportEndDate={setReportEndDate}
+          generatePeriodReport={generatePeriodReport}
+        />
       </main>
     </div>
   );
