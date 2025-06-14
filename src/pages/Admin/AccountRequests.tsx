@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, UserCheck, UserX } from 'lucide-react';
+import { Loader2, UserCheck, UserX, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const fetchAccountRequests = async () => {
@@ -112,8 +112,21 @@ const AccountRequests: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>مراجعة طلبات الحسابات الجديدة</CardTitle>
-            <CardDescription>الطلبات التالية في انتظار المراجعة للقبول أو الرفض.</CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>مراجعة طلبات الحسابات الجديدة</CardTitle>
+                <CardDescription>الطلبات التالية في انتظار المراجعة للقبول أو الرفض.</CardDescription>
+              </div>
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+                size="sm"
+                className="flex-shrink-0"
+              >
+                <ArrowRight className="h-4 w-4" />
+                <span>العودة للرئيسية</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading && <div className="flex justify-center items-center py-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}
