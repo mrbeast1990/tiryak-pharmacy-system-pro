@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +30,7 @@ const permissionsByRole: Record<UserRole, string[]> = {
   morning_shift: ['manage_shortages', 'register_revenue_morning', 'view_own'],
   evening_shift: ['manage_shortages', 'register_revenue_evening', 'view_own'],
   night_shift: ['manage_shortages', 'register_revenue_night', 'view_own'],
+  member: [],
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -106,3 +108,4 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+

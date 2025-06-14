@@ -160,6 +160,7 @@ export type Database = {
         | "morning_shift"
         | "evening_shift"
         | "night_shift"
+        | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -281,6 +282,7 @@ export const Constants = {
         "morning_shift",
         "evening_shift",
         "night_shift",
+        "member",
       ],
     },
   },

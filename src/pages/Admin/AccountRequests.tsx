@@ -1,6 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +27,8 @@ const AccountRequests: React.FC = () => {
   const { checkPermission } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [processingId, setProcessingId] = useState<string | null>(null);
   
   const canManageUsers = checkPermission('manage_users'); 
 
@@ -47,14 +49,58 @@ const AccountRequests: React.FC = () => {
       enabled: canManageUsers,
   });
 
+  const approveMutation = useMutation({
+    mutationFn: (requestId: string) => 
+      supabase.functions.invoke('approve-request', {
+        body: { requestId },
+      }),
+    onSuccess: (response) => {
+      const { data, error } = response;
+      if (error) {
+        toast({ title: "خطأ", description: (error as any).message || "فشلت عملية القبول.", variant: "destructive" });
+      } else {
+        toast({ title: "نجاح", description: data.message || "تمت الموافقة على الطلب وإرسال دعوة للمستخدم." });
+        queryClient.invalidateQueries({ queryKey: ['accountRequests'] });
+      }
+    },
+    onError: (error) => {
+      toast({ title: "خطأ فادح", description: error.message || "حدث خطأ غير متوقع.", variant: "destructive" });
+    },
+    onSettled: () => {
+      setProcessingId(null);
+    }
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (requestId: string) => 
+      supabase.functions.invoke('reject-request', {
+        body: { requestId },
+      }),
+    onSuccess: (response) => {
+      const { data, error } = response;
+      if (error) {
+        toast({ title: "خطأ", description: (error as any).message || "فشلت عملية الرفض.", variant: "destructive" });
+      } else {
+        toast({ title: "نجاح", description: "تم رفض الطلب بنجاح." });
+        queryClient.invalidateQueries({ queryKey: ['accountRequests'] });
+      }
+    },
+    onError: (error) => {
+      toast({ title: "خطأ فادح", description: error.message || "حدث خطأ غير متوقع.", variant: "destructive" });
+    },
+    onSettled: () => {
+      setProcessingId(null);
+    }
+  });
+
   const handleApprove = (id: string) => {
-    console.log(`Approving request ${id}`);
-    toast({ title: "قيد التطوير", description: "سيتم تنفيذ وظيفة القبول قريبًا." });
+    setProcessingId(id);
+    approveMutation.mutate(id);
   };
 
   const handleReject = (id: string) => {
-    console.log(`Rejecting request ${id}`);
-    toast({ title: "قيد التطوير", description: "سيتم تنفيذ وظيفة الرفض قريبًا." });
+    setProcessingId(id);
+    rejectMutation.mutate(id);
   };
   
   if (!canManageUsers) {
@@ -92,12 +138,24 @@ const AccountRequests: React.FC = () => {
                         <TableCell>{req.phone}</TableCell>
                         <TableCell>{new Date(req.created_at).toLocaleDateString('ar-EG')}</TableCell>
                         <TableCell className="text-center space-x-2 space-x-reverse">
-                          <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700" onClick={() => handleApprove(req.id)}>
-                            <UserCheck className="ml-2 h-4 w-4" />
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700" 
+                            onClick={() => handleApprove(req.id)}
+                            disabled={processingId === req.id}
+                          >
+                            {processingId === req.id && approveMutation.isPending ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <UserCheck className="ml-2 h-4 w-4" />}
                             قبول
                           </Button>
-                          <Button size="sm" variant="outline" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleReject(req.id)}>
-                            <UserX className="ml-2 h-4 w-4" />
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700" 
+                            onClick={() => handleReject(req.id)}
+                            disabled={processingId === req.id}
+                          >
+                            {processingId === req.id && rejectMutation.isPending ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <UserX className="ml-2 h-4 w-4" />}
                             رفض
                           </Button>
                         </TableCell>
@@ -121,4 +179,3 @@ const AccountRequests: React.FC = () => {
 };
 
 export default AccountRequests;
-
