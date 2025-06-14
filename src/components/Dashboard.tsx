@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const navigate = useNavigate();
   
   const { logout, checkPermission } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
@@ -198,6 +200,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
             </Card>
           )}
 
+          {(checkPermission('manage_users') || user?.role === 'admin') && (
+            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/admin/requests')}>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4 space-x-reverse">
+                  <div className="p-3 bg-indigo-100 rounded-full">
+                    <Users className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      مراجعة الطلبات
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      مراجعة وقبول طلبات الحسابات الجديدة
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           {(checkPermission('manage_users') || user?.role === 'admin') && (
             <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('notifications')}>
               <CardContent className="p-6">
