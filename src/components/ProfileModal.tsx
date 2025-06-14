@@ -9,7 +9,6 @@ import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { User, Shield, Clock, Fingerprint, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { NativeBiometric } from 'capacitor-native-biometric';
 import { Preferences } from '@capacitor/preferences';
 
 interface ProfileModalProps {
@@ -39,6 +38,15 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
 
   const handleFingerprintToggle = async (enabled: boolean) => {
     setFingerprintEnabled(enabled); // Optimistic UI update
+
+    let NativeBiometric;
+    try {
+      const biometricModule = await import('capacitor-native-biometric');
+      NativeBiometric = biometricModule.NativeBiometric;
+    } catch (e) {
+      console.error("Could not load capacitor-native-biometric. This is expected on web.", e);
+      NativeBiometric = null;
+    }
 
     if (!NativeBiometric) {
       toast({
@@ -217,3 +225,4 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
 };
 
 export default ProfileModal;
+
