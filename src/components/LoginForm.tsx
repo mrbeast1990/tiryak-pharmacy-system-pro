@@ -1,12 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
-import { Pill, Lock, Mail, Globe, UserPlus } from 'lucide-react';
+import { Lock, Mail, Globe, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,7 +15,6 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const { login } = useAuthStore();
@@ -29,7 +26,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     e.preventDefault();
     setIsLoading(true);
     
-    const success = await login(email, password, rememberMe);
+    const success = await login(email, password);
     
     if (success) {
       toast({
@@ -132,17 +129,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                     required
                   />
                 </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <label htmlFor="remember" className="text-sm text-gray-700">
-                  {language === 'ar' ? 'تذكرني' : 'Remember me'}
-                </label>
               </div>
               
               <Button

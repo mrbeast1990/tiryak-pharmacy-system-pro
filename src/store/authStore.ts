@@ -18,7 +18,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   rememberMe: boolean;
-  login: (email: string, password: string, rememberMe: boolean) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   checkPermission: (permission: string) => boolean;
 }
@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       rememberMe: false,
       
-      login: async (email: string, password: string, rememberMe: boolean) => {
+      login: async (email: string, password: string) => {
         console.log('محاولة تسجيل الدخول عبر Supabase:', email);
         
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
@@ -73,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: userWithPermissions,
           isAuthenticated: true,
-          rememberMe
+          rememberMe: true
         });
         console.log('تم تسجيل الدخول بنجاح:', userWithPermissions.name);
         return true;
