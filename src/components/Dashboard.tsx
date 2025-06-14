@@ -141,7 +141,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-lg font-medium text-gray-700">تسجيل نواقص الأدوية</p>
+                    <p className="text-xl font-medium text-gray-700">تسجيل نواقص الأدوية</p>
                     <p className="text-xs text-gray-500">
                       {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
                     </p>
@@ -164,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-lg font-medium text-gray-700">تسجيل الإيرادات</p>
+                    <p className="text-xl font-medium text-gray-700">تسجيل الإيرادات</p>
                     <p className="text-xs text-gray-500">
                       {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
                     </p>
