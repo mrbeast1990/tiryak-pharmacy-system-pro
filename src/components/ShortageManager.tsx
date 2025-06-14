@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,8 +50,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     addMedicine({
       name: medicineName,
       status: 'shortage',
-      lastUpdated: new Date().toISOString(),
-      updatedBy: user?.name || ''
+      notes: null
     });
     
     toast({
@@ -68,8 +66,6 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     const newStatus = medicine.status === 'shortage' ? 'available' : 'shortage';
     updateMedicine(medicine.id, {
       status: newStatus,
-      lastUpdated: new Date().toISOString(),
-      updatedBy: user?.name || ''
     });
     
     toast({
@@ -288,15 +284,15 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           <div>
                             <div className="flex items-center space-x-2 space-x-reverse">
                               <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
-                              {medicine.repeatCount && medicine.repeatCount > 1 && (
+                              {medicine.repeat_count && medicine.repeat_count > 1 && (
                                 <Badge variant="outline" className="flex items-center space-x-1 text-xs">
                                   <RotateCcw className="w-2 h-2" />
-                                  <span>{medicine.repeatCount}x {t('shortages.repeated')}</span>
+                                  <span>{medicine.repeat_count}x {t('shortages.repeated')}</span>
                                 </Badge>
                               )}
                             </div>
                             <p className="text-xs text-gray-500">
-                              {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.lastUpdated).toLocaleDateString()} 
+                              {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.last_updated).toLocaleDateString()} 
                               {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
                             </p>
                           </div>
@@ -342,7 +338,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           <div>
                             <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
                             <p className="text-xs text-gray-500">
-                              {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.lastUpdated).toLocaleDateString()} 
+                              {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.last_updated).toLocaleDateString()} 
                               {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
                             </p>
                           </div>

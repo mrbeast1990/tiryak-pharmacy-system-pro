@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,8 +91,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
       
       // Filter data by date range
       const filteredMedicines = medicines.filter(medicine => {
-        if (!medicine.createdAt) return false;
-        const medicineDate = medicine.createdAt.split('T')[0];
+        if (!medicine.created_at) return false;
+        const medicineDate = medicine.created_at.split('T')[0];
         return medicineDate >= reportStartDate && medicineDate <= reportEndDate;
       });
       

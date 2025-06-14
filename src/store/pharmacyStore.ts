@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from './authStore';
@@ -17,7 +18,7 @@ interface PharmacyState {
   addMedicine: (medicine: Pick<Medicine, 'name' | 'status' | 'notes'>) => Promise<void>;
   updateMedicine: (id: string, updates: Partial<Pick<Medicine, 'name' | 'status' | 'notes'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
-  addRevenue: (revenue: Omit<Revenue, 'id' | 'createdAt' | 'createdBy'>) => Promise<void>;
+  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy'>) => Promise<void>;
   updateRevenue: (id: string, updates: Partial<Revenue>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
