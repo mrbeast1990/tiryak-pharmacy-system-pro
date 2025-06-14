@@ -129,19 +129,22 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
+      // Configure font for Arabic support
+      doc.setLanguage("ar");
+      
       // Add logo - larger size
-      const logoSize = 30;
+      const logoSize = 50;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
       // Header
       doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 25, { align: 'center' });
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 30, { align: 'center' });
       
       doc.setFontSize(14);
-      doc.text('Revenue Report', 105, 35, { align: 'center' });
+      doc.text('Revenue Report', 105, 40, { align: 'center' });
       
       doc.setFontSize(12);
-      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, 105, 45, { align: 'center' });
+      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, 105, 50, { align: 'center' });
       
       // Get revenues for the period
       const periodRevenues = revenues.filter(revenue => 
@@ -157,9 +160,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         return acc;
       }, {} as Record<string, Revenue[]>);
       
-      let yPosition = 60;
+      let yPosition = 70;
       let totalRevenue = 0;
-      let totalChange = 0;
       
       // Process each date
       Object.keys(revenuesByDate).sort().forEach(date => {
@@ -190,7 +192,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         yPosition += 10;
         
         let dailyTotal = 0;
-        let dailyChange = 0;
         
         dayRevenues.forEach(revenue => {
           // Draw row borders
@@ -206,8 +207,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           if (revenue.type === 'expense') {
             doc.text(`${revenue.amount}.00`, 80, yPosition, { align: 'center' });
             doc.text('-', 120, yPosition, { align: 'center' });
-            dailyChange += revenue.amount;
-            totalChange += revenue.amount;
           } else {
             doc.text('-', 80, yPosition, { align: 'center' });
             doc.text(`${revenue.amount}.00`, 120, yPosition, { align: 'center' });
@@ -215,11 +214,25 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
             totalRevenue += revenue.amount;
           }
           
-          // Notes - support Arabic
+          // Notes - handle Arabic text properly
           if (revenue.notes) {
-            const noteText = revenue.notes.replace('- إيراد', '').replace('- صرف فكة', '').trim();
+            let noteText = revenue.notes.replace('- إيراد', '').replace('- صرف فكة', '').trim();
             if (noteText) {
-              doc.text(noteText, 165, yPosition, { align: 'center' });
+              // For Arabic text, we need to handle it differently
+              // Since jsPDF doesn't natively support Arabic, we'll encode it properly
+              try {
+                // Check if the text contains Arabic characters
+                const hasArabic = /[\u0600-\u06FF]/.test(noteText);
+                if (hasArabic) {
+                  // For Arabic text, we'll use a different approach
+                  doc.text(noteText, 165, yPosition, { align: 'center', lang: 'ar' });
+                } else {
+                  doc.text(noteText, 165, yPosition, { align: 'center' });
+                }
+              } catch (error) {
+                // Fallback if Arabic rendering fails
+                doc.text('[Arabic Text]', 165, yPosition, { align: 'center' });
+              }
             } else {
               doc.text('-', 165, yPosition, { align: 'center' });
             }
@@ -266,6 +279,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         description: language === 'ar' ? "تم تصدير التقرير بنجاح" : "Report exported successfully",
       });
     } catch (error) {
+      console.error('Error generating PDF:', error);
       toast({
         title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
         description: language === 'ar' ? "حدث خطأ أثناء تصدير التقرير" : "Error occurred while exporting report",

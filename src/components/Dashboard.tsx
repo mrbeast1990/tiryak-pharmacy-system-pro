@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,22 +92,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 <h1 className="text-xl font-bold text-gray-900">
                   {t('pharmacy.name')}
                 </h1>
-                <p className="text-sm text-gray-600">
-                  {t('welcome')} {user?.name}
-                </p>
+                <div className="flex items-center space-x-4 space-x-reverse">
+                  <p className="text-sm text-gray-600">
+                    {t('welcome')} {user?.name}
+                  </p>
+                  <Button
+                    onClick={handleLogout}
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center space-x-1 space-x-reverse text-red-600 hover:text-red-700 text-xs px-2 py-1 h-6"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    <span className="text-xs">{t('logout')}</span>
+                  </Button>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Button
-                onClick={handleLogout}
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 space-x-reverse text-red-600 hover:text-red-700"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm">{t('logout')}</span>
-              </Button>
             </div>
           </div>
           
@@ -138,75 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        {/* Action Cards - Moved to top */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {(checkPermission('manage_shortages') || user?.role === 'admin') && (
-            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('shortages')}>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <div className="p-3 bg-orange-100 rounded-full">
-                    <Pill className="w-8 h-8 text-orange-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {t('dashboard.registerShortage')}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {(checkPermission('register_revenue_all') || 
-            checkPermission('register_revenue_morning') || 
-            checkPermission('register_revenue_evening') || 
-            checkPermission('register_revenue_night') || 
-            user?.role === 'admin' || 
-            user?.role === 'ahmad_rajili') && (
-            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('revenue')}>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <DollarSign className="w-8 h-8 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {t('dashboard.registerRevenue')}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {(checkPermission('view_reports') || user?.role === 'admin') && (
-            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('reports')}>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4 space-x-reverse">
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <FileText className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {t('dashboard.reports')}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {language === 'ar' ? 'عرض التقارير وإحصائيات الأداء' : 'View reports and performance statistics'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Statistics Cards - Moved down */}
+        {/* Statistics Cards - Top section with action buttons integrated */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="card-shadow">
             <CardContent className="p-6">
@@ -217,20 +147,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 </div>
                 <div className="p-3 bg-red-100 rounded-full">
                   <AlertTriangle className="w-6 h-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{t('dashboard.available')}</p>
-                  <p className="text-2xl font-bold text-green-600">{availableCount}</p>
-                </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -250,20 +166,71 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
             </CardContent>
           </Card>
 
-          <Card className="card-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{t('dashboard.totalRevenues')}</p>
-                  <p className="text-2xl font-bold text-emerald-600">{totalRevenue} {language === 'ar' ? 'د.أ' : 'JD'}</p>
+          {/* Action Cards integrated in the statistics row */}
+          {(checkPermission('manage_shortages') || user?.role === 'admin') && (
+            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('shortages')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{t('dashboard.registerShortage')}</p>
+                    <p className="text-xs text-gray-500">
+                      {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-orange-100 rounded-full">
+                    <Pill className="w-6 h-6 text-orange-600" />
+                  </div>
                 </div>
-                <div className="p-3 bg-emerald-100 rounded-full">
-                  <DollarSign className="w-6 h-6 text-emerald-600" />
+              </CardContent>
+            </Card>
+          )}
+
+          {(checkPermission('register_revenue_all') || 
+            checkPermission('register_revenue_morning') || 
+            checkPermission('register_revenue_evening') || 
+            checkPermission('register_revenue_night') || 
+            user?.role === 'admin' || 
+            user?.role === 'ahmad_rajili') && (
+            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('revenue')}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{t('dashboard.registerRevenue')}</p>
+                    <p className="text-xs text-gray-500">
+                      {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <DollarSign className="w-6 h-6 text-green-600" />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
+
+        {/* Reports Card - Separate row if user has permission */}
+        {(checkPermission('view_reports') || user?.role === 'admin') && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('reports')}>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4 space-x-reverse">
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <FileText className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      {t('dashboard.reports')}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {language === 'ar' ? 'عرض التقارير وإحصائيات الأداء' : 'View reports and performance statistics'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
 
       {/* Footer */}
