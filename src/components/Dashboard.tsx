@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,12 +16,14 @@ import {
   Users,
   LogOut,
   User,
-  Settings
+  Settings,
+  MessageSquare,
 } from 'lucide-react';
 import ProfileModal from './ProfileModal';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
 import ReportsPage from './ReportsPage';
+import NotificationSender from './NotificationSender';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -63,6 +66,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
 
   if (currentPage === 'reports') {
     return <ReportsPage onBack={handleBack} />;
+  }
+
+  if (currentPage === 'notifications') {
+    return <NotificationSender onBack={handleBack} />;
   }
 
   return (
@@ -169,9 +176,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
           )}
         </div>
 
-        {/* Reports Card */}
-        {(checkPermission('view_reports') || user?.role === 'admin') && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        {/* Reports & Admin Tools */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {(checkPermission('view_reports') || user?.role === 'admin') && (
             <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('reports')}>
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4 space-x-reverse">
@@ -189,8 +196,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          )}
+
+          {(checkPermission('manage_users') || user?.role === 'admin') && (
+            <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleNavigate('notifications')}>
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4 space-x-reverse">
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <MessageSquare className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      إرسال الإشعارات
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      إرسال رسائل وتنبيهات للمستخدمين
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </main>
 
       {/* Footer */}
