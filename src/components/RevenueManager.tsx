@@ -147,6 +147,10 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     setSelectedDate(currentDate.toISOString().split('T')[0]);
   };
 
+  const canNavigateDate = useMemo(() => {
+    return checkPermission('view_all');
+  }, [checkPermission]);
+
   const dailyRevenue = getTotalDailyRevenue(selectedDate);
   const dailyRevenues = revenues.filter(revenue => revenue.date === selectedDate);
 
@@ -453,15 +457,18 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           periodEndDate={periodEndDate}
           setPeriodEndDate={setPeriodEndDate}
           showPeriodRevenue={showPeriodRevenue}
+          canNavigateDate={canNavigateDate}
         />
         
-        <RevenueReportExporter
-          reportStartDate={reportStartDate}
-          setReportStartDate={setReportStartDate}
-          reportEndDate={reportEndDate}
-          setReportEndDate={setReportEndDate}
-          generatePeriodReport={generatePeriodReport}
-        />
+        {checkPermission('export_revenue_pdf') && (
+          <RevenueReportExporter
+            reportStartDate={reportStartDate}
+            setReportStartDate={setReportStartDate}
+            reportEndDate={reportEndDate}
+            setReportEndDate={setReportEndDate}
+            generatePeriodReport={generatePeriodReport}
+          />
+        )}
       </main>
     </div>
   );

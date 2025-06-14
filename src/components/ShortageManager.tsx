@@ -268,10 +268,12 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                     <AlertCircle className="w-4 h-4" />
                     <span>{t('dashboard.shortages')} ({shortages.length})</span>
                   </CardTitle>
-                  <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
-                    <FileText className="w-2 h-2 ml-1" />
-                    {t('shortages.exportPdf')}
-                  </Button>
+                  {checkPermission('export_shortages_pdf') && (
+                    <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
+                      <FileText className="w-2 h-2 ml-1" />
+                      {t('shortages.exportPdf')}
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>

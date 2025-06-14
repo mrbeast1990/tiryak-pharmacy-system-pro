@@ -15,6 +15,7 @@ interface RevenueDisplayProps {
   periodEndDate: string;
   setPeriodEndDate: (date: string) => void;
   showPeriodRevenue: () => void;
+  canNavigateDate: boolean;
 }
 
 const RevenueDisplay: React.FC<RevenueDisplayProps> = ({
@@ -27,6 +28,7 @@ const RevenueDisplay: React.FC<RevenueDisplayProps> = ({
   periodEndDate,
   setPeriodEndDate,
   showPeriodRevenue,
+  canNavigateDate,
 }) => {
   return (
     <Card className="card-shadow mb-6">
@@ -40,26 +42,34 @@ const RevenueDisplay: React.FC<RevenueDisplayProps> = ({
             إيراد اليوم
           </h3>
           <div className="flex items-center justify-between">
-            <Button
-              onClick={() => navigateDate('next')}
-              variant="outline"
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
+            {canNavigateDate ? (
+              <Button
+                onClick={() => navigateDate('next')}
+                variant="outline"
+                size="sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            ) : (
+              <div className="w-10 h-9" />
+            )}
             
             <div className="text-center cursor-pointer" onClick={() => setShowDailyDetails(true)}>
               <p className="text-lg font-bold text-green-600">{dailyRevenue} دينار</p>
               <p className="text-xs text-gray-500">{selectedDate}</p>
             </div>
             
-            <Button
-              onClick={() => navigateDate('prev')}
-              variant="outline"
-              size="sm"
-            >
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            {canNavigateDate ? (
+              <Button
+                onClick={() => navigateDate('prev')}
+                variant="outline"
+                size="sm"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            ) : (
+              <div className="w-10 h-9" />
+            )}
           </div>
         </div>
 
