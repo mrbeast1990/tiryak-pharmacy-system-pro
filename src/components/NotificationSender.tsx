@@ -6,9 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRight, Send } from 'lucide-react';
+import { ArrowRight, Send, Loader2 } from 'lucide-react';
 import { useLanguageStore } from '@/store/languageStore';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NotificationSenderProps {
   onBack: () => void;
@@ -18,15 +19,43 @@ const NotificationSender: React.FC<NotificationSenderProps> = ({ onBack }) => {
     const [title, setTitle] = useState('');
     const [message, setMessage] = useState('');
     const [recipient, setRecipient] = useState('all');
+    const [isLoading, setIsLoading] = useState(false);
     const { language } = useLanguageStore();
 
-    const handleSubmit = () => {
-        // سيتم تنفيذ منطق الإرسال الفعلي في خطوة لاحقة
-        console.log('Sending notification:', { title, message, recipient });
-        toast({
-          title: "جاري التطوير",
-          description: "سيتم تفعيل خاصية إرسال الإشعارات قريباً.",
+    const handleSubmit = async () => {
+        if (!title || !message) {
+            toast({
+                title: "خطأ",
+                description: "يرجى تعبئة عنوان ونص الإشعار.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsLoading(true);
+        
+        const { error } = await supabase.functions.invoke('send-notification', {
+            body: { title, message, recipient },
         });
+
+        setIsLoading(false);
+
+        if (error) {
+            console.error('Error sending notification:', error);
+            toast({
+                title: "فشل الإرسال",
+                description: "حدث خطأ أثناء إرسال الإشعار. ربما لا تملك الصلاحية الكافية.",
+                variant: "destructive",
+            });
+        } else {
+            toast({
+                title: "تم الإرسال بنجاح",
+                description: "تم إرسال إشعارك بنجاح.",
+            });
+            setTitle('');
+            setMessage('');
+            setRecipient('all');
+        }
     };
 
     const roles = [
@@ -53,7 +82,7 @@ const NotificationSender: React.FC<NotificationSenderProps> = ({ onBack }) => {
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
                             <Label htmlFor="recipient">إرسال إلى</Label>
-                            <Select value={recipient} onValueChange={setRecipient} dir="rtl">
+                            <Select value={recipient} onValueChange={setRecipient} dir="rtl" disabled={isLoading}>
                                 <SelectTrigger id="recipient">
                                     <SelectValue placeholder="اختر المستلمين" />
                                 </SelectTrigger>
@@ -71,6 +100,7 @@ const NotificationSender: React.FC<NotificationSenderProps> = ({ onBack }) => {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="اكتب عنوان الإشعار هنا..."
+                                disabled={isLoading}
                             />
                         </div>
                         <div className="space-y-2">
@@ -81,11 +111,16 @@ const NotificationSender: React.FC<NotificationSenderProps> = ({ onBack }) => {
                                 onChange={(e) => setMessage(e.target.value)}
                                 placeholder="اكتب رسالتك هنا..."
                                 rows={6}
+                                disabled={isLoading}
                             />
                         </div>
-                        <Button onClick={handleSubmit} className="w-full pharmacy-gradient text-white flex items-center space-x-2 space-x-reverse">
-                            <Send className="w-4 h-4" />
-                            <span>إرسال الإشعار</span>
+                        <Button onClick={handleSubmit} className="w-full pharmacy-gradient text-white flex items-center space-x-2 space-x-reverse" disabled={isLoading}>
+                            {isLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Send className="w-4 h-4" />
+                            )}
+                            <span>{isLoading ? 'جاري الإرسال...' : 'إرسال الإشعار'}</span>
                         </Button>
                     </CardContent>
                 </Card>
