@@ -19,7 +19,7 @@ const ActionCards: React.FC<ActionCardsProps> = ({ onNavigate, t }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-medium text-gray-700">{t('dashboard.registerShortage')}</p>
+                <p className="text-xl font-medium text-gray-700">{t('dashboard.registerShortage')}</p>
                 <p className="text-xs text-gray-500">
                   {t('dashboard.registerShortage.desc')}
                 </p>
@@ -42,7 +42,7 @@ const ActionCards: React.FC<ActionCardsProps> = ({ onNavigate, t }) => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-medium text-gray-700">{t('dashboard.registerRevenue')}</p>
+                <p className="text-xl font-medium text-gray-700">{t('dashboard.registerRevenue')}</p>
                 <p className="text-xs text-gray-500">
                   {t('dashboard.registerRevenue.desc')}
                 </p>
