@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -62,14 +61,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
     return <ShortageManager onBack={handleBack} />;
   }
 
-  if (currentPage === 'revenue') {
-    return <RevenueManager onBack={handleBack} />;
-  }
-
-  if (currentPage === 'reports') {
-    return <ReportsPage onBack={handleBack} />;
-  }
-
   if (currentPage === 'notifications') {
     return <NotificationSender onBack={handleBack} />;
   }
@@ -103,7 +94,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                   {t('pharmacy.name')}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  {t('welcome')} {user?.name}
+                  {t('welcome')}{' '}
+                  {user?.email === 'deltanorthpharm@gmail.com' ? 'مدير' : user?.name}
                 </p>
               </div>
             </div>
