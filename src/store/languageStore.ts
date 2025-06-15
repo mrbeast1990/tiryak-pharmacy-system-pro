@@ -15,6 +15,7 @@ const translations = {
     'pharmacy.name': 'الترياق الشافي',
     'logout': 'تسجيل الخروج',
     'welcome': 'مرحباً،',
+    'user.role.manager': 'مدير',
     
     // Dashboard
     'dashboard.shortages': 'النواقص',
@@ -25,6 +26,13 @@ const translations = {
     'dashboard.registerRevenue': 'تسجيل الإيرادات',
     'dashboard.reports': 'التقارير',
     'dashboard.exportUserReport': 'تصدير تقرير أداء المستخدمين',
+    'dashboard.registerShortage.desc': 'إضافة وإدارة نواقص الأدوية',
+    'dashboard.registerRevenue.desc': 'تسجيل وإدارة الإيرادات اليومية',
+    'dashboard.reports.desc': 'عرض التقارير وإحصائيات الأداء',
+    'dashboard.reviewRequests.title': 'مراجعة الطلبات',
+    'dashboard.reviewRequests.desc': 'مراجعة وقبول طلبات الحسابات الجديدة',
+    'dashboard.sendNotifications.title': 'إرسال الإشعارات',
+    'dashboard.sendNotifications.desc': 'إرسال رسائل وتنبيهات للمستخدمين',
     
     // Shortages
     'shortages.title': 'إدارة نواقص الأدوية',
@@ -66,6 +74,7 @@ const translations = {
     'pharmacy.name': 'Al-Tiryak Al-Shafi',
     'logout': 'Logout',
     'welcome': 'Welcome,',
+    'user.role.manager': 'Manager',
     
     // Dashboard
     'dashboard.shortages': 'Shortages',
@@ -76,6 +85,13 @@ const translations = {
     'dashboard.registerRevenue': 'Register Revenue',
     'dashboard.reports': 'Reports',
     'dashboard.exportUserReport': 'Export Staff Performance Report',
+    'dashboard.registerShortage.desc': 'Add and manage medicine shortages',
+    'dashboard.registerRevenue.desc': 'Register and manage daily revenues',
+    'dashboard.reports.desc': 'View reports and performance statistics',
+    'dashboard.reviewRequests.title': 'Review Requests',
+    'dashboard.reviewRequests.desc': 'Review and approve new account requests',
+    'dashboard.sendNotifications.title': 'Send Notifications',
+    'dashboard.sendNotifications.desc': 'Send messages and alerts to users',
     
     // Shortages
     'shortages.title': 'Medicine Shortages Management',

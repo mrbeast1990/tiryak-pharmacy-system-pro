@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
     return <ShortageManager onBack={handleBack} />;
   }
 
+  if (currentPage === 'revenue') {
+    return <RevenueManager onBack={handleBack} />;
+  }
+
+  if (currentPage === 'reports') {
+    return <ReportsPage onBack={handleBack} />;
+  }
+
   if (currentPage === 'notifications') {
     return <NotificationSender onBack={handleBack} />;
   }
@@ -95,7 +104,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                 </h1>
                 <p className="text-sm text-gray-600">
                   {t('welcome')}{' '}
-                  {user?.email === 'deltanorthpharm@gmail.com' ? 'مدير' : user?.name}
+                  {user?.email === 'deltanorthpharm@gmail.com' ? t('user.role.manager') : user?.name}
                 </p>
               </div>
             </div>
@@ -133,9 +142,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xl font-medium text-gray-700">تسجيل نواقص الأدوية</p>
+                    <p className="text-2xl font-medium text-gray-700">{t('dashboard.registerShortage')}</p>
                     <p className="text-xs text-gray-500">
-                      {language === 'ar' ? 'إضافة وإدارة نواقص الأدوية' : 'Add and manage medicine shortages'}
+                      {t('dashboard.registerShortage.desc')}
                     </p>
                   </div>
                   <div className="p-3 bg-orange-100 rounded-full">
@@ -156,9 +165,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xl font-medium text-gray-700">تسجيل الإيرادات</p>
+                    <p className="text-2xl font-medium text-gray-700">{t('dashboard.registerRevenue')}</p>
                     <p className="text-xs text-gray-500">
-                      {language === 'ar' ? 'تسجيل وإدارة الإيرادات اليومية' : 'Register and manage daily revenues'}
+                      {t('dashboard.registerRevenue.desc')}
                     </p>
                   </div>
                   <div className="p-3 bg-green-100 rounded-full">
@@ -184,7 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                       {t('dashboard.reports')}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {language === 'ar' ? 'عرض التقارير وإحصائيات الأداء' : 'View reports and performance statistics'}
+                      {t('dashboard.reports.desc')}
                     </p>
                   </div>
                 </div>
@@ -201,10 +210,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      مراجعة الطلبات
+                      {t('dashboard.reviewRequests.title')}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      مراجعة وقبول طلبات الحسابات الجديدة
+                      {t('dashboard.reviewRequests.desc')}
                     </p>
                   </div>
                 </div>
@@ -221,10 +230,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, user }) => {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      إرسال الإشعارات
+                      {t('dashboard.sendNotifications.title')}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      إرسال رسائل وتنبيهات للمستخدمين
+                      {t('dashboard.sendNotifications.desc')}
                     </p>
                   </div>
                 </div>
