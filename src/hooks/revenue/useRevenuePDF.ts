@@ -1,3 +1,4 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/store/languageStore';
 import { Revenue } from '@/store/pharmacyStore';
@@ -42,35 +43,34 @@ export const useRevenuePDF = () => {
       
       const head = [['Date', 'Period', 'Amount (LYD)', 'Notes']];
       const body: any[] = [];
-      let totalRevenue = 0;
+      const totalRevenue = periodRevenuesData.reduce((acc, r) => acc + (r.type === 'income' ? r.amount : -r.amount), 0);
 
       Object.keys(revenuesByDate).sort().forEach(date => {
-        const dayRevenues = revenuesByDate[date];
+        const dayRevenues = revenuesByDate[date].filter(r => r.type === 'income');
         let dailyTotalRevenue = 0;
         
-        dayRevenues.forEach((revenue, index) => {
-          const periodText = revenue.period === 'morning' ? 'Morning' : 
-                            revenue.period === 'evening' ? 'Evening' : 
-                            revenue.period === 'night' ? 'Night' : 'Ahmad Rajili';
-          
-          const amount = revenue.type === 'income' ? revenue.amount : -revenue.amount;
-          
-          dailyTotalRevenue += amount;
-          totalRevenue += amount;
-
-          let noteText = (revenue.notes || '').replace('- Income', '').replace('- Cash Disbursement', '').trim();
-          
-          noteText = noteText.replace(/[^\x00-\x7F]+/g, '').trim() || '-';
-          
-          body.push([
-            index === 0 ? date : '',
-            periodText,
-            amount.toFixed(2),
-            noteText
-          ]);
-        });
-        
         if (dayRevenues.length > 0) {
+          dayRevenues.forEach((revenue, index) => {
+            const periodText = revenue.period === 'morning' ? 'Morning' : 
+                              revenue.period === 'evening' ? 'Evening' : 
+                              revenue.period === 'night' ? 'Night' : 'Ahmad Rajili';
+            
+            const amount = revenue.amount;
+            
+            dailyTotalRevenue += amount;
+  
+            let noteText = (revenue.notes || '').replace('- Income', '').replace('- Cash Disbursement', '').trim();
+            
+            noteText = noteText.replace(/[^\x00-\x7F]+/g, '').trim() || '-';
+            
+            body.push([
+              index === 0 ? date : '',
+              periodText,
+              amount.toFixed(2),
+              noteText
+            ]);
+          });
+          
           body.push([
             { content: 'Daily Total:', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } },
             { content: dailyTotalRevenue.toFixed(2), styles: { fontStyle: 'bold' } },
@@ -120,3 +120,4 @@ export const useRevenuePDF = () => {
 
   return { generatePeriodReport };
 };
+
