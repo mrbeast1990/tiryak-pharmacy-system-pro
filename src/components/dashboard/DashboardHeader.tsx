@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
@@ -37,7 +36,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </h1>
               <p className="text-sm text-gray-600">
                 {t('welcome')}{' '}
-                {user?.email === 'deltanorthpharm@gmail.com' ? t('user.role.manager') : user?.name}
+                {user?.name}
               </p>
             </div>
           </div>
