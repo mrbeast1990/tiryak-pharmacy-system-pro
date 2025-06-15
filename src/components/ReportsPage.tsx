@@ -9,6 +9,7 @@ import { ArrowRight, Users, BarChart3, FileText, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface ReportsPageProps {
   onBack: () => void;
@@ -17,7 +18,7 @@ interface ReportsPageProps {
 const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
   const { user } = useAuthStore();
   const { language } = useLanguageStore();
-  const { medicines, revenues } = usePharmacyStore();
+  const { medicines } = usePharmacyStore();
   const { toast } = useToast();
   
   const [reportStartDate, setReportStartDate] = React.useState('');
@@ -25,38 +26,27 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
 
   // Calculate user statistics
   const userStats = React.useMemo(() => {
-    const stats: Record<string, { shortages: number; revenues: number }> = {};
+    const stats: Record<string, { shortages: number }> = {};
     
     medicines.forEach(medicine => {
       if (medicine.updatedBy) {
         if (!stats[medicine.updatedBy]) {
-          stats[medicine.updatedBy] = { shortages: 0, revenues: 0 };
+          stats[medicine.updatedBy] = { shortages: 0 };
         }
         stats[medicine.updatedBy].shortages++;
-      }
-    });
-    
-    revenues.forEach(revenue => {
-      if (revenue.createdBy) {
-        if (!stats[revenue.createdBy]) {
-          stats[revenue.createdBy] = { shortages: 0, revenues: 0 };
-        }
-        stats[revenue.createdBy].revenues++;
       }
     });
     
     return Object.entries(stats).map(([name, data]) => ({
       name,
       shortages: data.shortages,
-      revenues: data.revenues,
-      total: data.shortages + data.revenues
+      total: data.shortages
     }));
-  }, [medicines, revenues]);
+  }, [medicines]);
 
   const chartData = userStats.map(user => ({
     name: user.name,
     النواقص: user.shortages,
-    الإيرادات: user.revenues
   }));
 
   const pieData = userStats.map(user => ({
@@ -79,92 +69,81 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Header
-      doc.setFont('helvetica');
-      doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 20, { align: 'center' });
-      doc.text('صيدلية الترياق الشافي', 105, 30, { align: 'center' });
+      const logoSize = 30;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', (pageWidth / 2) - (logoSize / 2), 15, logoSize, logoSize);
       
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', pageWidth / 2, 55, { align: 'center' });
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(14);
+      doc.text('Staff Performance Report', pageWidth / 2, 65, { align: 'center' });
       doc.setFontSize(12);
-      doc.text(`تقرير أداء الموظفين من ${reportStartDate} إلى ${reportEndDate}`, 105, 40, { align: 'center' });
-      doc.text(`Staff Performance Report: ${reportStartDate} to ${reportEndDate}`, 105, 50, { align: 'center' });
+      doc.text(`Period: ${reportStartDate} to ${reportEndDate}`, pageWidth / 2, 75, { align: 'center' });
       
-      // Filter data by date range
       const filteredMedicines = medicines.filter(medicine => {
         if (!medicine.created_at) return false;
         const medicineDate = medicine.created_at.split('T')[0];
         return medicineDate >= reportStartDate && medicineDate <= reportEndDate;
       });
       
-      const filteredRevenues = revenues.filter(revenue => 
-        revenue.date >= reportStartDate && revenue.date <= reportEndDate
-      );
-      
-      // Recalculate stats for the period
-      const periodStats: Record<string, { shortages: number; revenues: number }> = {};
+      const periodStats: Record<string, { shortages: number }> = {};
       
       filteredMedicines.forEach(medicine => {
         if (medicine.updatedBy) {
           if (!periodStats[medicine.updatedBy]) {
-            periodStats[medicine.updatedBy] = { shortages: 0, revenues: 0 };
+            periodStats[medicine.updatedBy] = { shortages: 0 };
           }
           periodStats[medicine.updatedBy].shortages++;
         }
       });
       
-      filteredRevenues.forEach(revenue => {
-        if (revenue.createdBy) {
-          if (!periodStats[revenue.createdBy]) {
-            periodStats[revenue.createdBy] = { shortages: 0, revenues: 0 };
-          }
-          periodStats[revenue.createdBy].revenues++;
-        }
+      const head = [['Staff Name', 'Shortage Entries', 'Rating']];
+      const body = Object.entries(periodStats).map(([name, data]) => {
+          const total = data.shortages;
+          const rating = total > 20 ? 'Excellent' : 
+                        total > 10 ? 'Good' : 'Average';
+          return [name, total.toString(), rating];
       });
+
+      if (body.length > 0) {
+        autoTable(doc, {
+            head: head,
+            body: body,
+            startY: 85,
+            theme: 'grid',
+            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+            styles: { font: 'helvetica', cellPadding: 3, fontSize: 10 },
+            didDrawPage: (data) => {
+              doc.setFontSize(8);
+              doc.text(`Page ${data.pageNumber}`, data.settings.margin.left, doc.internal.pageSize.getHeight() - 5);
+            }
+        });
+      } else {
+        doc.text('No data available for the selected period.', pageWidth / 2, 90, { align: 'center' });
+      }
+
+      const finalY = (doc as any).lastAutoTable?.finalY || 90;
       
-      let yPosition = 70;
-      
-      // Headers
-      doc.setFontSize(10);
-      doc.text('اسم الموظف / Staff Name', 20, yPosition);
-      doc.text('النواقص / Shortages', 80, yPosition);
-      doc.text('الإيرادات / Revenues', 120, yPosition);
-      doc.text('المجموع / Total', 160, yPosition);
-      doc.text('التقييم / Rating', 180, yPosition);
-      
-      yPosition += 10;
-      
-      Object.entries(periodStats).forEach(([name, data]) => {
-        const total = data.shortages + data.revenues;
-        const rating = total > 20 ? 'ممتاز/Excellent' : 
-                      total > 10 ? 'جيد/Good' : 'متوسط/Average';
-        
-        doc.text(name, 20, yPosition);
-        doc.text(data.shortages.toString(), 80, yPosition);
-        doc.text(data.revenues.toString(), 120, yPosition);
-        doc.text(total.toString(), 160, yPosition);
-        doc.text(rating, 180, yPosition);
-        
-        yPosition += 8;
-        
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
-        }
-      });
-      
-      // Summary
-      yPosition += 10;
       doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Summary', 14, finalY + 15);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
       const totalStaff = Object.keys(periodStats).length;
       const totalShortageEntries = Object.values(periodStats).reduce((sum, stat) => sum + stat.shortages, 0);
-      const totalRevenueEntries = Object.values(periodStats).reduce((sum, stat) => sum + stat.revenues, 0);
       
-      doc.text(`إجمالي الموظفين النشطين / Active Staff: ${totalStaff}`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`إجمالي سجلات النواقص / Total Shortage Records: ${totalShortageEntries}`, 20, yPosition);
-      yPosition += 8;
-      doc.text(`إجمالي سجلات الإيرادات / Total Revenue Records: ${totalRevenueEntries}`, 20, yPosition);
+      doc.text(`Active Staff: ${totalStaff}`, 14, finalY + 22);
+      doc.text(`Total Shortage Records: ${totalShortageEntries}`, 14, finalY + 29);
       
+      doc.setFontSize(10);
+      const pageHeight = doc.internal.pageSize.getHeight();
+      doc.text(`Generated by: ${user?.name || 'System'} on ${new Date().toLocaleString('en-US')}`, pageWidth / 2, pageHeight - 15, { align: 'center' });
+      doc.text('Authorized Signature: ____________________', pageWidth / 2, pageHeight - 8, { align: 'center' });
+
       doc.save(`staff-performance-report-${reportStartDate}-to-${reportEndDate}.pdf`);
       
       toast({
@@ -172,6 +151,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
         description: language === 'ar' ? "تم تصدير تقرير الأداء بنجاح" : "Performance report exported successfully",
       });
     } catch (error) {
+      console.error("PDF generation error:", error);
       toast({
         title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
         description: language === 'ar' ? "حدث خطأ أثناء تصدير التقرير" : "Error occurred while exporting report",
@@ -280,7 +260,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
                   <tr className="border-b">
                     <th className="py-3 px-4 font-medium text-gray-700">اسم المستخدم</th>
                     <th className="py-3 px-4 font-medium text-gray-700">سجلات النواقص</th>
-                    <th className="py-3 px-4 font-medium text-gray-700">سجلات الإيرادات</th>
                     <th className="py-3 px-4 font-medium text-gray-700">إجمالي السجلات</th>
                     <th className="py-3 px-4 font-medium text-gray-700">التقييم</th>
                   </tr>
@@ -290,7 +269,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium">{userStat.name}</td>
                       <td className="py-3 px-4">{userStat.shortages}</td>
-                      <td className="py-3 px-4">{userStat.revenues}</td>
                       <td className="py-3 px-4 font-semibold">{userStat.total}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs ${
@@ -328,7 +306,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="النواقص" fill="#8884d8" />
-                    <Bar dataKey="الإيرادات" fill="#82ca9d" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -385,15 +362,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
               <div className="text-center">
                 <p className="text-2xl font-bold text-red-600">{medicines.length}</p>
                 <p className="text-sm text-gray-600">إجمالي سجلات النواقص</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="card-shadow">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{revenues.length}</p>
-                <p className="text-sm text-gray-600">إجمالي سجلات الإيرادات</p>
               </div>
             </CardContent>
           </Card>
