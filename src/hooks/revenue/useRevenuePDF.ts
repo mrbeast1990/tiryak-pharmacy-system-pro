@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/store/languageStore';
 import { Revenue } from '@/store/pharmacyStore';
@@ -41,7 +40,7 @@ export const useRevenuePDF = () => {
         return acc;
       }, {} as Record<string, Revenue[]>);
       
-      const head = [['Date', 'Period', 'Change (LYD)', 'Revenue (LYD)', 'Notes']];
+      const head = [['Date', 'Period', 'Amount (LYD)', 'Notes']];
       const body: any[] = [];
       let totalRevenue = 0;
 
@@ -54,13 +53,10 @@ export const useRevenuePDF = () => {
                             revenue.period === 'evening' ? 'Evening' : 
                             revenue.period === 'night' ? 'Night' : 'Ahmad Rajili';
           
-          const change = revenue.type === 'expense' ? revenue.amount.toFixed(2) : '-';
-          const income = revenue.type === 'income' ? revenue.amount.toFixed(2) : '-';
+          const amount = revenue.type === 'income' ? revenue.amount : -revenue.amount;
           
-          if (revenue.type === 'income') {
-            dailyTotalRevenue += revenue.amount;
-            totalRevenue += revenue.amount;
-          }
+          dailyTotalRevenue += amount;
+          totalRevenue += amount;
 
           let noteText = (revenue.notes || '').replace('- Income', '').replace('- Cash Disbursement', '').trim();
           
@@ -69,15 +65,14 @@ export const useRevenuePDF = () => {
           body.push([
             index === 0 ? date : '',
             periodText,
-            change,
-            income,
+            amount.toFixed(2),
             noteText
           ]);
         });
         
         if (dayRevenues.length > 0) {
           body.push([
-            { content: 'Daily Total:', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
+            { content: 'Daily Total:', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } },
             { content: dailyTotalRevenue.toFixed(2), styles: { fontStyle: 'bold' } },
             ''
           ]);
@@ -91,7 +86,7 @@ export const useRevenuePDF = () => {
         theme: 'grid',
         headStyles: { fillColor: [70, 130, 180], textColor: 255, font: 'helvetica', fontStyle: 'bold' },
         styles: { font: 'helvetica', cellPadding: 3, fontSize: 9 },
-        columnStyles: { 4: { cellWidth: 'auto' } },
+        columnStyles: { 3: { cellWidth: 'auto' } },
       });
 
       const finalY = (doc as any).lastAutoTable.finalY || 100;
@@ -100,7 +95,7 @@ export const useRevenuePDF = () => {
       doc.setFillColor(34, 139, 34);
       doc.rect(20, finalY + 10, pageWidth - 40, 12, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.text(`Total Revenue: ${totalRevenue.toFixed(2)} LYD`, pageWidth / 2, finalY + 17, { align: 'center' });
+      doc.text(`Total Net Revenue: ${totalRevenue.toFixed(2)} LYD`, pageWidth / 2, finalY + 17, { align: 'center' });
       doc.setTextColor(0, 0, 0);
       
       doc.setFontSize(10);
