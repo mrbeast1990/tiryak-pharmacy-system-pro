@@ -6,8 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Loader2 } from 'lucide-react';
-
-type Period = 'morning' | 'evening' | 'night' | 'ahmad_rajili';
+import { Period } from '@/hooks/revenue/useRevenueState';
 
 interface RevenueFormProps {
   selectedDate: string;
