@@ -6,10 +6,12 @@ import { useRevenueState } from './revenue/useRevenueState';
 import { useRevenueData } from './revenue/useRevenueData';
 import { useRevenuePDF } from './revenue/useRevenuePDF';
 import { useRevenueForm } from './revenue/useRevenueForm';
+import { usePharmacyStore } from '@/store/pharmacyStore';
 
 export const useRevenueManager = () => {
   const { user, checkPermission } = useAuthStore();
   const { language } = useLanguageStore();
+  const { updateRevenue, deleteRevenue } = usePharmacyStore();
 
   const state = useRevenueState();
 
@@ -79,5 +81,7 @@ export const useRevenueManager = () => {
     generatePeriodReport,
     canSelectPeriod,
     periodDisplayName,
+    updateRevenue,
+    deleteRevenue,
   };
 };

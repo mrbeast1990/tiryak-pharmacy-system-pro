@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 
@@ -18,6 +19,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [medicineName, setMedicineName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
+  const [editedName, setEditedName] = useState('');
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -75,6 +78,36 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         : `${medicine.name} status updated to ${newStatus}`,
     });
   };
+
+  const handleUpdateName = (medicineId: string) => {
+    if (!editedName.trim()) {
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال اسم الدواء",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateMedicine(medicineId, { name: editedName });
+    setEditingMedicineId(null);
+    setEditedName('');
+    toast({
+      title: "تم التحديث",
+      description: "تم تحديث اسم الدواء بنجاح",
+    });
+  };
+
+  const startEditing = (medicine: Medicine) => {
+    setEditingMedicineId(medicine.id);
+    setEditedName(medicine.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingMedicineId(null);
+    setEditedName('');
+  };
+
+  const canEditMedicineName = checkPermission('manage_users');
 
   const exportShortagesPDF = () => {
     try {
@@ -285,7 +318,22 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           <AlertCircle className="w-4 h-4 text-red-500" />
                           <div>
                             <div className="flex items-center space-x-2 space-x-reverse">
-                              <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
+                              {editingMedicineId === medicine.id ? (
+                                <div className="flex items-center space-x-2">
+                                  <Input value={editedName} onChange={e => setEditedName(e.target.value)} className="h-8 text-sm" />
+                                  <Button size="icon" className="h-8 w-8" onClick={() => handleUpdateName(medicine.id)}><Save className="h-4 w-4" /></Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={cancelEditing}><X className="h-4 w-4" /></Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
+                                  {canEditMedicineName && (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEditing(medicine)}>
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
                               {medicine.repeat_count && medicine.repeat_count > 1 && (
                                 <Badge variant="outline" className="flex items-center space-x-1 text-xs">
                                   <RotateCcw className="w-2 h-2" />
@@ -338,7 +386,24 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                         <div className="flex items-center space-x-2 space-x-reverse">
                           <CheckCircle className="w-4 h-4 text-green-500" />
                           <div>
-                            <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                              {editingMedicineId === medicine.id ? (
+                                <div className="flex items-center space-x-2">
+                                  <Input value={editedName} onChange={e => setEditedName(e.target.value)} className="h-8 text-sm" />
+                                  <Button size="icon" className="h-8 w-8" onClick={() => handleUpdateName(medicine.id)}><Save className="h-4 w-4" /></Button>
+                                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={cancelEditing}><X className="h-4 w-4" /></Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
+                                  {canEditMedicineName && (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEditing(medicine)}>
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                            </div>
                             <p className="text-xs text-gray-500">
                               {language === 'ar' ? 'آخر تحديث:' : 'Last updated:'} {new Date(medicine.last_updated).toLocaleDateString()} 
                               {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}

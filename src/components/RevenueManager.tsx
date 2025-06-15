@@ -43,6 +43,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     generatePeriodReport,
     canSelectPeriod,
     periodDisplayName,
+    updateRevenue,
+    deleteRevenue,
   } = useRevenueManager();
 
   if (revenuesLoading && !showDailyDetails && !showPeriodDetails) {
@@ -64,6 +66,9 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         periodRevenue={periodRevenue}
         periodRevenues={periodRevenues}
         language={language}
+        updateRevenue={updateRevenue}
+        deleteRevenue={deleteRevenue}
+        checkPermission={checkPermission}
       />
     );
   }
@@ -76,6 +81,9 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         dailyRevenue={dailyRevenue}
         dailyRevenues={dailyRevenues}
         language={language}
+        updateRevenue={updateRevenue}
+        deleteRevenue={deleteRevenue}
+        checkPermission={checkPermission}
       />
     );
   }
