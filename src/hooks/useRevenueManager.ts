@@ -95,7 +95,7 @@ export const useRevenueManager = () => {
         amount: expenseAmount,
         type: 'expense',
         period,
-        notes: notes + (notes ? ' - ' : '') + 'صرف فكة',
+        notes: notes + (notes ? ' - ' : '') + 'Cash Disbursement',
         date: selectedDate,
       });
     }
@@ -105,7 +105,7 @@ export const useRevenueManager = () => {
         amount: incomeAmount,
         type: 'income',
         period,
-        notes: notes + (notes ? ' - ' : '') + 'إيراد',
+        notes: notes + (notes ? ' - ' : '') + 'Income',
         date: selectedDate,
       });
     }
@@ -181,28 +181,6 @@ export const useRevenueManager = () => {
 
     try {
       const doc = new jsPDF();
-      let fontLoaded = false;
-      try {
-        // The Amiri font is needed for Arabic characters in the PDF.
-        // Make sure 'Amiri-Regular.ttf' is in the `public` folder of your project.
-        const fontResponse = await fetch('/Amiri-Regular.ttf');
-        if (!fontResponse.ok) {
-          throw new Error('Font file not found.');
-        }
-        const font = await fontResponse.arrayBuffer();
-        const fontStr = new Uint8Array(font).reduce((data, byte) => data + String.fromCharCode(byte), '');
-        doc.addFileToVFS('Amiri-Regular.ttf', fontStr);
-        doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-        doc.setFont('Amiri');
-        fontLoaded = true;
-      } catch (fontError) {
-        console.error("Font loading error:", fontError);
-        toast({
-          title: "Font Warning",
-          description: "Could not load Arabic font. Arabic text may not render correctly. Please upload Amiri-Regular.ttf to the public folder.",
-          variant: "destructive",
-        });
-      }
       
       const logoSize = 40;
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -244,7 +222,7 @@ export const useRevenueManager = () => {
             totalRevenue += revenue.amount;
           }
 
-          let noteText = (revenue.notes || '').replace('- إيراد', '').replace('- صرف فكة', '').trim() || '-';
+          let noteText = (revenue.notes || '').replace('- Income', '').replace('- Cash Disbursement', '').trim() || '-';
           
           body.push([
             index === 0 ? date : '',
@@ -269,15 +247,9 @@ export const useRevenueManager = () => {
         body: body,
         startY: 90,
         theme: 'grid',
-        headStyles: { fillColor: [70, 130, 180], textColor: 255, font: fontLoaded ? 'Amiri' : 'helvetica', fontStyle: 'bold' },
-        styles: { font: fontLoaded ? 'Amiri' : 'helvetica', cellPadding: 3, fontSize: 9 },
+        headStyles: { fillColor: [70, 130, 180], textColor: 255, font: 'helvetica', fontStyle: 'bold' },
+        styles: { font: 'helvetica', cellPadding: 3, fontSize: 9 },
         columnStyles: { 4: { cellWidth: 'auto' } },
-        didParseCell: function (data) {
-          const arabicRegex = /[\u0600-\u06FF]/;
-          if (fontLoaded && typeof data.cell.raw === 'string' && arabicRegex.test(data.cell.raw)) {
-            data.cell.styles.halign = 'right';
-          }
-        }
       });
 
       const finalY = (doc as any).lastAutoTable.finalY || 100;
