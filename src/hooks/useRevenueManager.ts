@@ -222,7 +222,10 @@ export const useRevenueManager = () => {
             totalRevenue += revenue.amount;
           }
 
-          let noteText = (revenue.notes || '').replace('- Income', '').replace('- Cash Disbursement', '').trim() || '-';
+          let noteText = (revenue.notes || '').replace('- Income', '').replace('- Cash Disbursement', '').trim();
+          
+          // Sanitize notes: remove non-ASCII characters to prevent PDF rendering issues
+          noteText = noteText.replace(/[^\x00-\x7F]+/g, '').trim() || '-';
           
           body.push([
             index === 0 ? date : '',
