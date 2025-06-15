@@ -1,18 +1,10 @@
-
 import { useState, useMemo, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Revenue } from '@/store/pharmacyStore';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-
-// Extend jsPDF with autoTable for TypeScript
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+import autoTable from 'jspdf-autotable';
 
 export const useRevenueManager = () => {
   const [expense, setExpense] = useState('');
@@ -177,7 +169,7 @@ export const useRevenueManager = () => {
     setShowPeriodDetails(true);
   };
 
-  const generatePeriodReport = () => {
+  const generatePeriodReport = async () => {
     if (!reportStartDate || !reportEndDate) {
       toast({
         title: language === 'ar' ? "خطأ" : "Error",
@@ -189,6 +181,28 @@ export const useRevenueManager = () => {
 
     try {
       const doc = new jsPDF();
+      let fontLoaded = false;
+      try {
+        // The Amiri font is needed for Arabic characters in the PDF.
+        // Make sure 'Amiri-Regular.ttf' is in the `public` folder of your project.
+        const fontResponse = await fetch('/Amiri-Regular.ttf');
+        if (!fontResponse.ok) {
+          throw new Error('Font file not found.');
+        }
+        const font = await fontResponse.arrayBuffer();
+        const fontStr = new Uint8Array(font).reduce((data, byte) => data + String.fromCharCode(byte), '');
+        doc.addFileToVFS('Amiri-Regular.ttf', fontStr);
+        doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+        doc.setFont('Amiri');
+        fontLoaded = true;
+      } catch (fontError) {
+        console.error("Font loading error:", fontError);
+        toast({
+          title: "Font Warning",
+          description: "Could not load Arabic font. Arabic text may not render correctly. Please upload Amiri-Regular.ttf to the public folder.",
+          variant: "destructive",
+        });
+      }
       
       const logoSize = 40;
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -250,17 +264,17 @@ export const useRevenueManager = () => {
         }
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         head: head,
         body: body,
         startY: 90,
         theme: 'grid',
-        headStyles: { fillColor: [70, 130, 180], textColor: 255 },
-        styles: { font: 'helvetica', cellPadding: 3, fontSize: 9 },
+        headStyles: { fillColor: [70, 130, 180], textColor: 255, font: fontLoaded ? 'Amiri' : 'helvetica', fontStyle: 'bold' },
+        styles: { font: fontLoaded ? 'Amiri' : 'helvetica', cellPadding: 3, fontSize: 9 },
         columnStyles: { 4: { cellWidth: 'auto' } },
         didParseCell: function (data) {
           const arabicRegex = /[\u0600-\u06FF]/;
-          if (typeof data.cell.raw === 'string' && arabicRegex.test(data.cell.raw)) {
+          if (fontLoaded && typeof data.cell.raw === 'string' && arabicRegex.test(data.cell.raw)) {
             data.cell.styles.halign = 'right';
           }
         }
