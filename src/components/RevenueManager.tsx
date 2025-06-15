@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
@@ -14,6 +13,13 @@ import PeriodRevenueDetails from './revenue/PeriodRevenueDetails';
 import RevenueForm from './revenue/RevenueForm';
 import RevenueDisplay from './revenue/RevenueDisplay';
 import RevenueReportExporter from './revenue/RevenueReportExporter';
+
+// Extend jsPDF with autoTable for TypeScript
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 interface RevenueManagerProps {
   onBack: () => void;
@@ -198,137 +204,94 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
-      // Add logo - larger size
-      const logoSize = 50;
-      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
+      const logoSize = 40;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', (pageWidth / 2) - (logoSize/2), 10, logoSize, logoSize);
       
-      // Header
-      doc.setFontSize(16);
-      doc.text('Al-Tiryak Al-Shafi Pharmacy', 105, 30, { align: 'center' });
-      
+      doc.setFontSize(18);
+      doc.text('Al-Tiryak Al-Shafi Pharmacy', pageWidth / 2, 60, { align: 'center' });
       doc.setFontSize(14);
-      doc.text('Revenue Report', 105, 40, { align: 'center' });
-      
+      doc.text('Revenue Report', pageWidth / 2, 70, { align: 'center' });
       doc.setFontSize(12);
-      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, 105, 50, { align: 'center' });
+      doc.text(`Period: ${reportStartDate} - ${reportEndDate}`, pageWidth / 2, 80, { align: 'center' });
       
-      // Get revenues for the period
-      const periodRevenues = revenues.filter(revenue => 
-        revenue.date >= reportStartDate && revenue.date <= reportEndDate
-      );
+      const periodRevenues = revenues.filter(r => r.date >= reportStartDate && r.date <= reportEndDate);
       
-      // Group revenues by date
       const revenuesByDate = periodRevenues.reduce((acc, revenue) => {
-        if (!acc[revenue.date]) {
-          acc[revenue.date] = [];
-        }
+        if (!acc[revenue.date]) acc[revenue.date] = [];
         acc[revenue.date].push(revenue);
         return acc;
       }, {} as Record<string, Revenue[]>);
       
-      let yPosition = 70;
+      const head = [['Date', 'Period', 'Change (LYD)', 'Revenue (LYD)', 'Notes']];
+      const body: any[] = [];
       let totalRevenue = 0;
-      
-      // Process each date
+
       Object.keys(revenuesByDate).sort().forEach(date => {
         const dayRevenues = revenuesByDate[date];
+        let dailyTotalRevenue = 0;
         
-        // Date header
-        doc.setFontSize(12);
-        doc.setFillColor(240, 240, 240);
-        doc.rect(20, yPosition - 5, 170, 8, 'F');
-        doc.text(`Date: ${date}`, 25, yPosition, { align: 'left' });
-        yPosition += 15;
-        
-        // Table headers for this date
-        doc.setFontSize(10);
-        doc.setFillColor(70, 130, 180);
-        doc.rect(20, yPosition - 5, 40, 8, 'F');
-        doc.rect(60, yPosition - 5, 40, 8, 'F');
-        doc.rect(100, yPosition - 5, 40, 8, 'F');
-        doc.rect(140, yPosition - 5, 50, 8, 'F');
-        
-        doc.setTextColor(255, 255, 255);
-        doc.text('Period', 40, yPosition, { align: 'center' });
-        doc.text('Change (LYD)', 80, yPosition, { align: 'center' });
-        doc.text('Revenue (LYD)', 120, yPosition, { align: 'center' });
-        doc.text('Notes', 165, yPosition, { align: 'center' });
-        
-        doc.setTextColor(0, 0, 0);
-        yPosition += 10;
-        
-        let dailyTotal = 0;
-        
-        dayRevenues.forEach(revenue => {
-          // Draw row borders
-          doc.setDrawColor(200, 200, 200);
-          doc.line(20, yPosition - 3, 190, yPosition - 3);
-          doc.line(20, yPosition + 5, 190, yPosition + 5);
-          
+        dayRevenues.forEach((revenue, index) => {
           const periodText = revenue.period === 'morning' ? 'Morning' : 
                             revenue.period === 'evening' ? 'Evening' : 
                             revenue.period === 'night' ? 'Night' : 'Ahmad Rajili';
-          doc.text(periodText, 40, yPosition, { align: 'center' });
           
-          if (revenue.type === 'expense') {
-            doc.text(`${revenue.amount}.00`, 80, yPosition, { align: 'center' });
-            doc.text('-', 120, yPosition, { align: 'center' });
-          } else {
-            doc.text('-', 80, yPosition, { align: 'center' });
-            doc.text(`${revenue.amount}.00`, 120, yPosition, { align: 'center' });
-            dailyTotal += revenue.amount;
+          const change = revenue.type === 'expense' ? revenue.amount.toFixed(2) : '-';
+          const income = revenue.type === 'income' ? revenue.amount.toFixed(2) : '-';
+          
+          if (revenue.type === 'income') {
+            dailyTotalRevenue += revenue.amount;
             totalRevenue += revenue.amount;
           }
+
+          let noteText = (revenue.notes || '').replace('- إيراد', '').replace('- صرف فكة', '').trim() || '-';
           
-          // Notes - handle Arabic text properly
-          if (revenue.notes) {
-            let noteText = revenue.notes.replace('- إيراد', '').replace('- صرف فكة', '').trim();
-            if (noteText) {
-              // For Arabic text, we'll display it as is since jsPDF has basic Arabic support
-              try {
-                doc.text(noteText, 165, yPosition, { align: 'center' });
-              } catch (error) {
-                // Fallback if rendering fails
-                doc.text('[Arabic Text]', 165, yPosition, { align: 'center' });
-              }
-            } else {
-              doc.text('-', 165, yPosition, { align: 'center' });
-            }
-          } else {
-            doc.text('-', 165, yPosition, { align: 'center' });
-          }
-          
-          yPosition += 10;
+          body.push([
+            index === 0 ? date : '',
+            periodText,
+            change,
+            income,
+            noteText
+          ]);
         });
         
-        // Daily total
-        doc.setFontSize(11);
-        doc.setFillColor(220, 220, 220);
-        doc.rect(20, yPosition - 3, 170, 8, 'F');
-        doc.text(`Daily Total: ${dailyTotal}.00 LYD`, 105, yPosition, { align: 'center' });
-        yPosition += 20;
-        
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
+        if (dayRevenues.length > 0) {
+          body.push([
+            { content: 'Daily Total:', colSpan: 3, styles: { halign: 'right', fontStyle: 'bold' } },
+            { content: dailyTotalRevenue.toFixed(2), styles: { fontStyle: 'bold' } },
+            ''
+          ]);
         }
       });
+
+      doc.autoTable({
+        head: head,
+        body: body,
+        startY: 90,
+        theme: 'grid',
+        headStyles: { fillColor: [70, 130, 180], textColor: 255 },
+        styles: { font: 'helvetica', cellPadding: 3, fontSize: 9 },
+        columnStyles: { 4: { cellWidth: 'auto' } },
+        didParseCell: function (data) {
+          const arabicRegex = /[\u0600-\u06FF]/;
+          if (typeof data.cell.raw === 'string' && arabicRegex.test(data.cell.raw)) {
+            data.cell.styles.halign = 'right';
+          }
+        }
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY || 100;
       
-      // Summary
-      yPosition += 10;
       doc.setFontSize(14);
       doc.setFillColor(34, 139, 34);
-      doc.rect(20, yPosition - 5, 170, 10, 'F');
+      doc.rect(20, finalY + 10, pageWidth - 40, 12, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.text(`Total Revenue: ${totalRevenue}.00 LYD`, 105, yPosition, { align: 'center' });
+      doc.text(`Total Revenue: ${totalRevenue.toFixed(2)} LYD`, pageWidth / 2, finalY + 17, { align: 'center' });
       doc.setTextColor(0, 0, 0);
-      yPosition += 20;
       
-      // Footer
       doc.setFontSize(10);
-      doc.text(`Generated on ${new Date().toLocaleDateString('en-US')}, ${new Date().toLocaleTimeString('en-US')}`, 105, yPosition, { align: 'center' });
-      yPosition += 10;
-      doc.text('Manager: ________________', 105, yPosition, { align: 'center' });
+      doc.text(`Generated on ${new Date().toLocaleDateString('en-US')}, ${new Date().toLocaleTimeString('en-US')}`, pageWidth / 2, finalY + 35, { align: 'center' });
+      doc.text('Manager: ________________', pageWidth / 2, finalY + 45, { align: 'center' });
       
       doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
       
