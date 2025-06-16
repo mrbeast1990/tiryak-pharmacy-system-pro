@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,7 @@ interface AuthState {
   rememberMe: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  setRememberMe: (remember: boolean) => void;
   checkPermission: (permission: string) => boolean;
 }
 
@@ -38,6 +40,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       rememberMe: false,
+      
+      setRememberMe: (remember: boolean) => {
+        set({ rememberMe: remember });
+      },
       
       login: async (email: string, password: string) => {
         console.log('محاولة تسجيل الدخول عبر Supabase:', email);
@@ -73,7 +79,6 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: userWithPermissions,
           isAuthenticated: true,
-          rememberMe: true
         });
         console.log('تم تسجيل الدخول بنجاح:', userWithPermissions.name);
         return true;

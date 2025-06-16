@@ -1,12 +1,15 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
-import { Lock, Mail, Globe, UserPlus } from 'lucide-react';
+import { Lock, Mail, Globe, UserPlus, Fingerprint } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { NativeBiometric } from 'capacitor-native-biometric';
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -15,9 +18,11 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isBiometricLoading, setIsBiometricLoading] = useState(false);
   
-  const { login } = useAuthStore();
+  const { login, setRememberMe: setAuthRememberMe } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -25,6 +30,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    // Set remember me preference before login
+    setAuthRememberMe(rememberMe);
     
     const success = await login(email, password);
     
@@ -45,9 +53,88 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     setIsLoading(false);
   };
 
+  const handleBiometricLogin = async () => {
+    setIsBiometricLoading(true);
+    
+    try {
+      // Check if biometric is available
+      const isAvailable = await NativeBiometric.isAvailable();
+      
+      if (!isAvailable.isAvailable) {
+        toast({
+          title: language === 'ar' ? "البصمة غير متاحة" : "Biometric Not Available",
+          description: language === 'ar' ? "البصمة غير مدعومة على هذا الجهاز" : "Biometric authentication is not supported on this device",
+          variant: "destructive",
+        });
+        setIsBiometricLoading(false);
+        return;
+      }
+
+      // Perform biometric verification
+      const result = await NativeBiometric.verifyIdentity({
+        reason: language === 'ar' ? "استخدم البصمة لتسجيل الدخول" : "Use your biometric to authenticate",
+        title: language === 'ar' ? "تسجيل الدخول بالبصمة" : "Biometric Login",
+        subtitle: language === 'ar' ? "ضع إصبعك على المستشعر" : "Place your finger on the sensor",
+        description: language === 'ar' ? "تأكيد الهوية للدخول إلى النظام" : "Verify your identity to access the system"
+      });
+
+      if (result) {
+        // Get stored credentials (you might want to store these securely)
+        const credentials = await NativeBiometric.getCredentials({
+          server: "al-tiryak-pharmacy",
+        });
+
+        if (credentials.username && credentials.password) {
+          setAuthRememberMe(true);
+          const success = await login(credentials.username, credentials.password);
+          
+          if (success) {
+            toast({
+              title: language === 'ar' ? "تم تسجيل الدخول بالبصمة" : "Biometric Login Successful",
+              description: language === 'ar' ? "تم التحقق من الهوية بنجاح" : "Identity verified successfully",
+            });
+            onLogin();
+          } else {
+            toast({
+              title: language === 'ar' ? "خطأ في البيانات المحفوظة" : "Stored Credentials Error",
+              description: language === 'ar' ? "يرجى تسجيل الدخول يدوياً لتحديث البيانات" : "Please login manually to update credentials",
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: language === 'ar' ? "لا توجد بيانات محفوظة" : "No Stored Credentials",
+            description: language === 'ar' ? "يرجى تسجيل الدخول يدوياً أولاً" : "Please login manually first to enable biometric login",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Biometric authentication error:', error);
+      toast({
+        title: language === 'ar' ? "خطأ في البصمة" : "Biometric Error",
+        description: language === 'ar' ? "فشل في التحقق من البصمة" : "Failed to verify biometric",
+        variant: "destructive",
+      });
+    }
+    
+    setIsBiometricLoading(false);
+  };
+
   const handleSignUpClick = () => {
     navigate('/signup');
   };
+
+  // Store credentials for biometric login when successful login with remember me
+  React.useEffect(() => {
+    if (rememberMe && email && password) {
+      NativeBiometric.setCredentials({
+        username: email,
+        password: password,
+        server: "al-tiryak-pharmacy",
+      }).catch(console.error);
+    }
+  }, [rememberMe, email, password]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative pt-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
@@ -130,6 +217,21 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                   />
                 </div>
               </div>
+
+              {/* Remember Me Checkbox */}
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <Checkbox 
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <label 
+                  htmlFor="remember-me" 
+                  className="text-sm font-medium text-gray-700 cursor-pointer"
+                >
+                  {language === 'ar' ? 'تذكرني' : 'Remember me'}
+                </label>
+              </div>
               
               <Button
                 type="submit"
@@ -140,6 +242,24 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   language === 'ar' ? 'تسجيل الدخول' : 'Sign In'
+                )}
+              </Button>
+
+              {/* Biometric Login Button */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleBiometricLogin}
+                disabled={isBiometricLoading}
+              >
+                {isBiometricLoading ? (
+                  <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Fingerprint className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                    {language === 'ar' ? 'تسجيل الدخول بالبصمة' : 'Login with Biometric'}
+                  </>
                 )}
               </Button>
               

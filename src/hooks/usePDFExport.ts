@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/store/languageStore';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { FileOpener } from '@capacitor-community/file-opener';
 import jsPDF from 'jspdf';
 
 export const usePDFExport = () => {
@@ -13,24 +14,45 @@ export const usePDFExport = () => {
     try {
       if (Capacitor.isNativePlatform()) {
         // Mobile platform - use Capacitor Filesystem
-        const pdfData = doc.output('dataurlstring');
-        const base64Data = pdfData.split(',')[1];
+        const pdfArrayBuffer = doc.output('arraybuffer');
+        const base64Data = btoa(
+          new Uint8Array(pdfArrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
 
+        console.log('Saving PDF to mobile device...');
+        
         const result = await Filesystem.writeFile({
           path: filename,
           data: base64Data,
-          directory: Directory.Documents,
-          encoding: Encoding.UTF8
+          directory: Directory.Downloads,
+          encoding: Encoding.Base64
         });
+
+        console.log('PDF saved successfully:', result.uri);
 
         toast({
           title: language === 'ar' ? "تم التصدير" : "Exported",
           description: language === 'ar' ? 
-            `تم حفظ الملف في: Documents/${filename}` : 
-            `File saved to: Documents/${filename}`,
+            `تم حفظ الملف في: Downloads/${filename}` : 
+            `File saved to: Downloads/${filename}`,
         });
 
-        console.log('PDF saved to:', result.uri);
+        // Try to open the file
+        try {
+          await FileOpener.open({
+            filePath: result.uri,
+            contentType: 'application/pdf'
+          });
+        } catch (openError) {
+          console.log('Could not open file directly:', openError);
+          // Show additional message about manual opening
+          toast({
+            title: language === 'ar' ? "ملاحظة" : "Note",
+            description: language === 'ar' ? 
+              "يمكنك العثور على الملف في مجلد التحميلات" : 
+              "You can find the file in Downloads folder",
+          });
+        }
       } else {
         // Web platform - use traditional download
         doc.save(filename);
