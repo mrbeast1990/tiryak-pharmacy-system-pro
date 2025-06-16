@@ -2,12 +2,14 @@
 import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/store/languageStore';
 import { Revenue } from '@/store/pharmacyStore';
+import { usePDFExport } from '@/hooks/usePDFExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export const useRevenuePDF = () => {
   const { language } = useLanguageStore();
   const { toast } = useToast();
+  const { exportPDF } = usePDFExport();
 
   const generatePeriodReport = async (reportStartDate: string, reportEndDate: string, revenues: Revenue[]) => {
     if (!reportStartDate || !reportEndDate) {
@@ -102,12 +104,7 @@ export const useRevenuePDF = () => {
       doc.text(`Generated on ${new Date().toLocaleDateString('en-US')}, ${new Date().toLocaleTimeString('en-US')}`, pageWidth / 2, finalY + 35, { align: 'center' });
       doc.text('Manager: ________________', pageWidth / 2, finalY + 45, { align: 'center' });
       
-      doc.save(`revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
-      
-      toast({
-        title: language === 'ar' ? "تم التصدير" : "Exported",
-        description: language === 'ar' ? "تم تصدير التقرير بنجاح" : "Report exported successfully",
-      });
+      await exportPDF(doc, `revenue-report-${reportStartDate}-to-${reportEndDate}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
@@ -120,4 +117,3 @@ export const useRevenuePDF = () => {
 
   return { generatePeriodReport };
 };
-

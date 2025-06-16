@@ -13,6 +13,7 @@
   "dependencies": {
     "@capacitor/cli": "^7.3.0",
     "@capacitor/core": "^7.3.0",
+    "@capacitor/filesystem": "^7.1.1",
     "@capacitor/ios": "^7.3.0",
     "@capacitor/preferences": "^7.0.1",
     "@hookform/resolvers": "^3.9.0",

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { usePharmacyStore } from '@/store/pharmacyStore';
 import { ArrowRight, Users, BarChart3, FileText, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useToast } from '@/hooks/use-toast';
+import { usePDFExport } from '@/hooks/usePDFExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -20,11 +22,12 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
   const { language } = useLanguageStore();
   const { medicines } = usePharmacyStore();
   const { toast } = useToast();
+  const { exportPDF } = usePDFExport();
   
   const [reportStartDate, setReportStartDate] = React.useState('');
   const [reportEndDate, setReportEndDate] = React.useState('');
 
-  // Calculate user statistics
+  // Calculate user statistics based only on shortage records
   const userStats = React.useMemo(() => {
     const stats: Record<string, { shortages: number }> = {};
     
@@ -56,7 +59,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-  const generatePerformanceReport = () => {
+  const generatePerformanceReport = async () => {
     if (!reportStartDate || !reportEndDate) {
       toast({
         title: language === 'ar' ? "خطأ" : "Error",
@@ -69,26 +72,32 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
     try {
       const doc = new jsPDF();
       
+      // Header with logo
       const logoSize = 30;
       const pageWidth = doc.internal.pageSize.getWidth();
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', (pageWidth / 2) - (logoSize / 2), 15, logoSize, logoSize);
       
+      // Title
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
+      doc.setFontSize(20);
       doc.text('Al-Tiryak Al-Shafi Pharmacy', pageWidth / 2, 55, { align: 'center' });
       
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(14);
-      doc.text('Staff Performance Report', pageWidth / 2, 65, { align: 'center' });
-      doc.setFontSize(12);
-      doc.text(`Period: ${reportStartDate} to ${reportEndDate}`, pageWidth / 2, 75, { align: 'center' });
+      doc.setFontSize(16);
+      doc.text('Staff Performance Report', pageWidth / 2, 68, { align: 'center' });
       
+      doc.setFontSize(12);
+      doc.text(`Report Period: ${reportStartDate} to ${reportEndDate}`, pageWidth / 2, 78, { align: 'center' });
+      doc.text(`Generated on: ${new Date().toLocaleDateString('en-US')}`, pageWidth / 2, 86, { align: 'center' });
+      
+      // Filter medicines by date range
       const filteredMedicines = medicines.filter(medicine => {
         if (!medicine.created_at) return false;
         const medicineDate = medicine.created_at.split('T')[0];
         return medicineDate >= reportStartDate && medicineDate <= reportEndDate;
       });
       
+      // Calculate period statistics
       const periodStats: Record<string, { shortages: number }> = {};
       
       filteredMedicines.forEach(medicine => {
@@ -100,11 +109,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
         }
       });
       
-      const head = [['Staff Name', 'Shortage Entries', 'Rating']];
+      // Create table data
+      const head = [['Staff Member', 'Shortage Records', 'Performance Rating']];
       const body = Object.entries(periodStats).map(([name, data]) => {
           const total = data.shortages;
           const rating = total > 20 ? 'Excellent' : 
-                        total > 10 ? 'Good' : 'Average';
+                        total > 10 ? 'Good' : 
+                        total > 5 ? 'Average' : 'Needs Improvement';
           return [name, total.toString(), rating];
       });
 
@@ -112,44 +123,56 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
         autoTable(doc, {
             head: head,
             body: body,
-            startY: 85,
-            theme: 'grid',
-            headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-            styles: { font: 'helvetica', cellPadding: 3, fontSize: 10 },
-            didDrawPage: (data) => {
-              doc.setFontSize(8);
-              doc.text(`Page ${data.pageNumber}`, data.settings.margin.left, doc.internal.pageSize.getHeight() - 5);
+            startY: 100,
+            theme: 'striped',
+            headStyles: { 
+              fillColor: [41, 128, 185], 
+              textColor: 255, 
+              fontStyle: 'bold',
+              fontSize: 12
+            },
+            styles: { 
+              font: 'helvetica', 
+              cellPadding: 5, 
+              fontSize: 11,
+              halign: 'center'
+            },
+            columnStyles: {
+              0: { halign: 'left' },
+              1: { halign: 'center' },
+              2: { halign: 'center' }
             }
         });
       } else {
-        doc.text('No data available for the selected period.', pageWidth / 2, 90, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text('No performance data available for the selected period.', pageWidth / 2, 110, { align: 'center' });
       }
 
-      const finalY = (doc as any).lastAutoTable?.finalY || 90;
+      const finalY = (doc as any).lastAutoTable?.finalY || 120;
       
-      doc.setFontSize(12);
+      // Summary section
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text('Summary', 14, finalY + 15);
+      doc.text('Performance Summary', 20, finalY + 20);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       const totalStaff = Object.keys(periodStats).length;
       const totalShortageEntries = Object.values(periodStats).reduce((sum, stat) => sum + stat.shortages, 0);
+      const avgPerformance = totalStaff > 0 ? (totalShortageEntries / totalStaff).toFixed(1) : '0';
       
-      doc.text(`Active Staff: ${totalStaff}`, 14, finalY + 22);
-      doc.text(`Total Shortage Records: ${totalShortageEntries}`, 14, finalY + 29);
+      doc.text(`• Total Active Staff Members: ${totalStaff}`, 20, finalY + 32);
+      doc.text(`• Total Shortage Records Processed: ${totalShortageEntries}`, 20, finalY + 42);
+      doc.text(`• Average Records per Staff Member: ${avgPerformance}`, 20, finalY + 52);
       
-      doc.setFontSize(10);
+      // Footer
       const pageHeight = doc.internal.pageSize.getHeight();
-      doc.text(`Generated by: ${user?.name || 'System'} on ${new Date().toLocaleString('en-US')}`, pageWidth / 2, pageHeight - 15, { align: 'center' });
-      doc.text('Authorized Signature: ____________________', pageWidth / 2, pageHeight - 8, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(`Report generated by: ${user?.name || 'System Admin'}`, 20, pageHeight - 25);
+      doc.text(`Date & Time: ${new Date().toLocaleString('en-US')}`, 20, pageHeight - 18);
+      doc.text('Authorized Signature: ________________________', 20, pageHeight - 10);
 
-      doc.save(`staff-performance-report-${reportStartDate}-to-${reportEndDate}.pdf`);
-      
-      toast({
-        title: language === 'ar' ? "تم التصدير" : "Exported",
-        description: language === 'ar' ? "تم تصدير تقرير الأداء بنجاح" : "Performance report exported successfully",
-      });
+      await exportPDF(doc, `staff-performance-report-${reportStartDate}-to-${reportEndDate}.pdf`);
     } catch (error) {
       console.error("PDF generation error:", error);
       toast({
@@ -260,7 +283,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
                   <tr className="border-b">
                     <th className="py-3 px-4 font-medium text-gray-700">اسم المستخدم</th>
                     <th className="py-3 px-4 font-medium text-gray-700">سجلات النواقص</th>
-                    <th className="py-3 px-4 font-medium text-gray-700">إجمالي السجلات</th>
                     <th className="py-3 px-4 font-medium text-gray-700">التقييم</th>
                   </tr>
                 </thead>
@@ -269,7 +291,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4 font-medium">{userStat.name}</td>
                       <td className="py-3 px-4">{userStat.shortages}</td>
-                      <td className="py-3 px-4 font-semibold">{userStat.total}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           userStat.total > 20 ? 'bg-green-100 text-green-800' :
@@ -347,7 +368,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
         </div>
 
         {/* Summary Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           <Card className="card-shadow">
             <CardContent className="pt-6">
               <div className="text-center">

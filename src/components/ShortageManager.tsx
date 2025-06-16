@@ -9,6 +9,7 @@ import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
 import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePDFExport } from '@/hooks/usePDFExport';
 import jsPDF from 'jspdf';
 
 interface ShortageManagerProps {
@@ -26,6 +27,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const { language, t } = useLanguageStore();
   const { medicines, addMedicine, updateMedicine, deleteMedicine, getMedicineSuggestions } = usePharmacyStore();
   const { toast } = useToast();
+  const { exportPDF } = usePDFExport();
 
   const suggestions = getMedicineSuggestions(medicineName);
 
@@ -109,7 +111,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
 
   const canEditMedicineName = checkPermission('manage_users');
 
-  const exportShortagesPDF = () => {
+  const exportShortagesPDF = async () => {
     try {
       const doc = new jsPDF();
       
@@ -177,12 +179,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         }
       });
       
-      doc.save(`shortages-list-${new Date().toISOString().split('T')[0]}.pdf`);
-      
-      toast({
-        title: language === 'ar' ? "تم التصدير" : "Exported",
-        description: language === 'ar' ? "تم تصدير تقرير النواقص بنجاح" : "Shortages report exported successfully",
-      });
+      await exportPDF(doc, `shortages-list-${new Date().toISOString().split('T')[0]}.pdf`);
     } catch (error) {
       toast({
         title: language === 'ar' ? "خطأ في التصدير" : "Export Error",
