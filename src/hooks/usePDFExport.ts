@@ -24,8 +24,8 @@ export const usePDFExport = () => {
         const result = await Filesystem.writeFile({
           path: filename,
           data: base64Data,
-          directory: Directory.Downloads,
-          encoding: Encoding.Base64
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8
         });
 
         console.log('PDF saved successfully:', result.uri);
@@ -33,8 +33,8 @@ export const usePDFExport = () => {
         toast({
           title: language === 'ar' ? "تم التصدير" : "Exported",
           description: language === 'ar' ? 
-            `تم حفظ الملف في: Downloads/${filename}` : 
-            `File saved to: Downloads/${filename}`,
+            `تم حفظ الملف في: Documents/${filename}` : 
+            `File saved to: Documents/${filename}`,
         });
 
         // Try to open the file
@@ -49,8 +49,8 @@ export const usePDFExport = () => {
           toast({
             title: language === 'ar' ? "ملاحظة" : "Note",
             description: language === 'ar' ? 
-              "يمكنك العثور على الملف في مجلد التحميلات" : 
-              "You can find the file in Downloads folder",
+              "يمكنك العثور على الملف في مجلد المستندات" : 
+              "You can find the file in Documents folder",
           });
         }
       } else {
