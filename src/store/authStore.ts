@@ -67,10 +67,16 @@ export const useAuthStore = create<AuthState>()(
           return false;
         }
         
+        // تصحيح اسم المدير
+        let displayName = profile.name || 'مستخدم';
+        if (profile.role === 'admin' && displayName === 'Deltanorthpharm') {
+          displayName = 'المدير';
+        }
+        
         const userWithPermissions: User = {
           id: authData.user.id,
           email: authData.user.email!,
-          name: profile.name || 'مستخدم',
+          name: displayName,
           role: profile.role,
           permissions: permissionsByRole[profile.role] || [],
           lastLogin: new Date().toISOString(),

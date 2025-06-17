@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
 import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
+import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 
 interface ShortageManagerProps {
@@ -25,9 +25,33 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
-  const { medicines, addMedicine, updateMedicine, deleteMedicine, getMedicineSuggestions } = usePharmacyStore();
+  const { medicines, addMedicine, updateMedicine, deleteMedicine, getMedicineSuggestions, loadMedicines } = usePharmacyStore();
   const { toast } = useToast();
   const { exportPDF } = usePDFExport();
+
+  // إضافة الاستماع للتحديثات المباشرة
+  useEffect(() => {
+    const channel = supabase
+      .channel('medicines-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'medicines'
+        },
+        (payload) => {
+          console.log('تم تلقي تحديث في قاعدة البيانات:', payload);
+          // إعادة تحميل البيانات عند حدوث أي تغيير
+          loadMedicines();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [loadMedicines]);
 
   const suggestions = getMedicineSuggestions(medicineName);
 

@@ -2,7 +2,7 @@
 import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/store/languageStore';
 import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { FileOpener } from '@capacitor-community/file-opener';
 import jsPDF from 'jspdf';
 
@@ -14,18 +14,20 @@ export const usePDFExport = () => {
     try {
       if (Capacitor.isNativePlatform()) {
         // Mobile platform - use Capacitor Filesystem
+        console.log('Starting PDF export on mobile...');
+        
         const pdfArrayBuffer = doc.output('arraybuffer');
         const base64Data = btoa(
           new Uint8Array(pdfArrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
 
-        console.log('Saving PDF to mobile device...');
+        console.log('PDF converted to base64, size:', base64Data.length);
         
         const result = await Filesystem.writeFile({
           path: filename,
           data: base64Data,
-          directory: Directory.Documents,
-          encoding: Encoding.UTF8
+          directory: Directory.Documents
+          // Removed encoding parameter as it's not needed for base64 data
         });
 
         console.log('PDF saved successfully:', result.uri);
@@ -39,10 +41,12 @@ export const usePDFExport = () => {
 
         // Try to open the file
         try {
+          console.log('Attempting to open PDF file...');
           await FileOpener.open({
             filePath: result.uri,
             contentType: 'application/pdf'
           });
+          console.log('PDF opened successfully');
         } catch (openError) {
           console.log('Could not open file directly:', openError);
           // Show additional message about manual opening
@@ -55,6 +59,7 @@ export const usePDFExport = () => {
         }
       } else {
         // Web platform - use traditional download
+        console.log('Exporting PDF on web platform...');
         doc.save(filename);
         
         toast({

@@ -10,6 +10,7 @@ import { Lock, Mail, Globe, UserPlus, Fingerprint } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { NativeBiometric } from 'capacitor-native-biometric';
+import { Capacitor } from '@capacitor/core';
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -54,6 +55,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   };
 
   const handleBiometricLogin = async () => {
+    // التحقق من أن التطبيق يعمل على منصة الهاتف
+    if (!Capacitor.isNativePlatform()) {
+      toast({
+        title: language === 'ar' ? "غير مدعوم" : "Not Supported",
+        description: language === 'ar' ? 
+          "تسجيل الدخول بالبصمة مفعل فقط على تطبيق الهاتف" : 
+          "Biometric login is only available on mobile app",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsBiometricLoading(true);
     
     try {
@@ -127,7 +140,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
   // Store credentials for biometric login when successful login with remember me
   React.useEffect(() => {
-    if (rememberMe && email && password) {
+    if (rememberMe && email && password && Capacitor.isNativePlatform()) {
       NativeBiometric.setCredentials({
         username: email,
         password: password,
@@ -245,23 +258,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 )}
               </Button>
 
-              {/* Biometric Login Button */}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleBiometricLogin}
-                disabled={isBiometricLoading}
-              >
-                {isBiometricLoading ? (
-                  <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Fingerprint className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
-                    {language === 'ar' ? 'تسجيل الدخول بالبصمة' : 'Login with Biometric'}
-                  </>
-                )}
-              </Button>
+              {/* Biometric Login Button - فقط على الهاتف */}
+              {Capacitor.isNativePlatform() && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleBiometricLogin}
+                  disabled={isBiometricLoading}
+                >
+                  {isBiometricLoading ? (
+                    <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Fingerprint className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                      {language === 'ar' ? 'تسجيل الدخول بالبصمة' : 'Login with Biometric'}
+                    </>
+                  )}
+                </Button>
+              )}
               
               <Button
                 type="button"

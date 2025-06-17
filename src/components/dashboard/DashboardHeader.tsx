@@ -1,24 +1,23 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { Globe, Settings, LogOut, User } from 'lucide-react';
+import { useLanguageStore } from '@/store/languageStore';
+import { useAuthStore } from '@/store/authStore';
+import NotificationDisplay from '@/components/NotificationDisplay';
 
 interface DashboardHeaderProps {
-  user: any;
-  t: (key: string) => string;
-  language: 'ar' | 'en';
-  onLogout: () => void;
-  onToggleLanguage: () => void;
-  onShowProfile: () => void;
+  onOpenProfile: () => void;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({
-  user,
-  t,
-  language,
-  onLogout,
-  onToggleLanguage,
-  onShowProfile,
-}) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
+  const { language, toggleLanguage, t } = useLanguageStore();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <header className="bg-white shadow-sm border-b relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,38 +26,49 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <img 
               src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
               alt="Al-Tiryak Logo" 
-              className="w-10 h-10 cursor-pointer"
-              onClick={onShowProfile}
+              className="w-8 h-8"
             />
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">
-                {t('pharmacy.name')}
-              </h1>
-              <p className="text-sm text-gray-600">
-                {t('welcome')}{' '}
-                {user?.name}
-              </p>
-            </div>
+            <h1 className="text-xl font-bold text-gray-900">
+              {t('pharmacy.name')}
+            </h1>
           </div>
           
-          <div className="flex items-center space-x-2 space-x-reverse">
+          <div className="flex items-center space-x-4 space-x-reverse">
+            <span className="text-sm text-gray-600">
+              {language === 'ar' ? 'مرحباً' : 'Welcome'}, {user?.name}
+            </span>
+            
+            {/* مكون الإشعارات */}
+            <NotificationDisplay />
+            
             <Button
-              onClick={onToggleLanguage}
-              variant="outline"
+              onClick={toggleLanguage}
+              variant="ghost"
               size="sm"
-              className="text-xs px-1.5 py-0.5 h-5"
+              className="flex items-center space-x-2"
             >
-              {language === 'ar' ? 'English' : 'عربي'}
+              <Globe className="w-4 h-4" />
+              <span className="text-sm">{t('language')}</span>
             </Button>
             
             <Button
-              onClick={onLogout}
+              onClick={onOpenProfile}
               variant="ghost"
               size="sm"
-              className="flex items-center space-x-1 space-x-reverse text-red-600 hover:text-red-700 text-xs px-1.5 py-0.5 h-5"
+              className="flex items-center space-x-2"
             >
-              <LogOut className="w-3 h-3" />
-              <span>{t('logout')}</span>
+              <User className="w-4 h-4" />
+              <span className="text-sm">{t('profile.title')}</span>
+            </Button>
+            
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              size="sm"
+              className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="text-sm">{t('logout')}</span>
             </Button>
           </div>
         </div>
