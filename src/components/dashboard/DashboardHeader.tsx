@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Globe, Settings, LogOut, User } from 'lucide-react';
+import { Globe, LogOut, User } from 'lucide-react';
 import { useLanguageStore } from '@/store/languageStore';
 import { useAuthStore } from '@/store/authStore';
 import NotificationDisplay from '@/components/NotificationDisplay';
@@ -18,11 +18,19 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
     logout();
   };
 
+  // تحديد النص المناسب للترحيب
+  const getWelcomeText = () => {
+    if (user?.role === 'admin') {
+      return 'مرحباً مدير';
+    }
+    return `${language === 'ar' ? 'مرحباً' : 'Welcome'}, ${user?.name}`;
+  };
+
   return (
     <header className="bg-white shadow-sm border-b relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-4 space-x-reverse">
+          <div className="flex items-center gap-3">
             <img 
               src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
               alt="Al-Tiryak Logo" 
@@ -33,41 +41,44 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
             </h1>
           </div>
           
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <span className="text-sm text-gray-600">
-              {language === 'ar' ? 'مرحباً' : 'Welcome'}, {user?.name}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600 hidden sm:block">
+              {getWelcomeText()}
             </span>
             
             <NotificationDisplay />
             
             <Button
-              onClick={toggleLanguage}
-              variant="ghost"
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-sm">{t('language')}</span>
-            </Button>
-            
-            <Button
               onClick={onOpenProfile}
               variant="ghost"
               size="sm"
-              className="flex items-center space-x-2"
+              className="flex items-center gap-2"
+              title={t('profile.title')}
             >
               <User className="w-4 h-4" />
-              <span className="text-sm">{t('profile.title')}</span>
+              <span className="text-sm hidden md:block">{t('profile.title')}</span>
+            </Button>
+            
+            <Button
+              onClick={toggleLanguage}
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2"
+              title={t('language')}
+            >
+              <Globe className="w-4 h-4" />
+              <span className="text-sm hidden md:block">{language === 'ar' ? 'English' : 'العربية'}</span>
             </Button>
             
             <Button
               onClick={handleLogout}
               variant="ghost"
               size="sm"
-              className="flex items-center space-x-2 text-red-600 hover:text-red-700"
+              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+              title={t('logout')}
             >
               <LogOut className="w-4 h-4" />
-              <span className="text-sm">{t('logout')}</span>
+              <span className="text-sm hidden md:block">{t('logout')}</span>
             </Button>
           </div>
         </div>

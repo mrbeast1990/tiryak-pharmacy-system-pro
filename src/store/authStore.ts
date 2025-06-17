@@ -92,9 +92,9 @@ export const useAuthStore = create<AuthState>()(
             return false;
           }
           
-          // تصحيح اسم المدير
+          // تحديد الاسم المناسب للعرض
           let displayName = profile.name || 'مستخدم';
-          if (profile.role === 'admin' && displayName === 'Deltanorthpharm') {
+          if (profile.role === 'admin') {
             displayName = 'المدير';
           }
           
