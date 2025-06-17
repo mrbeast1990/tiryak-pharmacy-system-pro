@@ -19,10 +19,13 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   rememberMe: boolean;
+  isLoading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   setRememberMe: (remember: boolean) => void;
   checkPermission: (permission: string) => boolean;
+  clearError: () => void;
 }
 
 const permissionsByRole: Record<UserRole, string[]> = {
@@ -40,70 +43,109 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       rememberMe: false,
+      isLoading: false,
+      error: null,
       
       setRememberMe: (remember: boolean) => {
         set({ rememberMe: remember });
       },
       
+      clearError: () => {
+        set({ error: null });
+      },
+      
       login: async (email: string, password: string) => {
-        console.log('محاولة تسجيل الدخول عبر Supabase:', email);
+        set({ isLoading: true, error: null });
         
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+        try {
+          console.log('🔐 محاولة تسجيل الدخول عبر Supabase:', email);
+          
+          const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ 
+            email, 
+            password 
+          });
 
-        if (authError || !authData.user) {
-          console.error('فشل في تسجيل الدخول عبر Supabase:', authError?.message);
+          if (authError || !authData.user) {
+            console.error('❌ فشل في تسجيل الدخول عبر Supabase:', authError?.message);
+            set({ 
+              error: authError?.message || 'فشل في تسجيل الدخول', 
+              isLoading: false 
+            });
+            return false;
+          }
+
+          console.log('✅ تم تسجيل الدخول بنجاح، جاري جلب ملف المستخدم...');
+
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('name, role')
+            .eq('id', authData.user.id)
+            .single();
+
+          if (profileError || !profile) {
+            console.error('❌ فشل في جلب ملف المستخدم:', profileError?.message);
+            await supabase.auth.signOut();
+            set({ 
+              error: 'فشل في جلب بيانات المستخدم', 
+              isLoading: false 
+            });
+            return false;
+          }
+          
+          // تصحيح اسم المدير
+          let displayName = profile.name || 'مستخدم';
+          if (profile.role === 'admin' && displayName === 'Deltanorthpharm') {
+            displayName = 'المدير';
+          }
+          
+          const userWithPermissions: User = {
+            id: authData.user.id,
+            email: authData.user.email!,
+            name: displayName,
+            role: profile.role,
+            permissions: permissionsByRole[profile.role] || [],
+            lastLogin: new Date().toISOString(),
+          };
+          
+          set({
+            user: userWithPermissions,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null
+          });
+          
+          console.log('🎉 تم تسجيل الدخول بنجاح:', userWithPermissions.name);
+          return true;
+          
+        } catch (error) {
+          console.error('❌ خطأ غير متوقع في تسجيل الدخول:', error);
+          const errorMessage = error instanceof Error ? error.message : 'خطأ غير متوقع';
+          set({ 
+            error: errorMessage, 
+            isLoading: false 
+          });
           return false;
         }
-
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('name, role')
-          .eq('id', authData.user.id)
-          .single();
-
-        if (profileError || !profile) {
-          console.error('فشل في جلب ملف المستخدم:', profileError?.message);
-          await supabase.auth.signOut();
-          return false;
-        }
-        
-        // تصحيح اسم المدير
-        let displayName = profile.name || 'مستخدم';
-        if (profile.role === 'admin' && displayName === 'Deltanorthpharm') {
-          displayName = 'المدير';
-        }
-        
-        const userWithPermissions: User = {
-          id: authData.user.id,
-          email: authData.user.email!,
-          name: displayName,
-          role: profile.role,
-          permissions: permissionsByRole[profile.role] || [],
-          lastLogin: new Date().toISOString(),
-        };
-        
-        set({
-          user: userWithPermissions,
-          isAuthenticated: true,
-        });
-        console.log('تم تسجيل الدخول بنجاح:', userWithPermissions.name);
-        return true;
       },
       
       logout: async () => {
-        await supabase.auth.signOut();
-        set({
-          user: null,
-          isAuthenticated: false,
-          rememberMe: false
-        });
-        console.log('تم تسجيل الخروج');
+        try {
+          await supabase.auth.signOut();
+          set({
+            user: null,
+            isAuthenticated: false,
+            rememberMe: false,
+            error: null
+          });
+          console.log('👋 تم تسجيل الخروج');
+        } catch (error) {
+          console.error('❌ خطأ في تسجيل الخروج:', error);
+        }
       },
       
       checkPermission: (permission: string) => {
         const { user } = get();
         if (!user) return false;
-        // The admin role defined in the DB now grants all permissions implicitly
         if (user.role === 'admin') return true;
         return user.permissions.includes(permission);
       }
@@ -114,7 +156,10 @@ export const useAuthStore = create<AuthState>()(
         user: state.rememberMe ? state.user : null,
         isAuthenticated: state.rememberMe ? state.isAuthenticated : false,
         rememberMe: state.rememberMe
-      })
+      }),
+      onRehydrateStorage: () => (state) => {
+        console.log('🔄 إعادة تهيئة مخزن المصادقة:', state);
+      }
     }
   )
 );

@@ -12,8 +12,9 @@ interface PharmacyState {
   revenues: Revenue[];
   medicinesLoading: boolean;
   revenuesLoading: boolean;
+  error: string | null;
   fetchMedicines: () => Promise<void>;
-  loadMedicines: () => Promise<void>; // Added this method
+  loadMedicines: () => Promise<void>;
   fetchRevenues: () => Promise<void>;
   addMedicine: (medicine: Pick<Medicine, 'name' | 'status' | 'notes'>) => Promise<void>;
   updateMedicine: (id: string, updates: Partial<Pick<Medicine, 'name' | 'status' | 'notes'>>) => Promise<void>;
@@ -28,6 +29,7 @@ interface PharmacyState {
   getTotalRevenue: () => number;
   getTodayRevenue: () => number;
   getMedicineSuggestions: (query: string) => string[];
+  clearError: () => void;
 }
 
 export const usePharmacyStore = create<PharmacyState>()(
@@ -36,64 +38,124 @@ export const usePharmacyStore = create<PharmacyState>()(
     revenues: [],
     medicinesLoading: true,
     revenuesLoading: true,
+    error: null,
+
+    clearError: () => set({ error: null }),
 
     fetchMedicines: async () => {
-      set({ medicinesLoading: true });
-      const { data, error } = await supabase.from('medicines').select('*').order('last_updated', { ascending: false });
-      if (error) {
-        console.error('Error fetching medicines:', error);
-        set({ medicines: [], medicinesLoading: false });
-        return;
+      set({ medicinesLoading: true, error: null });
+      try {
+        const { data, error } = await supabase
+          .from('medicines')
+          .select('*')
+          .order('last_updated', { ascending: false });
+          
+        if (error) {
+          console.error('❌ خطأ في جلب الأدوية:', error);
+          set({ medicines: [], medicinesLoading: false, error: 'فشل في تحميل بيانات الأدوية' });
+          return;
+        }
+        
+        const medicines: Medicine[] = data.map(m => ({ 
+          ...m, 
+          updatedBy: m.updated_by_name || undefined 
+        }));
+        
+        set({ medicines, medicinesLoading: false, error: null });
+        console.log('✅ تم تحميل الأدوية بنجاح:', medicines.length);
+      } catch (error) {
+        console.error('❌ خطأ غير متوقع في جلب الأدوية:', error);
+        set({ 
+          medicines: [], 
+          medicinesLoading: false, 
+          error: 'خطأ غير متوقع في تحميل بيانات الأدوية' 
+        });
       }
-      const medicines: Medicine[] = data.map(m => ({ ...m, updatedBy: m.updated_by_name || undefined }));
-      set({ medicines, medicinesLoading: false });
     },
 
-    // Added loadMedicines method that calls fetchMedicines
     loadMedicines: async () => {
       await get().fetchMedicines();
     },
 
     fetchRevenues: async () => {
-      set({ revenuesLoading: true });
-      const { data, error } = await supabase.from('revenues').select('*').order('date', { ascending: false });
-      if (error) {
-        console.error('Error fetching revenues:', error);
-        set({ revenues: [], revenuesLoading: false });
-        return;
+      set({ revenuesLoading: true, error: null });
+      try {
+        const { data, error } = await supabase
+          .from('revenues')
+          .select('*')
+          .order('date', { ascending: false });
+          
+        if (error) {
+          console.error('❌ خطأ في جلب الإيرادات:', error);
+          set({ revenues: [], revenuesLoading: false, error: 'فشل في تحميل بيانات الإيرادات' });
+          return;
+        }
+        
+        const revenues: Revenue[] = data.map(r => ({ 
+          ...r, 
+          createdBy: r.created_by_name, 
+          amount: Number(r.amount) 
+        }));
+        
+        set({ revenues, revenuesLoading: false, error: null });
+        console.log('✅ تم تحميل الإيرادات بنجاح:', revenues.length);
+      } catch (error) {
+        console.error('❌ خطأ غير متوقع في جلب الإيرادات:', error);
+        set({ 
+          revenues: [], 
+          revenuesLoading: false, 
+          error: 'خطأ غير متوقع في تحميل بيانات الإيرادات' 
+        });
       }
-      const revenues: Revenue[] = data.map(r => ({ ...r, createdBy: r.created_by_name, amount: Number(r.amount) }));
-      set({ revenues, revenuesLoading: false });
     },
     
     addMedicine: async (medicine) => {
       const user = useAuthStore.getState().user;
-      if (!user) return console.error("User not authenticated");
-
-      const { data: existingMedicine } = await supabase.from('medicines').select('id, repeat_count').eq('name', medicine.name).maybeSingle();
-      
-      if (existingMedicine) {
-        const { error } = await supabase.from('medicines').update({ 
-          repeat_count: (existingMedicine.repeat_count || 1) + 1,
-          status: medicine.status,
-          last_updated: new Date().toISOString(),
-          updated_by_id: user.id,
-          updated_by_name: user.name,
-          notes: medicine.notes 
-        }).eq('id', existingMedicine.id);
-        if (error) console.error("Error updating medicine:", error);
-      } else {
-        const { error } = await supabase.from('medicines').insert({
-          name: medicine.name,
-          status: medicine.status,
-          notes: medicine.notes,
-          updated_by_id: user.id,
-          updated_by_name: user.name,
-          repeat_count: 1
-        });
-        if (error) console.error("Error adding medicine:", error);
+      if (!user) {
+        console.error("❌ المستخدم غير مصادق عليه");
+        return;
       }
-      await get().fetchMedicines();
+
+      try {
+        const { data: existingMedicine } = await supabase
+          .from('medicines')
+          .select('id, repeat_count')
+          .eq('name', medicine.name)
+          .maybeSingle();
+        
+        if (existingMedicine) {
+          const { error } = await supabase
+            .from('medicines')
+            .update({ 
+              repeat_count: (existingMedicine.repeat_count || 1) + 1,
+              status: medicine.status,
+              last_updated: new Date().toISOString(),
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              notes: medicine.notes 
+            })
+            .eq('id', existingMedicine.id);
+            
+          if (error) console.error("❌ خطأ في تحديث الدواء:", error);
+        } else {
+          const { error } = await supabase
+            .from('medicines')
+            .insert({
+              name: medicine.name,
+              status: medicine.status,
+              notes: medicine.notes,
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              repeat_count: 1
+            });
+            
+          if (error) console.error("❌ خطأ في إضافة الدواء:", error);
+        }
+        
+        await get().fetchMedicines();
+      } catch (error) {
+        console.error("❌ خطأ غير متوقع في إضافة الدواء:", error);
+      }
     },
     
     updateMedicine: async (id, updates) => {
@@ -152,7 +214,6 @@ export const usePharmacyStore = create<PharmacyState>()(
     
     getTotalDailyRevenue: (date) => {
       const dayRevenues = get().revenues.filter((revenue) => revenue.date === date);
-      // Only sum income, don't subtract expenses (cash disbursement doesn't reduce revenue)
       return dayRevenues.reduce((total, revenue) => {
         return revenue.type === 'income' ? total + revenue.amount : total;
       }, 0);
@@ -160,7 +221,6 @@ export const usePharmacyStore = create<PharmacyState>()(
 
     getTotalRevenue: () => {
       const revenues = get().revenues;
-      // Only sum income, don't subtract expenses (cash disbursement doesn't reduce revenue)
       return revenues.reduce((total, revenue) => {
         return revenue.type === 'income' ? total + revenue.amount : total;
       }, 0);
