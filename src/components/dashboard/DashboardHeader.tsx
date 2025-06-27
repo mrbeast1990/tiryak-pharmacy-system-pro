@@ -38,6 +38,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
               {language === 'ar' ? 'مرحباً' : 'Welcome'}, {user?.name}
             </span>
             
+            {/* مكون الإشعارات */}
             <NotificationDisplay />
             
             <Button

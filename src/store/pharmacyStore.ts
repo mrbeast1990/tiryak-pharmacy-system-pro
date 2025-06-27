@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from './authStore';
@@ -13,7 +14,6 @@ interface PharmacyState {
   medicinesLoading: boolean;
   revenuesLoading: boolean;
   fetchMedicines: () => Promise<void>;
-  loadMedicines: () => Promise<void>; // Added this method
   fetchRevenues: () => Promise<void>;
   addMedicine: (medicine: Pick<Medicine, 'name' | 'status' | 'notes'>) => Promise<void>;
   updateMedicine: (id: string, updates: Partial<Pick<Medicine, 'name' | 'status' | 'notes'>>) => Promise<void>;
@@ -47,11 +47,6 @@ export const usePharmacyStore = create<PharmacyState>()(
       }
       const medicines: Medicine[] = data.map(m => ({ ...m, updatedBy: m.updated_by_name || undefined }));
       set({ medicines, medicinesLoading: false });
-    },
-
-    // Added loadMedicines method that calls fetchMedicines
-    loadMedicines: async () => {
-      await get().fetchMedicines();
     },
 
     fetchRevenues: async () => {
