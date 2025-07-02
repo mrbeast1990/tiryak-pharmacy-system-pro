@@ -14,34 +14,21 @@ const Index = () => {
     document.documentElement.lang = language;
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     
-    // Allow time for store to hydrate from localStorage
+    // Small delay to allow stores to initialize
     const timer = setTimeout(() => {
       setIsReady(true);
-    }, 100);
+    }, 50);
     
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
-      });
-    }
-
     return () => clearTimeout(timer);
   }, [language]);
 
-  const handleSuccessfulLogin = () => {
-    console.log('تم تسجيل الدخول بنجاح');
-  };
+  console.log('Index render:', { isReady, isAuthenticated, userExists: !!user });
 
   if (!isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100">
         <div className="text-center">
-          <div className="w-16 h-16 pharmacy-gradient rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
           <p className="text-gray-600">
@@ -52,14 +39,18 @@ const Index = () => {
     );
   }
 
+  const handleSuccessfulLogin = () => {
+    console.log('تم تسجيل الدخول بنجاح');
+  };
+
   return (
-    <>
+    <div className="min-h-screen">
       {!isAuthenticated ? (
         <LoginForm onLogin={handleSuccessfulLogin} />
       ) : (
         <Dashboard user={user} />
       )}
-    </>
+    </div>
   );
 };
 
