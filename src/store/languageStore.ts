@@ -16,6 +16,7 @@ const translations = {
     'logout': 'تسجيل الخروج',
     'welcome': 'مرحباً،',
     'user.role.manager': 'مدير',
+    'profile.title': 'الملف الشخصي',
     
     // Dashboard
     'dashboard.shortages': 'النواقص',
@@ -75,6 +76,7 @@ const translations = {
     'logout': 'Logout',
     'welcome': 'Welcome,',
     'user.role.manager': 'Manager',
+    'profile.title': 'Profile',
     
     // Dashboard
     'dashboard.shortages': 'Shortages',
