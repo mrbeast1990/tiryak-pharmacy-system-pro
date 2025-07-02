@@ -22,16 +22,26 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
     <header className="bg-white shadow-sm border-b relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-4 space-x-reverse">
+          {/* Logo clickable for profile */}
+          <Button
+            onClick={onOpenProfile}
+            variant="ghost"
+            className="flex items-center space-x-4 space-x-reverse hover:bg-gray-50 p-2 rounded-lg"
+          >
             <img 
               src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
               alt="Al-Tiryak Logo" 
               className="w-8 h-8"
             />
-            <h1 className="text-xl font-bold text-gray-900">
-              {t('pharmacy.name')}
-            </h1>
-          </div>
+            <div className="text-right">
+              <h1 className="text-xl font-bold text-gray-900">
+                {t('pharmacy.name')}
+              </h1>
+              <p className="text-sm text-gray-600">
+                {t('profile.title')}
+              </p>
+            </div>
+          </Button>
           
           <div className="flex items-center space-x-4 space-x-reverse">
             <span className="text-sm text-gray-600">
@@ -49,16 +59,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
             >
               <Globe className="w-4 h-4" />
               <span className="text-sm">{t('language')}</span>
-            </Button>
-            
-            <Button
-              onClick={onOpenProfile}
-              variant="ghost"
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              <User className="w-4 h-4" />
-              <span className="text-sm">{t('profile.title')}</span>
             </Button>
             
             <Button
