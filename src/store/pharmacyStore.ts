@@ -28,6 +28,7 @@ interface PharmacyState {
   getTotalRevenue: () => number;
   getTodayRevenue: () => number;
   getMedicineSuggestions: (query: string) => string[];
+  loadMedicines: () => Promise<void>;
 }
 
 export const usePharmacyStore = create<PharmacyState>()(
@@ -175,6 +176,10 @@ export const usePharmacyStore = create<PharmacyState>()(
         )
         .map(medicine => medicine.name)
         .slice(0, 5);
+    },
+
+    loadMedicines: async () => {
+      await get().fetchMedicines();
     }
   })
 );
