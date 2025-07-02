@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Globe, Settings, LogOut, User } from 'lucide-react';
 import { useLanguageStore } from '@/store/languageStore';
 import { useAuthStore } from '@/store/authStore';
 import NotificationDisplay from '@/components/NotificationDisplay';
+import DeploymentStatusButton from './DeploymentStatusButton';
 
 interface DashboardHeaderProps {
   onOpenProfile: () => void;
@@ -50,6 +50,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
             
             {/* مكون الإشعارات */}
             <NotificationDisplay />
+            
+            {/* Deployment Status Button */}
+            <DeploymentStatusButton />
             
             <Button
               onClick={toggleLanguage}
