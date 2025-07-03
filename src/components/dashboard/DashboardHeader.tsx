@@ -34,7 +34,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
               className="w-8 h-8"
             />
             <div className="text-right">
-              <h1 className="text-lg font-bold text-gray-900">
+              <h1 className="text-sm font-bold text-gray-900">
                 {t('pharmacy.name')}
               </h1>
               <p className="text-xs text-gray-600">
