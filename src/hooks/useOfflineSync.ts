@@ -109,35 +109,40 @@ export const useOfflineSync = () => {
   };
 
   const executeQueueItem = async (item: OfflineQueue) => {
-    const store = usePharmacyStore.getState();
-    
-    switch (item.type) {
-      case 'medicine':
-        switch (item.action) {
-          case 'add':
-            await store.addMedicine(item.data);
-            break;
-          case 'update':
-            await store.updateMedicine(item.data.id, item.data.updates);
-            break;
-          case 'delete':
-            await store.deleteMedicine(item.data.id);
-            break;
-        }
-        break;
-      case 'revenue':
-        switch (item.action) {
-          case 'add':
-            await store.addRevenue(item.data);
-            break;
-          case 'update':
-            await store.updateRevenue(item.data.id, item.data.updates);
-            break;
-          case 'delete':
-            await store.deleteRevenue(item.data.id);
-            break;
-        }
-        break;
+    try {
+      const store = usePharmacyStore.getState();
+      
+      switch (item.type) {
+        case 'medicine':
+          switch (item.action) {
+            case 'add':
+              await store.addMedicine(item.data);
+              break;
+            case 'update':
+              await store.updateMedicine(item.data.id, item.data.updates);
+              break;
+            case 'delete':
+              await store.deleteMedicine(item.data.id);
+              break;
+          }
+          break;
+        case 'revenue':
+          switch (item.action) {
+            case 'add':
+              await store.addRevenue(item.data);
+              break;
+            case 'update':
+              await store.updateRevenue(item.data.id, item.data.updates);
+              break;
+            case 'delete':
+              await store.deleteRevenue(item.data.id);
+              break;
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('Error executing queue item:', error);
+      throw error;
     }
   };
 

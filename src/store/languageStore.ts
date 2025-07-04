@@ -156,7 +156,9 @@ export const useLanguageStore = create<LanguageState>()(
       
       t: (key: string) => {
         const { language } = get();
-        return translations[language][key] || key;
+        const languageTranslations = translations[language];
+        if (!languageTranslations) return key;
+        return languageTranslations[key as keyof typeof languageTranslations] || key;
       }
     }),
     {
