@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
+import { useOfflineSync } from '@/hooks/useOfflineSync';
 import ProfileModal from './ProfileModal';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
@@ -12,6 +13,7 @@ import ActionCards from './dashboard/ActionCards';
 import AdminTools from './dashboard/AdminTools';
 import DashboardFooter from './dashboard/DashboardFooter';
 import BackgroundLogo from './dashboard/BackgroundLogo';
+import OfflineIndicator from './OfflineIndicator';
 
 interface DashboardProps {
   user: any;
@@ -23,6 +25,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   
   const { logout } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
+  const { syncOfflineData } = useOfflineSync();
+
+  // الاستماع لأحداث المزامنة من Service Worker
+  useEffect(() => {
+    const handleSyncEvent = () => {
+      syncOfflineData();
+    };
+
+    window.addEventListener('syncOfflineData', handleSyncEvent);
+    return () => {
+      window.removeEventListener('syncOfflineData', handleSyncEvent);
+    };
+  }, [syncOfflineData]);
 
   const handleLogout = () => {
     logout();
@@ -74,6 +89,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           user={user}
         />
       )}
+      
+      <OfflineIndicator />
     </div>
   );
 };
