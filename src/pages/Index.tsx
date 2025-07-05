@@ -10,16 +10,21 @@ const Index = () => {
   const { language } = useLanguageStore();
 
   useEffect(() => {
-    // Set document direction based on language
-    document.documentElement.lang = language;
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    
-    // Small delay to allow stores to initialize
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 50);
-    
-    return () => clearTimeout(timer);
+    try {
+      // Set document direction based on language
+      document.documentElement.lang = language;
+      document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+      
+      // Small delay to allow stores to initialize properly
+      const timer = setTimeout(() => {
+        setIsReady(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    } catch (error) {
+      console.error('خطأ في تهيئة الصفحة:', error);
+      setIsReady(true); // السماح بالمتابعة حتى لو حدث خطأ
+    }
   }, [language]);
 
   console.log('Index render:', { isReady, isAuthenticated, userExists: !!user });

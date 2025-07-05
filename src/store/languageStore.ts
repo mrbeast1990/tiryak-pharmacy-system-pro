@@ -155,8 +155,14 @@ export const useLanguageStore = create<LanguageState>()(
       },
       
       t: (key: string) => {
-        const { language } = get();
-        return translations[language][key] || key;
+        try {
+          const { language } = get();
+          const translation = translations[language]?.[key];
+          return translation || key;
+        } catch (error) {
+          console.error('خطأ في الترجمة:', error);
+          return key;
+        }
       }
     }),
     {

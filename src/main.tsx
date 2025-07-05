@@ -2,9 +2,12 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
-// تسجيل Service Worker
+createRoot(document.getElementById("root")!).render(<App />);
+
+// تأجيل تسجيل Service Worker حتى بعد تحميل التطبيق
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+  // تأجيل التسجيل لمدة 3 ثوانٍ بعد تحميل الصفحة
+  setTimeout(() => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
         console.log('SW registered: ', registration);
@@ -27,7 +30,7 @@ if ('serviceWorker' in navigator) {
       .catch((registrationError) => {
         console.log('SW registration failed: ', registrationError);
       });
-  });
+  }, 3000);
 
   // الاستماع لرسائل Service Worker
   navigator.serviceWorker.addEventListener('message', (event) => {
@@ -38,4 +41,3 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
