@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
-import NotFound from "./pages/NotFound";
 import AccountRequests from "./pages/Admin/AccountRequests";
 
 const queryClient = new QueryClient();
@@ -17,8 +16,8 @@ const AppContent = () => {
       <Route path="/" element={<Index />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/admin/requests" element={<AccountRequests />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      <Route path="*" element={<NotFound />} />
+      {/* Redirect any unknown routes to home */}
+      <Route path="*" element={<Index />} />
     </Routes>
   );
 };
