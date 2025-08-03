@@ -22,6 +22,10 @@ const Index = () => {
       document.documentElement.lang = language;
       document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
       
+      // التحقق من حالة المتاجر
+      const authState = useAuthStore.getState();
+      const langState = useLanguageStore.getState();
+      
       console.log('حالة المصادقة:', { isAuthenticated, user: !!user });
       console.log('حالة اللغة:', { language });
       
@@ -29,7 +33,7 @@ const Index = () => {
       const timer = setTimeout(() => {
         setIsReady(true);
         console.log('تم تهيئة التطبيق بنجاح');
-      }, 50);
+      }, 100);
       
       return () => clearTimeout(timer);
     } catch (error) {
@@ -57,6 +61,7 @@ const Index = () => {
     );
   }
 
+  console.log('Index render:', { isReady, isAuthenticated, userExists: !!user, initError });
 
   if (!isReady) {
     return (
