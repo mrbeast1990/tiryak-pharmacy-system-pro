@@ -1,5 +1,4 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { useLanguageStore } from '@/store/languageStore';
 
 interface Props {
   children: ReactNode;
