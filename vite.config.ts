@@ -23,4 +23,9 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     exclude: ['capacitor-native-biometric'],
   },
+  build: {
+    rollupOptions: {
+      external: ["capacitor-native-biometric"],
+    },
+  },
 }));
