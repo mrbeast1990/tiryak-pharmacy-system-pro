@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
-import { User, Shield, Clock, Fingerprint, Check } from 'lucide-react';
+import { User, Shield, Clock, Fingerprint, Check, Bell } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Preferences } from '@capacitor/preferences';
 
@@ -213,6 +213,42 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
               )}
             </CardContent>
           </Card>
+
+          {/* Admin Features */}
+          {(user.role === 'admin' || user.role === 'ahmad_rajili') && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 space-x-reverse text-base">
+                  <Shield className="w-5 h-5" />
+                  <span>{language === 'ar' ? 'أدوات الإدارة' : 'Admin Tools'}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    onClose();
+                    window.location.href = '/admin/account-requests';
+                  }}
+                >
+                  <User className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                  {language === 'ar' ? 'مراجعة طلبات الحسابات' : 'Review Account Requests'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => {
+                    onClose();
+                    // Add notification sending functionality
+                  }}
+                >
+                  <Bell className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                  {language === 'ar' ? 'إرسال إشعارات' : 'Send Notifications'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Close Button */}
           <Button onClick={onClose} className="w-full pharmacy-gradient">

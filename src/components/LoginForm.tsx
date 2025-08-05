@@ -138,16 +138,86 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     navigate('/signup');
   };
 
-  // Store credentials for biometric login when successful login with remember me
+  // Load saved credentials on component mount
   React.useEffect(() => {
-    if (rememberMe && email && password && Capacitor.isNativePlatform()) {
-      NativeBiometric.setCredentials({
-        username: email,
-        password: password,
-        server: "al-tiryak-pharmacy",
-      }).catch(console.error);
+    const loadSavedCredentials = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const credentials = await NativeBiometric.getCredentials({
+            server: "al-tiryak-pharmacy",
+          });
+          
+          if (credentials && credentials.username && credentials.password) {
+            setEmail(credentials.username);
+            setPassword(credentials.password);
+            setRememberMe(true);
+          }
+        } else {
+          // For web, use localStorage
+          const savedEmail = localStorage.getItem('remembered-email');
+          const savedPassword = localStorage.getItem('remembered-password');
+          const wasRemembered = localStorage.getItem('remember-me') === 'true';
+          
+          if (wasRemembered && savedEmail && savedPassword) {
+            setEmail(savedEmail);
+            setPassword(savedPassword);
+            setRememberMe(true);
+          }
+        }
+      } catch (error) {
+        // No saved credentials
+      }
+    };
+
+    loadSavedCredentials();
+  }, []);
+
+  // Store credentials when successful login with remember me
+  const storeCredentials = React.useCallback(async () => {
+    if (rememberMe && email && password) {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await NativeBiometric.setCredentials({
+            username: email,
+            password: password,
+            server: "al-tiryak-pharmacy",
+          });
+        } catch (error) {
+          console.error('Failed to store biometric credentials:', error);
+        }
+      } else {
+        // For web, use localStorage
+        localStorage.setItem('remembered-email', email);
+        localStorage.setItem('remembered-password', password);
+        localStorage.setItem('remember-me', 'true');
+      }
+    } else if (!rememberMe) {
+      // Clear saved credentials when remember me is unchecked
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await NativeBiometric.deleteCredentials({
+            server: "al-tiryak-pharmacy",
+          });
+        } catch (error) {
+          console.error('Failed to delete biometric credentials:', error);
+        }
+      } else {
+        // For web, clear localStorage
+        localStorage.removeItem('remembered-email');
+        localStorage.removeItem('remembered-password');
+        localStorage.removeItem('remember-me');
+      }
     }
   }, [rememberMe, email, password]);
+
+  // Store credentials after successful login
+  React.useEffect(() => {
+    // Only store if login was successful (we can check this by seeing if user is set in auth store)
+    const user = useAuthStore.getState().user;
+    if (user && rememberMe && email && password) {
+      storeCredentials();
+    }
+  }, [storeCredentials, rememberMe, email, password]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative pt-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>

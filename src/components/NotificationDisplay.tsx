@@ -237,9 +237,17 @@ const NotificationDisplay: React.FC = () => {
                           }`}>
                             {notification.message}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(notification.created_at).toLocaleDateString('ar-SA')}
-                          </p>
+                           <p className="text-xs text-gray-400 mt-1">
+                             {new Date(notification.created_at).toLocaleDateString('en-US', {
+                               year: 'numeric',
+                               month: '2-digit',
+                               day: '2-digit'
+                             })} {new Date(notification.created_at).toLocaleTimeString('en-US', {
+                               hour: '2-digit',
+                               minute: '2-digit',
+                               hour12: false
+                             })}
+                           </p>
                         </div>
                         {!notification.is_read && (
                           <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-2" />

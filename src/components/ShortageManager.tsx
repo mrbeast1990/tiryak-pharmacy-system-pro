@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill, Edit, Save, X } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill, Edit, Save, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +22,9 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState('');
+  const [currentShortagesPage, setCurrentShortagesPage] = useState(1);
+  const [currentAvailablePage, setCurrentAvailablePage] = useState(1);
+  const itemsPerPage = 50;
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -61,8 +64,22 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     );
   }, [medicines, searchTerm]);
 
-  const shortages = filteredMedicines.filter(m => m.status === 'shortage');
-  const available = filteredMedicines.filter(m => m.status === 'available');
+  const allShortages = filteredMedicines.filter(m => m.status === 'shortage');
+  const allAvailable = filteredMedicines.filter(m => m.status === 'available');
+  
+  // Pagination logic
+  const totalShortagesPages = Math.ceil(allShortages.length / itemsPerPage);
+  const totalAvailablePages = Math.ceil(allAvailable.length / itemsPerPage);
+  
+  const shortages = allShortages.slice(
+    (currentShortagesPage - 1) * itemsPerPage,
+    currentShortagesPage * itemsPerPage
+  );
+  
+  const available = allAvailable.slice(
+    (currentAvailablePage - 1) * itemsPerPage,
+    currentAvailablePage * itemsPerPage
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,6 +151,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   };
 
   const canEditMedicineName = checkPermission('manage_users');
+  
+  const handleDeleteMedicine = (medicine: Medicine) => {
+    if (window.confirm(language === 'ar' ? `هل أنت متأكد من حذف ${medicine.name}؟` : `Are you sure you want to delete ${medicine.name}?`)) {
+      deleteMedicine(medicine.id);
+      toast({
+        title: language === 'ar' ? "تم الحذف" : "Deleted",
+        description: language === 'ar' ? `تم حذف ${medicine.name} بنجاح` : `${medicine.name} deleted successfully`,
+      });
+    }
+  };
 
   const exportShortagesPDF = async () => {
     try {
@@ -180,8 +207,17 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       doc.setTextColor(0, 0, 0);
       yPosition += 15;
       
+      // Get unique medicine names to avoid duplicates
+      const uniqueShortages = allShortages.reduce((acc, medicine) => {
+        const existingMedicine = acc.find(m => m.name.toLowerCase() === medicine.name.toLowerCase());
+        if (!existingMedicine) {
+          acc.push(medicine);
+        }
+        return acc;
+      }, [] as typeof allShortages);
+      
       // Draw table data - smaller rows
-      shortages.forEach((medicine, index) => {
+      uniqueShortages.forEach((medicine, index) => {
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.1);
         doc.line(30, yPosition - 8, 170, yPosition - 8);
@@ -317,11 +353,11 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
             {/* Shortages List */}
             <Card className="card-shadow">
               <CardHeader className="py-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>{t('dashboard.shortages')} ({shortages.length})</span>
-                  </CardTitle>
+                 <div className="flex items-center justify-between">
+                   <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
+                     <AlertCircle className="w-4 h-4" />
+                     <span>{t('dashboard.shortages')} ({allShortages.length})</span>
+                   </CardTitle>
                   {checkPermission('export_shortages_pdf') && (
                     <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
                       <FileText className="w-2 h-2 ml-1" />
@@ -382,23 +418,53 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                       </div>
                     </div>
                   ))}
-                  {shortages.length === 0 && (
-                    <p className="text-center text-gray-500 py-8 text-sm">
-                      {language === 'ar' ? 'لا توجد أدوية ناقصة' : 'No medicines in shortage'}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                   {shortages.length === 0 && (
+                     <p className="text-center text-gray-500 py-8 text-sm">
+                       {language === 'ar' ? 'لا توجد أدوية ناقصة' : 'No medicines in shortage'}
+                     </p>
+                   )}
+                 </div>
+
+                 {/* Pagination for Shortages */}
+                 {totalShortagesPages > 1 && (
+                   <div className="flex items-center justify-between mt-4 px-4 pb-4">
+                     <div className="text-sm text-gray-500">
+                       {language === 'ar' 
+                         ? `صفحة ${currentShortagesPage} من ${totalShortagesPages}` 
+                         : `Page ${currentShortagesPage} of ${totalShortagesPages}`
+                       }
+                     </div>
+                     <div className="flex items-center space-x-2">
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => setCurrentShortagesPage(prev => Math.max(1, prev - 1))}
+                         disabled={currentShortagesPage === 1}
+                       >
+                         <ChevronRight className="w-4 h-4" />
+                       </Button>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => setCurrentShortagesPage(prev => Math.min(totalShortagesPages, prev + 1))}
+                         disabled={currentShortagesPage === totalShortagesPages}
+                       >
+                         <ChevronLeft className="w-4 h-4" />
+                       </Button>
+                     </div>
+                   </div>
+                 )}
+               </CardContent>
+             </Card>
 
             {/* Available List */}
             <Card className="card-shadow">
-              <CardHeader className="py-3">
-                <CardTitle className="flex items-center space-x-2 space-x-reverse text-green-600 text-sm">
-                  <CheckCircle className="w-4 h-4" />
-                  <span>{t('dashboard.available')} ({available.length})</span>
-                </CardTitle>
-              </CardHeader>
+               <CardHeader className="py-3">
+                 <CardTitle className="flex items-center space-x-2 space-x-reverse text-green-600 text-sm">
+                   <CheckCircle className="w-4 h-4" />
+                   <span>{t('dashboard.available')} ({allAvailable.length})</span>
+                 </CardTitle>
+               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {available.map((medicine) => (
@@ -415,14 +481,21 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                                   <Button size="icon" variant="ghost" className="h-8 w-8" onClick={cancelEditing}><X className="h-4 w-4" /></Button>
                                 </div>
                               ) : (
-                                <>
-                                  <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
-                                  {canEditMedicineName && (
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEditing(medicine)}>
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                </>
+                                 <>
+                                   <h3 className="font-medium text-gray-900 text-sm">{medicine.name}</h3>
+                                   <div className="flex items-center space-x-1">
+                                     {canEditMedicineName && (
+                                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => startEditing(medicine)}>
+                                         <Edit className="h-3 w-3" />
+                                       </Button>
+                                     )}
+                                     {canEditMedicineName && (
+                                       <Button variant="ghost" size="icon" className="h-6 w-6 text-red-600 hover:text-red-700" onClick={() => handleDeleteMedicine(medicine)}>
+                                         <Trash2 className="h-3 w-3" />
+                                       </Button>
+                                     )}
+                                   </div>
+                                 </>
                               )}
                             </div>
                             <p className="text-xs text-gray-500">
@@ -430,18 +503,59 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                               {language === 'ar' ? ' بواسطة ' : ' by '} {medicine.updatedBy}
                             </p>
                           </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {available.length === 0 && (
-                    <p className="text-center text-gray-500 py-8 text-sm">
-                      {language === 'ar' ? 'لا توجد أدوية متوفرة' : 'No available medicines'}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                         </div>
+                         
+                         <div className="flex items-center">
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => toggleStatus(medicine)}
+                             className="bg-red-50 hover:bg-red-100 text-xs px-2 py-1"
+                           >
+                             {t('shortages.shortage')}
+                           </Button>
+                         </div>
+                       </div>
+                     </div>
+                   ))}
+                   {available.length === 0 && (
+                     <p className="text-center text-gray-500 py-8 text-sm">
+                       {language === 'ar' ? 'لا توجد أدوية متوفرة' : 'No available medicines'}
+                     </p>
+                   )}
+                 </div>
+
+                 {/* Pagination for Available */}
+                 {totalAvailablePages > 1 && (
+                   <div className="flex items-center justify-between mt-4 px-4 pb-4">
+                     <div className="text-sm text-gray-500">
+                       {language === 'ar' 
+                         ? `صفحة ${currentAvailablePage} من ${totalAvailablePages}` 
+                         : `Page ${currentAvailablePage} of ${totalAvailablePages}`
+                       }
+                     </div>
+                     <div className="flex items-center space-x-2">
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => setCurrentAvailablePage(prev => Math.max(1, prev - 1))}
+                         disabled={currentAvailablePage === 1}
+                       >
+                         <ChevronRight className="w-4 h-4" />
+                       </Button>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => setCurrentAvailablePage(prev => Math.min(totalAvailablePages, prev + 1))}
+                         disabled={currentAvailablePage === totalAvailablePages}
+                       >
+                         <ChevronLeft className="w-4 h-4" />
+                       </Button>
+                     </div>
+                   </div>
+                 )}
+               </CardContent>
+             </Card>
           </div>
         </div>
       </main>
