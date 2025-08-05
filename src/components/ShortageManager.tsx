@@ -32,6 +32,11 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const { toast } = useToast();
   const { exportPDF } = usePDFExport();
 
+  // تحميل البيانات عند بداية فتح الصفحة
+  useEffect(() => {
+    loadMedicines();
+  }, []);
+
   // إضافة الاستماع للتحديثات المباشرة
   useEffect(() => {
     const channel = supabase

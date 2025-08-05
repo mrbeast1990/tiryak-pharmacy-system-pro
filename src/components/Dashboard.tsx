@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
+import { usePharmacyStore } from '@/store/pharmacyStore';
 import ProfileModal from './ProfileModal';
 import ShortageManager from './ShortageManager';
 import RevenueManager from './RevenueManager';
@@ -26,6 +27,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { logout } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
   const { syncOfflineData } = useOfflineSync();
+  const { loadMedicines, fetchRevenues } = usePharmacyStore();
+
+  // تحميل البيانات عند بداية فتح Dashboard
+  useEffect(() => {
+    loadMedicines();
+    fetchRevenues();
+  }, [loadMedicines, fetchRevenues]);
 
   // الاستماع لأحداث المزامنة من Service Worker
   useEffect(() => {

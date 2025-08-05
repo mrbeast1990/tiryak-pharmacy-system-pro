@@ -35,8 +35,8 @@ export const usePharmacyStore = create<PharmacyState>()(
   (set, get) => ({
     medicines: [],
     revenues: [],
-    medicinesLoading: true,
-    revenuesLoading: true,
+    medicinesLoading: false,
+    revenuesLoading: false,
 
     fetchMedicines: async () => {
       set({ medicinesLoading: true });
