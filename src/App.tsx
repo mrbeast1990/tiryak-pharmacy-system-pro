@@ -12,22 +12,20 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   return (
-    <>
-      <Toaster />
-      <Sonner />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/admin/requests" element={<AccountRequests />} />
-        {/* Redirect any unknown routes to home */}
-        <Route path="*" element={<Index />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/signup" element={<SignUp />} />
+      <Route path="/admin/requests" element={<AccountRequests />} />
+      {/* Redirect any unknown routes to home */}
+      <Route path="*" element={<Index />} />
+    </Routes>
   );
 };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <Toaster />
+    <Sonner />
     <BrowserRouter>
       <AppContent />
     </BrowserRouter>
