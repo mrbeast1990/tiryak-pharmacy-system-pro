@@ -38,6 +38,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     const success = await login(email, password);
     
     if (success) {
+      // Store credentials after successful login
+      if (rememberMe && email && password) {
+        await storeCredentials();
+      }
+      
       toast({
         title: language === 'ar' ? "تم تسجيل الدخول بنجاح" : "Login Successful",
         description: language === 'ar' ? "مرحباً بك في نظام صيدلية الترياق الشافي" : "Welcome to Al-Tiryak Al-Shafi System",
@@ -210,14 +215,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     }
   }, [rememberMe, email, password]);
 
-  // Store credentials after successful login
-  React.useEffect(() => {
-    // Only store if login was successful (we can check this by seeing if user is set in auth store)
-    const user = useAuthStore.getState().user;
-    if (user && rememberMe && email && password) {
-      storeCredentials();
-    }
-  }, [storeCredentials, rememberMe, email, password]);
+  // Store credentials after successful login - handle this in the login submit function instead
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative pt-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
