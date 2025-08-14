@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
 import AccountRequests from "./pages/Admin/AccountRequests";
+import CreateUser from "./pages/CreateUser";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +17,7 @@ const AppContent = () => {
       <Route path="/" element={<Index />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/admin/requests" element={<AccountRequests />} />
+      <Route path="/create-user" element={<CreateUser />} />
       {/* Redirect any unknown routes to home */}
       <Route path="*" element={<Index />} />
     </Routes>

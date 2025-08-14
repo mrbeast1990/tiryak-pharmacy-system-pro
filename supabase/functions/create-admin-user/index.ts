@@ -40,10 +40,35 @@ serve(async (req: Request) => {
 
     console.log('تم إنشاء المستخدم بنجاح:', userData.user?.id);
 
+    // إنشاء الملف الشخصي
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({ 
+        id: userData.user!.id, 
+        name: 'أحمد الرجيلي', 
+        role: 'admin' 
+      });
+
+    if (profileError) {
+      console.error('خطأ في إنشاء الملف الشخصي:', profileError);
+      // حذف المستخدم إذا فشل إنشاء الملف الشخصي
+      await supabaseAdmin.auth.admin.deleteUser(userData.user!.id);
+      return new Response(JSON.stringify({ error: profileError.message }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log('تم إنشاء الملف الشخصي بنجاح');
+
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'تم إنشاء المستخدم بنجاح',
-      user: userData.user 
+      message: 'تم إنشاء المستخدم والملف الشخصي بنجاح',
+      user: userData.user,
+      email: 'thepanaceapharmacy@gmail.com',
+      password: 'thepanaceapharmacy@gmail.com',
+      name: 'أحمد الرجيلي',
+      role: 'admin'
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
