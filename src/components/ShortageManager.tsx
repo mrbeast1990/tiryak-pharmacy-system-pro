@@ -358,18 +358,32 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
             {/* Shortages List */}
             <Card className="card-shadow">
               <CardHeader className="py-3">
-                 <div className="flex items-center justify-between">
-                   <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
-                     <AlertCircle className="w-4 h-4" />
-                     <span>{t('dashboard.shortages')} ({allShortages.length})</span>
-                   </CardTitle>
-                  {checkPermission('export_shortages_pdf') && (
-                    <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
-                      <FileText className="w-2 h-2 ml-1" />
-                      {t('shortages.exportPdf')}
-                    </Button>
-                  )}
-                </div>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{t('dashboard.shortages')} ({allShortages.length})</span>
+                    </CardTitle>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <select 
+                        className="border border-gray-300 rounded-md px-2 py-1 text-xs bg-white"
+                        onChange={(e) => {
+                          const sortType = e.target.value;
+                          // You can implement sorting logic here later if needed
+                        }}
+                      >
+                        <option value="">ترتيب حسب</option>
+                        <option value="name">الاسم</option>
+                        <option value="date">التاريخ</option>
+                        <option value="repeat">التكرار</option>
+                      </select>
+                      {checkPermission('export_shortages_pdf') && (
+                        <Button onClick={exportShortagesPDF} size="sm" className="pharmacy-gradient text-xs px-2 py-1">
+                          <FileText className="w-2 h-2 ml-1" />
+                          {t('shortages.exportPdf')}
+                        </Button>
+                      )}
+                    </div>
+                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">

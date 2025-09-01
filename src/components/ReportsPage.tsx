@@ -32,7 +32,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
     const stats: Record<string, { shortages: number }> = {};
     
     medicines.forEach(medicine => {
-      if (medicine.updatedBy) {
+      if (medicine.updatedBy && medicine.status === 'shortage') {
         if (!stats[medicine.updatedBy]) {
           stats[medicine.updatedBy] = { shortages: 0 };
         }
@@ -101,7 +101,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
       const periodStats: Record<string, { shortages: number }> = {};
       
       filteredMedicines.forEach(medicine => {
-        if (medicine.updatedBy) {
+        if (medicine.updatedBy && medicine.status === 'shortage') {
           if (!periodStats[medicine.updatedBy]) {
             periodStats[medicine.updatedBy] = { shortages: 0 };
           }

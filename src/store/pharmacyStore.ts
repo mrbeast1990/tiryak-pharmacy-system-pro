@@ -66,9 +66,11 @@ export const usePharmacyStore = create<PharmacyState>()(
       const user = useAuthStore.getState().user;
       if (!user) return console.error("User not authenticated");
 
-      const { data: existingMedicine } = await supabase.from('medicines').select('id, repeat_count').eq('name', medicine.name).maybeSingle();
+      // Only check for existing medicine with same name that's still in shortage status
+      const { data: existingMedicine } = await supabase.from('medicines').select('id, repeat_count, status').eq('name', medicine.name).eq('status', 'shortage').maybeSingle();
       
       if (existingMedicine) {
+        // Only increment repeat count if it's still in shortage status
         const { error } = await supabase.from('medicines').update({ 
           repeat_count: (existingMedicine.repeat_count || 1) + 1,
           status: medicine.status,
@@ -79,6 +81,7 @@ export const usePharmacyStore = create<PharmacyState>()(
         }).eq('id', existingMedicine.id);
         if (error) console.error("Error updating medicine:", error);
       } else {
+        // Create new entry if no shortage record exists (even if there's an available one)
         const { error } = await supabase.from('medicines').insert({
           name: medicine.name,
           status: medicine.status,
