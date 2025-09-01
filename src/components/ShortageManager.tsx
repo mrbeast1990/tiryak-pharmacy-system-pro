@@ -24,6 +24,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [editedName, setEditedName] = useState('');
   const [currentShortagesPage, setCurrentShortagesPage] = useState(1);
   const [currentAvailablePage, setCurrentAvailablePage] = useState(1);
+  const [sortBy, setSortBy] = useState('');
   const itemsPerPage = 50;
   
   const { user, checkPermission } = useAuthStore();
@@ -72,11 +73,27 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const allShortages = filteredMedicines.filter(m => m.status === 'shortage');
   const allAvailable = filteredMedicines.filter(m => m.status === 'available');
   
+  // Sort shortages based on sortBy value
+  const sortedShortages = useMemo(() => {
+    const sortedList = [...allShortages];
+    
+    switch (sortBy) {
+      case 'name':
+        return sortedList.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+      case 'date':
+        return sortedList.sort((a, b) => new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime());
+      case 'repeat':
+        return sortedList.sort((a, b) => (b.repeat_count || 0) - (a.repeat_count || 0));
+      default:
+        return sortedList;
+    }
+  }, [allShortages, sortBy]);
+  
   // Pagination logic
-  const totalShortagesPages = Math.ceil(allShortages.length / itemsPerPage);
+  const totalShortagesPages = Math.ceil(sortedShortages.length / itemsPerPage);
   const totalAvailablePages = Math.ceil(allAvailable.length / itemsPerPage);
   
-  const shortages = allShortages.slice(
+  const shortages = sortedShortages.slice(
     (currentShortagesPage - 1) * itemsPerPage,
     currentShortagesPage * itemsPerPage
   );
@@ -366,10 +383,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                     <div className="flex items-center space-x-2 space-x-reverse">
                       <select 
                         className="border border-gray-300 rounded-md px-2 py-1 text-xs bg-white"
-                        onChange={(e) => {
-                          const sortType = e.target.value;
-                          // You can implement sorting logic here later if needed
-                        }}
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
                       >
                         <option value="">ترتيب حسب</option>
                         <option value="name">الاسم</option>
