@@ -70,26 +70,30 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     );
   }, [medicines, searchTerm]);
 
-  const allShortages = filteredMedicines.filter(m => m.status === 'shortage');
-  const allAvailable = filteredMedicines.filter(m => m.status === 'available');
-  
-  // Sort shortages based on sortBy value
+  // First filter by status, then sort ALL items, then paginate
   const sortedShortages = useMemo(() => {
-    const sortedList = [...allShortages];
+    const allShortages = filteredMedicines.filter(m => m.status === 'shortage');
     
     switch (sortBy) {
       case 'name':
-        return sortedList.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+        return allShortages.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
       case 'date':
-        return sortedList.sort((a, b) => new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime());
+        return allShortages.sort((a, b) => new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime());
       case 'repeat':
-        return sortedList.sort((a, b) => (b.repeat_count || 0) - (a.repeat_count || 0));
+        return allShortages.sort((a, b) => (b.repeat_count || 0) - (a.repeat_count || 0));
       default:
-        return sortedList;
+        return allShortages;
     }
-  }, [allShortages, sortBy]);
+  }, [filteredMedicines, sortBy]);
   
-  // Pagination logic
+  const allAvailable = filteredMedicines.filter(m => m.status === 'available');
+  
+  // Reset to first page when sorting changes
+  useEffect(() => {
+    setCurrentShortagesPage(1);
+  }, [sortBy]);
+  
+  // Pagination logic - now based on sorted results
   const totalShortagesPages = Math.ceil(sortedShortages.length / itemsPerPage);
   const totalAvailablePages = Math.ceil(allAvailable.length / itemsPerPage);
   
@@ -229,14 +233,14 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       doc.setTextColor(0, 0, 0);
       yPosition += 15;
       
-      // Get unique medicine names to avoid duplicates
-      const uniqueShortages = allShortages.reduce((acc, medicine) => {
+      // Use sorted shortages for export to maintain consistent order
+      const uniqueShortages = sortedShortages.reduce((acc, medicine) => {
         const existingMedicine = acc.find(m => m.name.toLowerCase() === medicine.name.toLowerCase());
         if (!existingMedicine) {
           acc.push(medicine);
         }
         return acc;
-      }, [] as typeof allShortages);
+      }, [] as typeof sortedShortages);
       
       // Draw table data - smaller rows
       uniqueShortages.forEach((medicine, index) => {
@@ -378,7 +382,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
-                      <span>{t('dashboard.shortages')} ({allShortages.length})</span>
+                      <span>{t('dashboard.shortages')} ({sortedShortages.length})</span>
                     </CardTitle>
                     <div className="flex items-center space-x-2 space-x-reverse">
                       <select 
