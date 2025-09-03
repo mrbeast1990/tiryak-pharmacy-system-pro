@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Globe, Settings, LogOut, User } from 'lucide-react';
 import { useLanguageStore } from '@/store/languageStore';
 import { useAuthStore } from '@/store/authStore';
-import NotificationDisplay from '@/components/NotificationDisplay';
+import NotificationCenter from '@/components/NotificationCenter';
 
 interface DashboardHeaderProps {
   onOpenProfile: () => void;
@@ -48,7 +48,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
             </span>
             
             {/* مكون الإشعارات */}
-            <NotificationDisplay />
+            <NotificationCenter />
             
             <Button
               onClick={toggleLanguage}

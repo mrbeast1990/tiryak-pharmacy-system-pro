@@ -279,8 +279,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
                     className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    autoComplete="email"
+                    list="email-suggestions"
                     required
                   />
+                  <datalist id="email-suggestions">
+                    <option value="deltanorthpharm@gmail.com" />
+                    <option value="thepanaceapharmacy@gmail.com" />
+                    <option value="ahmad@tiryak.com" />
+                    <option value="morning@tiryak.com" />
+                    <option value="evening@tiryak.com" />
+                    <option value="night@tiryak.com" />
+                  </datalist>
                 </div>
               </div>
               
@@ -296,6 +306,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
                     className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
+                    autoComplete="current-password"
                     required
                   />
                 </div>

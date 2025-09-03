@@ -27,17 +27,21 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
   const [reportStartDate, setReportStartDate] = React.useState('');
   const [reportEndDate, setReportEndDate] = React.useState('');
 
-  // Calculate user statistics based only on shortage records
+  // Calculate user statistics - count all times a user added a shortage, regardless of current status
   const userStats = React.useMemo(() => {
     const stats: Record<string, { shortages: number }> = {};
     
-    // Only count medicines that are currently in shortage status
+    // Count all medicine records where a user added a shortage (regardless of current status)
     medicines.forEach(medicine => {
-      if (medicine.updatedBy && medicine.status === 'shortage') {
+      if (medicine.updatedBy) {
+        // We count each medicine entry as it was originally recorded
+        // The repeat_count indicates how many times this shortage was reported
+        const shortageCount = medicine.repeat_count || 1;
+        
         if (!stats[medicine.updatedBy]) {
           stats[medicine.updatedBy] = { shortages: 0 };
         }
-        stats[medicine.updatedBy].shortages++;
+        stats[medicine.updatedBy].shortages += shortageCount;
       }
     });
     
@@ -98,15 +102,18 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
         return medicineDate >= reportStartDate && medicineDate <= reportEndDate;
       });
       
-      // Calculate period statistics - only count shortage records
+      // Calculate period statistics - count all shortage entries reported in this period
       const periodStats: Record<string, { shortages: number }> = {};
       
       filteredMedicines.forEach(medicine => {
-        if (medicine.updatedBy && medicine.status === 'shortage') {
+        if (medicine.updatedBy) {
+          // Count the actual number of shortage reports, not just current status
+          const shortageCount = medicine.repeat_count || 1;
+          
           if (!periodStats[medicine.updatedBy]) {
             periodStats[medicine.updatedBy] = { shortages: 0 };
           }
-          periodStats[medicine.updatedBy].shortages++;
+          periodStats[medicine.updatedBy].shortages += shortageCount;
         }
       });
       
@@ -382,8 +389,10 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
           <Card className="card-shadow">
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{medicines.filter(m => m.status === 'shortage').length}</p>
-                <p className="text-sm text-gray-600">إجمالي سجلات النواقص</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {medicines.reduce((total, medicine) => total + (medicine.repeat_count || 1), 0)}
+                </p>
+                <p className="text-sm text-gray-600">إجمالي سجلات النواقص المبلغ عنها</p>
               </div>
             </CardContent>
           </Card>
