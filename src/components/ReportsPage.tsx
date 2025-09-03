@@ -31,6 +31,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
   const userStats = React.useMemo(() => {
     const stats: Record<string, { shortages: number }> = {};
     
+    // Only count medicines that are currently in shortage status
     medicines.forEach(medicine => {
       if (medicine.updatedBy && medicine.status === 'shortage') {
         if (!stats[medicine.updatedBy]) {
@@ -97,7 +98,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
         return medicineDate >= reportStartDate && medicineDate <= reportEndDate;
       });
       
-      // Calculate period statistics
+      // Calculate period statistics - only count shortage records
       const periodStats: Record<string, { shortages: number }> = {};
       
       filteredMedicines.forEach(medicine => {
@@ -381,7 +382,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
           <Card className="card-shadow">
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{medicines.length}</p>
+                <p className="text-2xl font-bold text-red-600">{medicines.filter(m => m.status === 'shortage').length}</p>
                 <p className="text-sm text-gray-600">إجمالي سجلات النواقص</p>
               </div>
             </CardContent>
