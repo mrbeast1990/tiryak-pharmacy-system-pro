@@ -23,7 +23,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isBiometricLoading, setIsBiometricLoading] = useState(false);
   
-  const { login, setRememberMe: setAuthRememberMe } = useAuthStore();
+  const { user, login, setRememberMe: setAuthRememberMe } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -248,12 +248,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
   // Store credentials after successful login
   React.useEffect(() => {
-    // Only store if login was successful (we can check this by seeing if user is set in auth store)
-    const user = useAuthStore.getState().user;
+    // Only store if login was successful and we have a user
     if (user && rememberMe && email && password) {
       storeCredentials();
     }
-  }, [storeCredentials, rememberMe, email, password]);
+  }, [user, storeCredentials, rememberMe, email, password]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative pt-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
