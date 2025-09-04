@@ -138,6 +138,39 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     navigate('/signup');
   };
 
+  // Email autocomplete logic
+  const handleEmailChange = (newEmail: string) => {
+    setEmail(newEmail);
+    
+    // Enhanced autocomplete: check if we can complete the email after 2 characters
+    if (newEmail.length >= 2) {
+      const availableEmails = [
+        'deltanorthpharm@gmail.com',
+        'thepanaceapharmacy@gmail.com', 
+        'ahmad@tiryak.com',
+        'morning@tiryak.com',
+        'evening@tiryak.com',
+        'night@tiryak.com'
+      ];
+      
+      const matchingEmail = availableEmails.find(email => 
+        email.toLowerCase().startsWith(newEmail.toLowerCase())
+      );
+      
+      if (matchingEmail && matchingEmail !== newEmail) {
+        // Auto-complete the email
+        setEmail(matchingEmail);
+        
+        // Try to load saved password for this email if remember me was used
+        const savedData = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
+        if (savedData[matchingEmail]) {
+          setPassword(savedData[matchingEmail].password);
+          setRememberMe(true);
+        }
+      }
+    }
+  };
+
   // Load saved credentials on component mount
   React.useEffect(() => {
     const loadSavedCredentials = async () => {
@@ -153,14 +186,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             setRememberMe(true);
           }
         } else {
-          // For web, use localStorage
-          const savedEmail = localStorage.getItem('remembered-email');
-          const savedPassword = localStorage.getItem('remembered-password');
-          const wasRemembered = localStorage.getItem('remember-me') === 'true';
+          // For web, load the most recent credentials
+          const savedEmail = localStorage.getItem('last-email');
+          const savedCredentials = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
           
-          if (wasRemembered && savedEmail && savedPassword) {
+          if (savedEmail && savedCredentials[savedEmail]) {
             setEmail(savedEmail);
-            setPassword(savedPassword);
+            setPassword(savedCredentials[savedEmail].password);
             setRememberMe(true);
           }
         }
@@ -186,10 +218,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           console.error('Failed to store biometric credentials:', error);
         }
       } else {
-        // For web, use localStorage
-        localStorage.setItem('remembered-email', email);
-        localStorage.setItem('remembered-password', password);
-        localStorage.setItem('remember-me', 'true');
+        // Enhanced web storage - store multiple credentials
+        const existingCredentials = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
+        existingCredentials[email] = { password, rememberMe: true };
+        localStorage.setItem('saved-credentials', JSON.stringify(existingCredentials));
+        localStorage.setItem('last-email', email);
       }
     } else if (!rememberMe) {
       // Clear saved credentials when remember me is unchecked
@@ -202,10 +235,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           console.error('Failed to delete biometric credentials:', error);
         }
       } else {
-        // For web, clear localStorage
-        localStorage.removeItem('remembered-email');
-        localStorage.removeItem('remembered-password');
-        localStorage.removeItem('remember-me');
+        // For web, remove this email's credentials
+        const existingCredentials = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
+        delete existingCredentials[email];
+        localStorage.setItem('saved-credentials', JSON.stringify(existingCredentials));
+        if (localStorage.getItem('last-email') === email) {
+          localStorage.removeItem('last-email');
+        }
       }
     }
   }, [rememberMe, email, password]);
@@ -276,7 +312,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                   <Input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
                     className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
                     autoComplete="email"

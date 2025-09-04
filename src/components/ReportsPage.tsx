@@ -27,20 +27,21 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
   const [reportStartDate, setReportStartDate] = React.useState('');
   const [reportEndDate, setReportEndDate] = React.useState('');
 
-  // Calculate user statistics - count all times a user added a shortage, regardless of current status
+  // Calculate user statistics - count ALL shortage reports ever made, never decrease
   const userStats = React.useMemo(() => {
     const stats: Record<string, { shortages: number }> = {};
     
-    // Count all medicine records where a user added a shortage (regardless of current status)
+    // Count all medicine records - each record represents shortage reports made
     medicines.forEach(medicine => {
       if (medicine.updatedBy) {
-        // We count each medicine entry as it was originally recorded
-        // The repeat_count indicates how many times this shortage was reported
+        // Count the total number of shortage reports made by this user
+        // repeat_count represents how many times this shortage was reported
         const shortageCount = medicine.repeat_count || 1;
         
         if (!stats[medicine.updatedBy]) {
           stats[medicine.updatedBy] = { shortages: 0 };
         }
+        // Always add to the count - statistics never decrease when items become available
         stats[medicine.updatedBy].shortages += shortageCount;
       }
     });
