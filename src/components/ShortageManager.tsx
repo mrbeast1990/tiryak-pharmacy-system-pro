@@ -35,8 +35,11 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
 
   // تحميل البيانات عند بداية فتح الصفحة
   useEffect(() => {
-    loadMedicines();
-  }, []);
+    console.log('🔄 تحميل البيانات الأولية للأدوية...');
+    loadMedicines().then(() => {
+      console.log('✅ تم تحميل البيانات بنجاح، عدد الأدوية:', medicines.length);
+    });
+  }, [loadMedicines]);
 
   // إضافة الاستماع للتحديثات المباشرة
   useEffect(() => {
