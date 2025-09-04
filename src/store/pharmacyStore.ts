@@ -114,10 +114,11 @@ export const usePharmacyStore = create<PharmacyState>()(
     },
     
     updateMedicine: async (id, updates) => {
-      const user = useAuthStore.getState().user;
-      if (!user) return console.error("User not authenticated");
-      
-      const { error } = await supabase.from('medicines').update({ ...updates, last_updated: new Date().toISOString(), updated_by_id: user.id, updated_by_name: user.name }).eq('id', id);
+      // فقط تحديث البيانات المطلوبة دون تغيير المستخدم الأصلي
+      const { error } = await supabase.from('medicines').update({ 
+        ...updates, 
+        last_updated: new Date().toISOString() 
+      }).eq('id', id);
       if (error) console.error("Error updating medicine:", error);
       await get().fetchMedicines();
     },
