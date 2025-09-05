@@ -211,8 +211,9 @@ const NotificationCenter: React.FC = () => {
       {/* Notification Dropdown */}
       {isOpen && (
         <div 
-          className="absolute top-full right-0 mt-2 w-80 max-w-sm z-[9999]"
+          className="fixed top-16 right-4 w-80 max-w-sm z-[99999]"
           dir={language === 'ar' ? 'rtl' : 'ltr'}
+          style={{ zIndex: 99999 }}
         >
           <Card className="shadow-lg border-0 card-shadow">
             <CardHeader className="pb-3">
