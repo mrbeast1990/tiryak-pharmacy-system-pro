@@ -7,6 +7,7 @@ import { Bell, BellRing, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import NotificationPortal from './NotificationPortal';
 
 interface Notification {
   id: string;
@@ -208,14 +209,13 @@ const NotificationCenter: React.FC = () => {
         )}
       </Button>
 
-      {/* Notification Dropdown */}
-      {isOpen && (
+      {/* Notification Dropdown باستخدام Portal */}
+      <NotificationPortal isOpen={isOpen}>
         <div 
-          className="fixed top-16 right-4 w-80 max-w-sm z-[99999]"
+          className="w-80 max-w-sm"
           dir={language === 'ar' ? 'rtl' : 'ltr'}
-          style={{ zIndex: 99999 }}
         >
-          <Card className="shadow-lg border-0 card-shadow">
+          <Card className="shadow-lg border-0 card-shadow bg-white">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">
@@ -292,7 +292,7 @@ const NotificationCenter: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      )}
+      </NotificationPortal>
     </div>
   );
 };
