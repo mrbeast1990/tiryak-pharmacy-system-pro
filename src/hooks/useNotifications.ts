@@ -39,7 +39,7 @@ export const useNotifications = () => {
           )
         `)
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { foreignTable: 'notifications', ascending: false });
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -55,7 +55,8 @@ export const useNotifications = () => {
           created_at: item.notifications!.created_at,
           is_read: item.is_read,
           read_at: item.read_at,
-        }));
+        }))
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setNotifications(formattedNotifications);
       setUnreadCount(formattedNotifications.filter(n => !n.is_read).length);
