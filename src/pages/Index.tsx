@@ -9,21 +9,38 @@ const Index = () => {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
 
-  // استخدام مصادر الحالة بشكل منفصل لتجنب مشاكل الحالة
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  const user = useAuthStore(state => state.user);
-  const language = useLanguageStore(state => state.language);
+  // استخدام مصادر الحالة مع حماية من الأخطاء
+  const [storesReady, setStoresReady] = useState(false);
+  
+  // استخدام useEffect لتحميل الحالات بشكل آمن
+  const [authState, setAuthState] = useState({ isAuthenticated: false, user: null });
+  const [langState, setLangState] = useState({ language: 'ar' });
 
   useEffect(() => {
     try {
       console.log('تهيئة التطبيق...');
       
-      // Set document direction based on language
-      document.documentElement.lang = language;
-      document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+      // تحميل الحالات بشكل آمن
+      const authStore = useAuthStore.getState();
+      const langStore = useLanguageStore.getState();
       
-      console.log('حالة المصادقة:', { isAuthenticated, user: !!user });
-      console.log('حالة اللغة:', { language });
+      setAuthState({
+        isAuthenticated: authStore.isAuthenticated,
+        user: authStore.user
+      });
+      
+      setLangState({
+        language: langStore.language
+      });
+      
+      // Set document direction based on language
+      document.documentElement.lang = langStore.language;
+      document.documentElement.dir = langStore.language === 'ar' ? 'rtl' : 'ltr';
+      
+      console.log('حالة المصادقة:', { isAuthenticated: authStore.isAuthenticated, user: !!authStore.user });
+      console.log('حالة اللغة:', { language: langStore.language });
+      
+      setStoresReady(true);
       
       // Small delay to allow stores to initialize properly
       const timer = setTimeout(() => {
@@ -37,7 +54,7 @@ const Index = () => {
       setInitError('فشل في تهيئة التطبيق: ' + (error as Error).message);
       setIsReady(true); // السماح بالمتابعة حتى لو حدث خطأ
     }
-  }, [language, isAuthenticated, user]);
+  }, []);
 
   // إذا حدث خطأ في التهيئة
   if (initError) {
@@ -58,7 +75,7 @@ const Index = () => {
   }
 
 
-  if (!isReady) {
+  if (!isReady || !storesReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100">
         <div className="text-center">
@@ -66,7 +83,7 @@ const Index = () => {
             <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
           <p className="text-gray-600">
-            {language === 'ar' ? 'جاري تحميل النظام...' : 'Loading system...'}
+            {langState.language === 'ar' ? 'جاري تحميل النظام...' : 'Loading system...'}
           </p>
         </div>
       </div>
@@ -80,13 +97,13 @@ const Index = () => {
   return (
     <SafeWrapper name="Index Page">
       <div className="min-h-screen">
-        {!isAuthenticated ? (
+        {!authState.isAuthenticated ? (
           <SafeWrapper name="Login Form">
             <LoginForm onLogin={handleSuccessfulLogin} />
           </SafeWrapper>
         ) : (
           <SafeWrapper name="Dashboard">
-            <Dashboard user={user} />
+            <Dashboard user={authState.user} />
           </SafeWrapper>
         )}
       </div>
