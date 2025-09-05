@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, BellRing, Check, X } from 'lucide-react';
+import { Bell, BellRing, Check, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -120,6 +120,57 @@ const NotificationCenter: React.FC = () => {
       console.error('Error marking all as read:', error);
     }
   };
+
+  // Delete notification (admin only)
+  const deleteNotification = async (notificationId: string) => {
+    if (!user) return;
+
+    try {
+      // First delete from notification_read_status
+      const { error: deleteReadStatusError } = await supabase
+        .from('notification_read_status')
+        .delete()
+        .eq('notification_id', notificationId);
+
+      if (deleteReadStatusError) {
+        console.error('Error deleting notification read status:', deleteReadStatusError);
+        return;
+      }
+
+      // Then delete the notification itself
+      const { error: deleteNotificationError } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (deleteNotificationError) {
+        console.error('Error deleting notification:', deleteNotificationError);
+        return;
+      }
+
+      // Update local state
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setUnreadCount(prev => {
+        const deletedNotification = notifications.find(n => n.id === notificationId);
+        return deletedNotification && !deletedNotification.is_read ? Math.max(0, prev - 1) : prev;
+      });
+
+      toast({
+        title: language === 'ar' ? "تم حذف الإشعار" : "Notification deleted",
+        description: language === 'ar' ? "تم حذف الإشعار بنجاح" : "The notification has been deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast({
+        title: language === 'ar' ? "خطأ في الحذف" : "Delete error",
+        description: language === 'ar' ? "فشل في حذف الإشعار" : "Failed to delete notification",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Check if user is admin
+  const isAdmin = user?.email === 'deltanorthpharm@gmail.com' || user?.email === 'thepanaceapharmacy@gmail.com' || user?.email === 'ahmad@tiryak.com';
 
   // Real-time subscription
   useEffect(() => {
@@ -268,16 +319,31 @@ const NotificationCenter: React.FC = () => {
                       }}
                     >
                       <div className="space-y-1">
-                        <div className="flex items-start justify-between">
-                          <h4 className={`text-sm font-medium ${
-                            !notification.is_read ? 'text-blue-900' : 'text-gray-900'
-                          }`}>
-                            {notification.title}
-                          </h4>
-                          {!notification.is_read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1" />
-                          )}
-                        </div>
+                         <div className="flex items-start justify-between">
+                           <h4 className={`text-sm font-medium ${
+                             !notification.is_read ? 'text-blue-900' : 'text-gray-900'
+                           }`}>
+                             {notification.title}
+                           </h4>
+                           <div className="flex items-center gap-1">
+                             {isAdmin && (
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   deleteNotification(notification.id);
+                                 }}
+                               >
+                                 <Trash2 className="h-3 w-3" />
+                               </Button>
+                             )}
+                             {!notification.is_read && (
+                               <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1" />
+                             )}
+                           </div>
+                         </div>
                         <p className="text-xs text-gray-600 leading-relaxed">
                           {notification.message}
                         </p>
