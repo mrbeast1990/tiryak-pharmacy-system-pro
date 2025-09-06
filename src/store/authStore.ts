@@ -98,6 +98,11 @@ export const useAuthStore = create<AuthState>()(
           rememberMe: false
         });
         console.log('تم تسجيل الخروج');
+        
+        // إعادة تحميل الصفحة لضمان التوجيه الصحيح
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       },
       
       checkPermission: (permission: string) => {

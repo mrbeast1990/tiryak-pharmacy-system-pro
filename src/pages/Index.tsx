@@ -92,6 +92,12 @@ const Index = () => {
 
   const handleSuccessfulLogin = () => {
     console.log('تم تسجيل الدخول بنجاح');
+    // إعادة تحديث حالة المصادقة فورياً
+    const authStore = useAuthStore.getState();
+    setAuthState({
+      isAuthenticated: authStore.isAuthenticated,
+      user: authStore.user
+    });
   };
 
   return (

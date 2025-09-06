@@ -46,19 +46,27 @@ export const useNotifications = () => {
         return;
       }
 
-      const formattedNotifications = data
-        .filter(item => item.notifications)
-        .map(item => ({
-          id: item.notifications!.id,
-          title: item.notifications!.title,
-          message: item.notifications!.message,
-          created_at: item.notifications!.created_at,
-          is_read: item.is_read,
-          read_at: item.read_at,
-        }))
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+const formattedNotifications = data
+  .filter(item => item.notifications)
+  .map(item => ({
+    id: item.notifications!.id,
+    title: item.notifications!.title,
+    message: item.notifications!.message,
+    created_at: item.notifications!.created_at,
+    is_read: item.is_read,
+    read_at: item.read_at,
+  }))
+  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      setNotifications(formattedNotifications);
+// إضافة تأثير الظهور التدريجي
+setNotifications([]);
+setTimeout(() => {
+  formattedNotifications.forEach((notification, index) => {
+    setTimeout(() => {
+      setNotifications(prev => [...prev, notification]);
+    }, index * 100); // تأخير 100ms بين كل إشعار
+  });
+}, 50);
       setUnreadCount(formattedNotifications.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('Error in fetchNotifications:', error);
