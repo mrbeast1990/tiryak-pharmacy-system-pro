@@ -61,8 +61,13 @@ const NotificationDisplay: React.FC = () => {
         read_at: item.read_at
       })) || [];
 
-      setNotifications(formattedNotifications);
-      setUnreadCount(formattedNotifications.filter(n => !n.is_read).length);
+      // ترتيب الإشعارات: الجديد في الأعلى والقديم في الأسفل
+      const sortedNotifications = formattedNotifications.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setNotifications(sortedNotifications);
+      setUnreadCount(sortedNotifications.filter(n => !n.is_read).length);
     } catch (error) {
       console.error('خطأ في جلب الإشعارات:', error);
     }

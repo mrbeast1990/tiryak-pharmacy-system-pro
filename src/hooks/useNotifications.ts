@@ -58,12 +58,18 @@ const formattedNotifications = data
   }))
   .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-// إضافة تأثير الظهور التدريجي
+// إضافة تأثير الظهور التدريجي مع الترتيب الصحيح
 setNotifications([]);
 setTimeout(() => {
   formattedNotifications.forEach((notification, index) => {
     setTimeout(() => {
-      setNotifications(prev => [...prev, notification]);
+      setNotifications(prev => {
+        // إضافة الإشعارات بترتيب الأحدث أولاً
+        const newNotifications = [...prev, notification];
+        return newNotifications.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      });
     }, index * 100); // تأخير 100ms بين كل إشعار
   });
 }, 50);
