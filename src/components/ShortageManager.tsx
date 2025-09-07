@@ -122,6 +122,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       return;
     }
 
+    // التحقق من أن الاسم لا يبدأ بمسافة
+    if (/^\s/.test(medicineName)) {
+      toast({
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' ? "اسم الدواء يجب أن يبدأ بحرف أو رقم" : "Medicine name must start with a letter or number",
+        variant: "destructive",
+      });
+      return;
+    }
+
     addMedicine({
       name: medicineName,
       status: 'shortage',
@@ -156,6 +166,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       toast({
         title: "خطأ",
         description: "يرجى إدخال اسم الدواء",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // التحقق من أن الاسم لا يبدأ بمسافة
+    if (/^\s/.test(editedName)) {
+      toast({
+        title: "خطأ",
+        description: "اسم الدواء يجب أن يبدأ بحرف أو رقم",
         variant: "destructive",
       });
       return;
@@ -446,7 +466,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           </div>
                         </div>
                         
-                        <div className="flex items-center">
+                        <div className="flex items-center space-x-2">
                           <Button
                             size="sm"
                             variant="outline"
@@ -455,6 +475,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           >
                             {t('shortages.provided')}
                           </Button>
+                          {canEditMedicineName && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 text-red-600 hover:text-red-700" 
+                              onClick={() => handleDeleteMedicine(medicine)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -546,16 +576,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           </div>
                          </div>
                          
-                         <div className="flex items-center">
-                           <Button
-                             size="sm"
-                             variant="outline"
-                             onClick={() => toggleStatus(medicine)}
-                             className="bg-red-50 hover:bg-red-100 text-xs px-2 py-1"
-                           >
-                             {t('shortages.shortage')}
-                           </Button>
-                         </div>
+                          <div className="flex items-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => toggleStatus(medicine)}
+                              className="bg-red-50 hover:bg-red-100 text-xs px-2 py-1"
+                            >
+                              نقص
+                            </Button>
+                          </div>
                        </div>
                      </div>
                    ))}
