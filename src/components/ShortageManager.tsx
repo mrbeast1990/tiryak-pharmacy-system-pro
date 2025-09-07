@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
+import { useSuggestionsStore } from '@/store/suggestionsStore';
 import { ArrowRight, Plus, Search, AlertCircle, CheckCircle, FileText, RotateCcw, Pill, Edit, Save, X, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
@@ -25,11 +26,13 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [currentShortagesPage, setCurrentShortagesPage] = useState(1);
   const [currentAvailablePage, setCurrentAvailablePage] = useState(1);
   const [sortBy, setSortBy] = useState('');
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const itemsPerPage = 50;
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
-  const { medicines, addMedicine, updateMedicine, deleteMedicine, getMedicineSuggestions, loadMedicines } = usePharmacyStore();
+  const { medicines, addMedicine, updateMedicine, deleteMedicine, loadMedicines } = usePharmacyStore();
+  const { getFilteredSuggestions, deleteSuggestion, addCustomSuggestion } = useSuggestionsStore();
   const { toast } = useToast();
   const { exportPDF } = usePDFExport();
 
@@ -65,7 +68,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     };
   }, [loadMedicines]);
 
-  const suggestions = getMedicineSuggestions(medicineName);
+  const suggestions = getFilteredSuggestions(medicines, medicineName);
 
   const filteredMedicines = useMemo(() => {
     return medicines.filter(medicine =>
@@ -360,17 +363,66 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                       className="text-right"
                     />
                     {showSuggestions && suggestions.length > 0 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                         {suggestions.map((suggestion, index) => (
                           <div
                             key={index}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-right text-sm"
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-right text-sm relative group"
                             onClick={() => {
                               setMedicineName(suggestion);
                               setShowSuggestions(false);
                             }}
+                            onMouseDown={(e) => {
+                              if (e.button === 0) { // Left click only
+                                const timer = setTimeout(() => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  deleteSuggestion(suggestion);
+                                  toast({
+                                    title: "تم الحذف",
+                                    description: `تم حذف "${suggestion}" من الاقتراحات`,
+                                    variant: "destructive",
+                                  });
+                                }, 800); // 800ms for long press
+                                setLongPressTimer(timer);
+                              }
+                            }}
+                            onMouseUp={() => {
+                              if (longPressTimer) {
+                                clearTimeout(longPressTimer);
+                                setLongPressTimer(null);
+                              }
+                            }}
+                            onMouseLeave={() => {
+                              if (longPressTimer) {
+                                clearTimeout(longPressTimer);
+                                setLongPressTimer(null);
+                              }
+                            }}
+                            onTouchStart={(e) => {
+                              const timer = setTimeout(() => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                deleteSuggestion(suggestion);
+                                toast({
+                                  title: "تم الحذف",
+                                  description: `تم حذف "${suggestion}" من الاقتراحات`,
+                                  variant: "destructive",
+                                });
+                              }, 800);
+                              setLongPressTimer(timer);
+                            }}
+                            onTouchEnd={() => {
+                              if (longPressTimer) {
+                                clearTimeout(longPressTimer);
+                                setLongPressTimer(null);
+                              }
+                            }}
                           >
-                            {suggestion}
+                            <span>{suggestion}</span>
+                            <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                              اضغط مطولاً للحذف
+                            </span>
                           </div>
                         ))}
                       </div>

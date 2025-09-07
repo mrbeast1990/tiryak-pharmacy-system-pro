@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/store/authStore';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/store/languageStore';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface Notification {
   id: string;
@@ -18,6 +19,7 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const { sendLocalNotification } = usePushNotifications();
   const { language } = useLanguageStore();
 
   // Fetch notifications
@@ -173,8 +175,15 @@ setTimeout(() => {
           table: 'notification_read_status',
           filter: `user_id=eq.${user.id}`
         },
-        () => {
+        async () => {
           fetchNotifications();
+          
+          // Send push notification
+          await sendLocalNotification(
+            language === 'ar' ? "إشعار جديد" : "New Notification",
+            language === 'ar' ? "لديك إشعار جديد في النظام" : "You have a new notification"
+          );
+          
           // Show toast for new notification
           toast({
             title: language === 'ar' ? "إشعار جديد" : "New Notification",
@@ -199,7 +208,7 @@ setTimeout(() => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, language, toast]);
+  }, [user, language, toast, sendLocalNotification]);
 
   return {
     notifications,
