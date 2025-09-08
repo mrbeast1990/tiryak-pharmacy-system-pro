@@ -28,6 +28,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [sortBy, setSortBy] = useState('');
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const itemsPerPage = 50;
+  const availableItemsPerPage = 10;
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -101,7 +102,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   
   // Pagination logic - now based on sorted results
   const totalShortagesPages = Math.ceil(sortedShortages.length / itemsPerPage);
-  const totalAvailablePages = Math.ceil(allAvailable.length / itemsPerPage);
+  const totalAvailablePages = Math.ceil(allAvailable.length / availableItemsPerPage);
   
   const shortages = sortedShortages.slice(
     (currentShortagesPage - 1) * itemsPerPage,
@@ -109,8 +110,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   );
   
   const available = allAvailable.slice(
-    (currentAvailablePage - 1) * itemsPerPage,
-    currentAvailablePage * itemsPerPage
+    (currentAvailablePage - 1) * availableItemsPerPage,
+    currentAvailablePage * availableItemsPerPage
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -377,12 +378,14 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                                 const timer = setTimeout(() => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  deleteSuggestion(suggestion);
-                                  toast({
-                                    title: "تم الحذف",
-                                    description: `تم حذف "${suggestion}" من الاقتراحات`,
-                                    variant: "destructive",
-                                  });
+                                  if (window.confirm(`هل أنت متأكد من حذف "${suggestion}" من الاقتراحات؟`)) {
+                                    deleteSuggestion(suggestion);
+                                    toast({
+                                      title: "تم الحذف",
+                                      description: `تم حذف "${suggestion}" من الاقتراحات`,
+                                      variant: "destructive",
+                                    });
+                                  }
                                 }, 800); // 800ms for long press
                                 setLongPressTimer(timer);
                               }
@@ -403,12 +406,14 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                               const timer = setTimeout(() => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                deleteSuggestion(suggestion);
-                                toast({
-                                  title: "تم الحذف",
-                                  description: `تم حذف "${suggestion}" من الاقتراحات`,
-                                  variant: "destructive",
-                                });
+                                if (window.confirm(`هل أنت متأكد من حذف "${suggestion}" من الاقتراحات؟`)) {
+                                  deleteSuggestion(suggestion);
+                                  toast({
+                                    title: "تم الحذف",
+                                    description: `تم حذف "${suggestion}" من الاقتراحات`,
+                                    variant: "destructive",
+                                  });
+                                }
                               }, 800);
                               setLongPressTimer(timer);
                             }}
@@ -628,16 +633,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           </div>
                          </div>
                          
-                          <div className="flex items-center">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => toggleStatus(medicine)}
-                              className="bg-red-50 hover:bg-red-100 text-xs px-2 py-1"
-                            >
-                              نقص
-                            </Button>
-                          </div>
+                           <div className="flex items-center">
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               onClick={() => toggleStatus(medicine)}
+                               className="bg-red-50 hover:bg-red-100 text-xs px-2 py-1"
+                             >
+                               {t('shortages.shortage')}
+                             </Button>
+                           </div>
                        </div>
                      </div>
                    ))}

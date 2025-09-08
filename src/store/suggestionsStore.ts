@@ -40,7 +40,7 @@ export const useSuggestionsStore = create<SuggestionsState>()(
         const { customSuggestions, deletedSuggestions } = get();
         const lowerQuery = query.toLowerCase();
 
-        // Get medicine suggestions from database
+        // Get medicine suggestions from database (including previously available items)
         const medicineSuggestions = medicines
           .filter(medicine => 
             medicine.name.toLowerCase().includes(lowerQuery) &&
