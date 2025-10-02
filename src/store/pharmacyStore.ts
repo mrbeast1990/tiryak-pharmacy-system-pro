@@ -72,37 +72,77 @@ export const usePharmacyStore = create<PharmacyState>()(
       
       console.log('🔵 إضافة دواء:', medicine.name, 'بحالة:', medicine.status);
 
-      // نتحقق فقط من وجود دواء بنفس الاسم في حالة shortage حالياً
-      const { data: existingShortage } = await supabase
+      // التحقق من وجود الدواء بأي حالة
+      const { data: existingMedicine } = await supabase
         .from('medicines')
-        .select('id, repeat_count')
+        .select('id, status, repeat_count')
         .eq('name', medicine.name)
-        .eq('status', 'shortage')
         .maybeSingle();
       
-      if (existingShortage && medicine.status === 'shortage') {
-        console.log('⚠️ دواء موجود مسبقاً بحالة نقص، تحديث العدد');
-        // زيادة عداد التكرار للدواء الموجود
-        const newRepeatCount = (existingShortage.repeat_count || 1) + 1;
-        const { error } = await supabase
-          .from('medicines')
-          .update({ 
-            repeat_count: newRepeatCount,
-            last_updated: new Date().toISOString(),
-            updated_by_id: user.id,
-            updated_by_name: user.name,
-            notes: medicine.notes 
-          })
-          .eq('id', existingShortage.id);
-        
-        if (error) {
-          console.error("❌ خطأ في تحديث الدواء:", error);
+      if (existingMedicine) {
+        if (existingMedicine.status === 'shortage' && medicine.status === 'shortage') {
+          console.log('⚠️ دواء موجود مسبقاً بحالة نقص، تحديث العدد');
+          // زيادة عداد التكرار للدواء الموجود
+          const newRepeatCount = (existingMedicine.repeat_count || 1) + 1;
+          const { error } = await supabase
+            .from('medicines')
+            .update({ 
+              repeat_count: newRepeatCount,
+              last_updated: new Date().toISOString(),
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              notes: medicine.notes 
+            })
+            .eq('id', existingMedicine.id);
+          
+          if (error) {
+            console.error("❌ خطأ في تحديث الدواء:", error);
+          } else {
+            console.log('✅ تم تحديث الدواء بنجاح، العدد الجديد:', newRepeatCount);
+          }
+        } else if (existingMedicine.status === 'available' && medicine.status === 'shortage') {
+          console.log('🔄 تحويل دواء من متوفر إلى نقص');
+          // تحويل الدواء من متوفر إلى نقص
+          const { error } = await supabase
+            .from('medicines')
+            .update({ 
+              status: 'shortage',
+              repeat_count: 1,
+              last_updated: new Date().toISOString(),
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              notes: medicine.notes 
+            })
+            .eq('id', existingMedicine.id);
+          
+          if (error) {
+            console.error("❌ خطأ في تحويل الدواء:", error);
+          } else {
+            console.log('✅ تم تحويل الدواء من متوفر إلى نقص بنجاح');
+          }
         } else {
-          console.log('✅ تم تحديث الدواء بنجاح، العدد الجديد:', newRepeatCount);
+          console.log('📝 تحديث حالة الدواء الموجود');
+          // تحديث الحالة فقط
+          const { error } = await supabase
+            .from('medicines')
+            .update({ 
+              status: medicine.status,
+              last_updated: new Date().toISOString(),
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              notes: medicine.notes 
+            })
+            .eq('id', existingMedicine.id);
+          
+          if (error) {
+            console.error("❌ خطأ في تحديث الدواء:", error);
+          } else {
+            console.log('✅ تم تحديث حالة الدواء بنجاح');
+          }
         }
       } else {
-        console.log('🆕 إضافة سجل جديد بدون تكرار');
-        // إضافة سجل جديد دائماً بعداد = 1
+        console.log('🆕 إضافة سجل جديد');
+        // إضافة سجل جديد
         const { error } = await supabase.from('medicines').insert({
           name: medicine.name,
           status: medicine.status,
