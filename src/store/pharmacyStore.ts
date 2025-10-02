@@ -72,63 +72,50 @@ export const usePharmacyStore = create<PharmacyState>()(
       
       console.log('🔵 إضافة دواء:', medicine.name, 'بحالة:', medicine.status);
 
-      // Check if there's an existing medicine with same name that's still in shortage status
-      const { data: existingMedicine } = await supabase.from('medicines').select('id, repeat_count, status').eq('name', medicine.name).eq('status', 'shortage').maybeSingle();
+      // نتحقق فقط من وجود دواء بنفس الاسم في حالة shortage حالياً
+      const { data: existingShortage } = await supabase
+        .from('medicines')
+        .select('id, repeat_count')
+        .eq('name', medicine.name)
+        .eq('status', 'shortage')
+        .maybeSingle();
       
-      if (existingMedicine) {
+      if (existingShortage && medicine.status === 'shortage') {
         console.log('⚠️ دواء موجود مسبقاً بحالة نقص، تحديث العدد');
-        // Increment repeat count only if adding another shortage record
-        const newRepeatCount = medicine.status === 'shortage' ? (existingMedicine.repeat_count || 1) + 1 : 1;
-        const { error } = await supabase.from('medicines').update({ 
-          repeat_count: newRepeatCount,
-          status: medicine.status,
-          last_updated: new Date().toISOString(),
-          updated_by_id: user.id,
-          updated_by_name: user.name,
-          notes: medicine.notes 
-        }).eq('id', existingMedicine.id);
+        // زيادة عداد التكرار للدواء الموجود
+        const newRepeatCount = (existingShortage.repeat_count || 1) + 1;
+        const { error } = await supabase
+          .from('medicines')
+          .update({ 
+            repeat_count: newRepeatCount,
+            last_updated: new Date().toISOString(),
+            updated_by_id: user.id,
+            updated_by_name: user.name,
+            notes: medicine.notes 
+          })
+          .eq('id', existingShortage.id);
+        
         if (error) {
           console.error("❌ خطأ في تحديث الدواء:", error);
         } else {
-          console.log('✅ تم تحديث الدواء بنجاح');
+          console.log('✅ تم تحديث الدواء بنجاح، العدد الجديد:', newRepeatCount);
         }
       } else {
-        console.log('🆕 لا يوجد دواء بنفس الاسم في حالة نقص، فحص المتوفر');
-        // Create new entry - check if there's an available medicine with same name
-        const { data: availableMedicine } = await supabase.from('medicines').select('id').eq('name', medicine.name).eq('status', 'available').maybeSingle();
+        console.log('🆕 إضافة سجل جديد بدون تكرار');
+        // إضافة سجل جديد دائماً بعداد = 1
+        const { error } = await supabase.from('medicines').insert({
+          name: medicine.name,
+          status: medicine.status,
+          notes: medicine.notes,
+          updated_by_id: user.id,
+          updated_by_name: user.name,
+          repeat_count: 1
+        });
         
-        if (availableMedicine && medicine.status === 'shortage') {
-          console.log('📝 يوجد دواء متوفر بنفس الاسم، إضافة سجل نقص جديد');
-          // If there's an available medicine and we're adding shortage, create new shortage record with repeat_count = 1
-          const { error } = await supabase.from('medicines').insert({
-            name: medicine.name,
-            status: medicine.status,
-            notes: medicine.notes,
-            updated_by_id: user.id,
-            updated_by_name: user.name,
-            repeat_count: 1
-          });
-          if (error) {
-            console.error("❌ خطأ في إضافة الدواء:", error);
-          } else {
-            console.log('✅ تم إضافة الدواء بنجاح');
-          }
+        if (error) {
+          console.error("❌ خطأ في إضافة الدواء:", error);
         } else {
-          console.log('📝 حالة عادية، إضافة سجل جديد');
-          // Normal case - create new entry
-          const { error } = await supabase.from('medicines').insert({
-            name: medicine.name,
-            status: medicine.status,
-            notes: medicine.notes,
-            updated_by_id: user.id,
-            updated_by_name: user.name,
-            repeat_count: 1
-          });
-          if (error) {
-            console.error("❌ خطأ في إضافة الدواء:", error);
-          } else {
-            console.log('✅ تم إضافة الدواء بنجاح');
-          }
+          console.log('✅ تم إضافة الدواء بنجاح');
         }
       }
       await get().fetchMedicines();
