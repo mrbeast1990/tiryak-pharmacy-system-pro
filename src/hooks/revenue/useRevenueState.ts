@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 export type Period = 'morning' | 'evening' | 'night' | 'ahmad_rajili';
 
 export const useRevenueState = () => {
-  const [expense, setExpense] = useState('');
+  const [bankingServices, setBankingServices] = useState('');
   const [income, setIncome] = useState('');
   const [period, setPeriod] = useState<Period>('morning');
   const [notes, setNotes] = useState('');
@@ -20,6 +20,7 @@ export const useRevenueState = () => {
   const [periodStartDate, setPeriodStartDate] = useState('');
   const [periodEndDate, setPeriodEndDate] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
+  const [viewMode, setViewMode] = useState<'income' | 'banking'>('income');
   
   const { user } = useAuthStore();
 
@@ -46,7 +47,7 @@ export const useRevenueState = () => {
   }, [user]);
 
   return {
-    expense, setExpense,
+    bankingServices, setBankingServices,
     income, setIncome,
     period, setPeriod,
     notes, setNotes,
@@ -58,5 +59,7 @@ export const useRevenueState = () => {
     periodStartDate, setPeriodStartDate,
     periodEndDate, setPeriodEndDate,
     formSubmitting, setFormSubmitting,
+    viewMode, setViewMode,
   };
 };
+

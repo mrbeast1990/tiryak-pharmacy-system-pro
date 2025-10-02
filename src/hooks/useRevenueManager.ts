@@ -25,8 +25,8 @@ export const useRevenueManager = () => {
   const { generatePeriodReport: generateReport } = useRevenuePDF();
 
   const form = useRevenueForm({
-    expense: state.expense,
-    setExpense: state.setExpense,
+    bankingServices: state.bankingServices,
+    setBankingServices: state.setBankingServices,
     income: state.income,
     setIncome: state.setIncome,
     notes: state.notes,

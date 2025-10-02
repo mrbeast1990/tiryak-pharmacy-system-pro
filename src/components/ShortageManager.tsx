@@ -368,43 +368,13 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                         {suggestions.map((suggestion, index) => (
                           <div
                             key={index}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-right text-sm relative group"
-                            onClick={() => {
-                              setMedicineName(suggestion);
-                              setShowSuggestions(false);
-                            }}
-                            onMouseDown={(e) => {
-                              if (e.button === 0) { // Left click only
-                                const timer = setTimeout(() => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  if (window.confirm(`هل أنت متأكد من حذف "${suggestion}" من الاقتراحات؟`)) {
-                                    deleteSuggestion(suggestion);
-                                    toast({
-                                      title: "تم الحذف",
-                                      description: `تم حذف "${suggestion}" من الاقتراحات`,
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }, 800); // 800ms for long press
-                                setLongPressTimer(timer);
-                              }
-                            }}
-                            onMouseUp={() => {
-                              if (longPressTimer) {
-                                clearTimeout(longPressTimer);
-                                setLongPressTimer(null);
-                              }
-                            }}
-                            onMouseLeave={() => {
-                              if (longPressTimer) {
-                                clearTimeout(longPressTimer);
-                                setLongPressTimer(null);
-                              }
-                            }}
-                            onTouchStart={(e) => {
-                              const timer = setTimeout(() => {
-                                e.preventDefault();
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-right text-sm relative group flex items-center justify-between"
+                          >
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600 flex-shrink-0"
+                              onClick={(e) => {
                                 e.stopPropagation();
                                 if (window.confirm(`هل أنت متأكد من حذف "${suggestion}" من الاقتراحات؟`)) {
                                   deleteSuggestion(suggestion);
@@ -414,19 +384,18 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                                     variant: "destructive",
                                   });
                                 }
-                              }, 800);
-                              setLongPressTimer(timer);
-                            }}
-                            onTouchEnd={() => {
-                              if (longPressTimer) {
-                                clearTimeout(longPressTimer);
-                                setLongPressTimer(null);
-                              }
-                            }}
-                          >
-                            <span>{suggestion}</span>
-                            <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                              اضغط مطولاً للحذف
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                            <span
+                              onClick={() => {
+                                setMedicineName(suggestion);
+                                setShowSuggestions(false);
+                              }}
+                              className="flex-1"
+                            >
+                              {suggestion}
                             </span>
                           </div>
                         ))}

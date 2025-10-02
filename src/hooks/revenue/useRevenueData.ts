@@ -20,6 +20,10 @@ export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, s
 
   const dailyRevenue = getTotalDailyRevenue(selectedDate);
   const dailyRevenues = revenues.filter(revenue => revenue.date === selectedDate);
+  
+  const dailyBankingServices = revenues
+    .filter(revenue => revenue.date === selectedDate && revenue.type === 'banking_services')
+    .reduce((total, revenue) => total + revenue.amount, 0);
 
   const getPeriodRevenue = () => {
     if (!periodStartDate || !periodEndDate) return 0;
@@ -32,11 +36,23 @@ export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, s
       .reduce((total, revenue) => total + revenue.amount, 0);
   };
 
-  const getPeriodRevenues = () => {
+  const getPeriodBankingServices = () => {
+    if (!periodStartDate || !periodEndDate) return 0;
+    return revenues
+      .filter(revenue => 
+        revenue.date >= periodStartDate && 
+        revenue.date <= periodEndDate && 
+        revenue.type === 'banking_services'
+      )
+      .reduce((total, revenue) => total + revenue.amount, 0);
+  };
+
+  const getPeriodRevenues = (type: 'income' | 'banking_services') => {
     if (!periodStartDate || !periodEndDate) return [];
     return revenues.filter(revenue => 
       revenue.date >= periodStartDate && 
-      revenue.date <= periodEndDate
+      revenue.date <= periodEndDate &&
+      revenue.type === type
     );
   };
 
@@ -52,13 +68,28 @@ export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, s
     setShowPeriodDetails(true);
   };
 
+  const showPeriodBanking = () => {
+    if (!periodStartDate || !periodEndDate) {
+      toast({
+        title: "تحديد التواريخ",
+        description: "يرجى تحديد تاريخ البداية والنهاية",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowPeriodDetails(true);
+  };
+
   return {
     revenues,
     revenuesLoading,
     dailyRevenue,
+    dailyBankingServices,
     dailyRevenues,
     getPeriodRevenue,
+    getPeriodBankingServices,
     getPeriodRevenues,
     showPeriodRevenue,
+    showPeriodBanking,
   };
 };

@@ -7,8 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Period } from './useRevenueState';
 
 interface UseRevenueFormProps {
-  expense: string;
-  setExpense: (val: string) => void;
+  bankingServices: string;
+  setBankingServices: (val: string) => void;
   income: string;
   setIncome: (val: string) => void;
   notes: string;
@@ -20,7 +20,7 @@ interface UseRevenueFormProps {
 }
 
 export const useRevenueForm = ({
-  expense, setExpense,
+  bankingServices, setBankingServices,
   income, setIncome,
   notes, setNotes,
   period, selectedDate,
@@ -35,13 +35,13 @@ export const useRevenueForm = ({
     e.preventDefault();
     setFormSubmitting(true);
     
-    const expenseAmount = Number(expense) || 0;
+    const bankingAmount = Number(bankingServices) || 0;
     const incomeAmount = Number(income) || 0;
 
-    if (expenseAmount === 0 && incomeAmount === 0) {
+    if (bankingAmount === 0 && incomeAmount === 0) {
       toast({
         title: language === 'ar' ? "خطأ" : "Error",
-        description: language === 'ar' ? "يرجى إدخال مبلغ الصرف أو الإيراد" : "Please enter cash disbursement or income amount",
+        description: language === 'ar' ? "يرجى إدخال الإيراد النقدي أو الخدمات المصرفية" : "Please enter cash income or banking services amount",
         variant: "destructive",
       });
       setFormSubmitting(false);
@@ -67,22 +67,22 @@ export const useRevenueForm = ({
       return;
     }
 
-    if (expenseAmount > 0) {
-      await addRevenue({
-        amount: expenseAmount,
-        type: 'expense',
-        period,
-        notes: notes + (notes ? ' - ' : '') + 'Cash Disbursement',
-        date: selectedDate,
-      });
-    }
-
     if (incomeAmount > 0) {
       await addRevenue({
         amount: incomeAmount,
         type: 'income',
         period,
-        notes: notes + (notes ? ' - ' : '') + 'Income',
+        notes: notes,
+        date: selectedDate,
+      });
+    }
+
+    if (bankingAmount > 0) {
+      await addRevenue({
+        amount: bankingAmount,
+        type: 'banking_services',
+        period,
+        notes: notes,
         date: selectedDate,
       });
     }
@@ -92,7 +92,7 @@ export const useRevenueForm = ({
       description: language === 'ar' ? `تم تسجيل العملية بنجاح` : `Transaction registered successfully`,
     });
 
-    setExpense('');
+    setBankingServices('');
     setIncome('');
     setNotes('');
     setFormSubmitting(false);

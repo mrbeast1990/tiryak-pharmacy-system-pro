@@ -17,7 +17,7 @@ interface RevenueManagerProps {
 
 const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const {
-    expense, setExpense,
+    bankingServices, setBankingServices,
     income, setIncome,
     period, setPeriod,
     notes, setNotes,
@@ -29,6 +29,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     periodStartDate, setPeriodStartDate,
     periodEndDate, setPeriodEndDate,
     formSubmitting,
+    viewMode, setViewMode,
     language,
     revenuesLoading,
     checkPermission,
@@ -36,10 +37,13 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     navigateDate,
     canNavigateDate,
     dailyRevenue,
+    dailyBankingServices,
     dailyRevenues,
     getPeriodRevenue,
+    getPeriodBankingServices,
     getPeriodRevenues,
     showPeriodRevenue,
+    showPeriodBanking,
     generatePeriodReport,
     canSelectPeriod,
     periodDisplayName,
@@ -56,8 +60,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   }
 
   if (showPeriodDetails) {
-    const periodRevenues = getPeriodRevenues();
-    const periodRevenue = getPeriodRevenue();
+    const periodRevenues = getPeriodRevenues(viewMode === 'income' ? 'income' : 'banking_services');
+    const periodRevenue = viewMode === 'income' ? getPeriodRevenue() : getPeriodBankingServices();
     return (
       <PeriodRevenueDetails
         onBack={() => setShowPeriodDetails(false)}
@@ -129,8 +133,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           setPeriod={setPeriod}
           canSelectPeriod={canSelectPeriod}
           periodDisplayName={periodDisplayName}
-          expense={expense}
-          setExpense={setExpense}
+          bankingServices={bankingServices}
+          setBankingServices={setBankingServices}
           income={income}
           setIncome={setIncome}
           notes={notes}
@@ -141,6 +145,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
         <RevenueDisplay
           dailyRevenue={dailyRevenue}
+          dailyBankingServices={dailyBankingServices}
           selectedDate={selectedDate}
           navigateDate={navigateDate}
           setShowDailyDetails={setShowDailyDetails}
@@ -148,7 +153,14 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           setPeriodStartDate={setPeriodStartDate}
           periodEndDate={periodEndDate}
           setPeriodEndDate={setPeriodEndDate}
-          showPeriodRevenue={showPeriodRevenue}
+          showPeriodRevenue={() => {
+            setViewMode('income');
+            showPeriodRevenue();
+          }}
+          showPeriodBanking={() => {
+            setViewMode('banking');
+            showPeriodBanking();
+          }}
           canNavigateDate={canNavigateDate}
         />
         
