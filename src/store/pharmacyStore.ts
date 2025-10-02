@@ -65,12 +65,18 @@ export const usePharmacyStore = create<PharmacyState>()(
     
     addMedicine: async (medicine) => {
       const user = useAuthStore.getState().user;
-      if (!user) return console.error("User not authenticated");
+      if (!user) {
+        console.error("❌ User not authenticated");
+        return;
+      }
+      
+      console.log('🔵 إضافة دواء:', medicine.name, 'بحالة:', medicine.status);
 
       // Check if there's an existing medicine with same name that's still in shortage status
       const { data: existingMedicine } = await supabase.from('medicines').select('id, repeat_count, status').eq('name', medicine.name).eq('status', 'shortage').maybeSingle();
       
       if (existingMedicine) {
+        console.log('⚠️ دواء موجود مسبقاً بحالة نقص، تحديث العدد');
         // Increment repeat count only if adding another shortage record
         const newRepeatCount = medicine.status === 'shortage' ? (existingMedicine.repeat_count || 1) + 1 : 1;
         const { error } = await supabase.from('medicines').update({ 
@@ -81,12 +87,18 @@ export const usePharmacyStore = create<PharmacyState>()(
           updated_by_name: user.name,
           notes: medicine.notes 
         }).eq('id', existingMedicine.id);
-        if (error) console.error("Error updating medicine:", error);
+        if (error) {
+          console.error("❌ خطأ في تحديث الدواء:", error);
+        } else {
+          console.log('✅ تم تحديث الدواء بنجاح');
+        }
       } else {
+        console.log('🆕 لا يوجد دواء بنفس الاسم في حالة نقص، فحص المتوفر');
         // Create new entry - check if there's an available medicine with same name
         const { data: availableMedicine } = await supabase.from('medicines').select('id').eq('name', medicine.name).eq('status', 'available').maybeSingle();
         
         if (availableMedicine && medicine.status === 'shortage') {
+          console.log('📝 يوجد دواء متوفر بنفس الاسم، إضافة سجل نقص جديد');
           // If there's an available medicine and we're adding shortage, create new shortage record with repeat_count = 1
           const { error } = await supabase.from('medicines').insert({
             name: medicine.name,
@@ -96,8 +108,13 @@ export const usePharmacyStore = create<PharmacyState>()(
             updated_by_name: user.name,
             repeat_count: 1
           });
-          if (error) console.error("Error adding medicine:", error);
+          if (error) {
+            console.error("❌ خطأ في إضافة الدواء:", error);
+          } else {
+            console.log('✅ تم إضافة الدواء بنجاح');
+          }
         } else {
+          console.log('📝 حالة عادية، إضافة سجل جديد');
           // Normal case - create new entry
           const { error } = await supabase.from('medicines').insert({
             name: medicine.name,
@@ -107,7 +124,11 @@ export const usePharmacyStore = create<PharmacyState>()(
             updated_by_name: user.name,
             repeat_count: 1
           });
-          if (error) console.error("Error adding medicine:", error);
+          if (error) {
+            console.error("❌ خطأ في إضافة الدواء:", error);
+          } else {
+            console.log('✅ تم إضافة الدواء بنجاح');
+          }
         }
       }
       await get().fetchMedicines();
