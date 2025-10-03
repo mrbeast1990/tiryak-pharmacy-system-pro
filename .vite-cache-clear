@@ -1,0 +1,3 @@
+# This file forces Vite to clear its cache
+# Delete node_modules/.vite and restart dev server
+CACHE_VERSION=2
