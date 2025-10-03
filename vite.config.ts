@@ -19,8 +19,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
     exclude: ['capacitor-native-biometric'],
+    include: ['react', 'react-dom'],
   },
 }));
