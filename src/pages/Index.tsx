@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import LoginForm from '@/components/LoginForm';
@@ -8,11 +8,7 @@ import SafeWrapper from '@/components/SafeWrapper';
 const Index = () => {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
-
-  // استخدام مصادر الحالة مع حماية من الأخطاء
   const [storesReady, setStoresReady] = useState(false);
-  
-  // استخدام useEffect لتحميل الحالات بشكل آمن
   const [authState, setAuthState] = useState({ isAuthenticated: false, user: null });
   const [langState, setLangState] = useState({ language: 'ar' });
 
@@ -20,7 +16,6 @@ const Index = () => {
     try {
       console.log('تهيئة التطبيق...');
       
-      // تحميل الحالات بشكل آمن
       const authStore = useAuthStore.getState();
       const langStore = useLanguageStore.getState();
       
@@ -33,7 +28,6 @@ const Index = () => {
         language: langStore.language
       });
       
-      // Set document direction based on language
       document.documentElement.lang = langStore.language;
       document.documentElement.dir = langStore.language === 'ar' ? 'rtl' : 'ltr';
       
@@ -42,7 +36,6 @@ const Index = () => {
       
       setStoresReady(true);
       
-      // Small delay to allow stores to initialize properly
       const timer = setTimeout(() => {
         setIsReady(true);
         console.log('تم تهيئة التطبيق بنجاح');
@@ -52,11 +45,10 @@ const Index = () => {
     } catch (error) {
       console.error('خطأ في تهيئة الصفحة:', error);
       setInitError('فشل في تهيئة التطبيق: ' + (error as Error).message);
-      setIsReady(true); // السماح بالمتابعة حتى لو حدث خطأ
+      setIsReady(true);
     }
   }, []);
 
-  // إذا حدث خطأ في التهيئة
   if (initError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
@@ -73,7 +65,6 @@ const Index = () => {
       </div>
     );
   }
-
 
   if (!isReady || !storesReady) {
     return (
@@ -92,7 +83,6 @@ const Index = () => {
 
   const handleSuccessfulLogin = () => {
     console.log('تم تسجيل الدخول بنجاح');
-    // إعادة تحديث حالة المصادقة فورياً
     const authStore = useAuthStore.getState();
     setAuthState({
       isAuthenticated: authStore.isAuthenticated,
