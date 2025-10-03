@@ -15,11 +15,7 @@ try {
   const root = createRoot(rootElement);
   
   console.log('✅ إنشاء React root بنجاح');
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+  root.render(<App />);
   
   console.log('✅ تم تشغيل التطبيق بنجاح');
 } catch (error) {
