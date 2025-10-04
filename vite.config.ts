@@ -24,8 +24,17 @@ export default defineConfig(({ mode }) => ({
     dedupe: ['react', 'react-dom', 'zustand'],
   },
   optimizeDeps: {
-    exclude: ['capacitor-native-biometric'],
-    include: ['react', 'react-dom', 'zustand', 'sonner', 'next-themes'],
+    exclude: ['capacitor-native-biometric', 'react', 'react-dom'],
+    include: ['zustand', 'sonner', 'next-themes'],
     force: true,
+    esbuildOptions: {
+      resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
+    }
+  },
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    }
   },
 }));
