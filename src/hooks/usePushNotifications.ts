@@ -45,29 +45,25 @@ export const usePushNotifications = () => {
           console.error('Push notification registration error:', error);
         });
 
-        // Listen for push notifications received (show in system notification bar)
-        PushNotifications.addListener('pushNotificationReceived', async (notification) => {
+        // Listen for push notifications received while app is open
+        PushNotifications.addListener('pushNotificationReceived', (notification) => {
           console.log('Push notification received:', notification);
           
-          // Show system notification (appears in notification bar)
-          try {
-            await LocalNotifications.schedule({
-              notifications: [{
-                title: notification.title || 'إشعار جديد',
-                body: notification.body || '',
-                id: Date.now(),
-                schedule: { at: new Date(Date.now() + 100) },
-                sound: 'beep.wav',
-                attachments: [],
-                actionTypeId: '',
-                extra: notification.data
-              }]
-            });
-          } catch (error) {
-            console.error('Error scheduling local notification:', error);
-          }
+          // Show local notification for immediate visibility
+          LocalNotifications.schedule({
+            notifications: [{
+              title: notification.title || 'إشعار جديد',
+              body: notification.body || '',
+              id: Date.now(),
+              schedule: { at: new Date(Date.now() + 100) }, // Small delay
+              sound: 'default',
+              attachments: [],
+              actionTypeId: '',
+              extra: notification.data
+            }]
+          });
 
-          // Also show toast for in-app visibility
+          // Also show toast for in-app notification
           toast({
             title: notification.title || 'إشعار جديد',
             description: notification.body || '',
@@ -96,21 +92,18 @@ export const usePushNotifications = () => {
 
   const sendLocalNotification = async (title: string, body: string, data?: any) => {
     try {
-      // Show notification in system notification bar
       await LocalNotifications.schedule({
         notifications: [{
           title,
           body,
           id: Date.now(),
           schedule: { at: new Date(Date.now() + 100) },
-          sound: 'beep.wav',
+          sound: 'default',
           attachments: [],
           actionTypeId: '',
           extra: data
         }]
       });
-      
-      console.log('Local notification scheduled successfully');
     } catch (error) {
       console.error('Error sending local notification:', error);
     }

@@ -6,7 +6,6 @@ import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
 import AccountRequests from "./pages/Admin/AccountRequests";
 import CreateUser from "./pages/CreateUser";
-import AvailableMedicines from "./pages/AvailableMedicines";
 
 const queryClient = new QueryClient();
 
@@ -18,7 +17,6 @@ const AppContent = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/admin/requests" element={<AccountRequests />} />
         <Route path="/create-user" element={<CreateUser />} />
-        <Route path="/available-medicines" element={<AvailableMedicines />} />
         {/* Redirect any unknown routes to home */}
         <Route path="*" element={<Index />} />
       </Routes>
