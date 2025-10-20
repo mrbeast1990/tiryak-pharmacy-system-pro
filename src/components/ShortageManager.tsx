@@ -23,12 +23,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState('');
-  const [currentShortagesPage, setCurrentShortagesPage] = useState(1);
-  const [currentAvailablePage, setCurrentAvailablePage] = useState(1);
   const [sortBy, setSortBy] = useState('');
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const itemsPerPage = 50;
-  const availableItemsPerPage = 10;
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -77,8 +73,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     );
   }, [medicines, searchTerm]);
 
-  // First filter by status, then sort ALL items, then paginate
-  const sortedShortages = useMemo(() => {
+  // Filter and sort shortages - show all in one page
+  const shortages = useMemo(() => {
     const allShortages = filteredMedicines.filter(m => m.status === 'shortage');
     
     switch (sortBy) {
@@ -93,26 +89,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     }
   }, [filteredMedicines, sortBy]);
   
-  const allAvailable = filteredMedicines.filter(m => m.status === 'available');
-  
-  // Reset to first page when sorting changes
-  useEffect(() => {
-    setCurrentShortagesPage(1);
-  }, [sortBy]);
-  
-  // Pagination logic - now based on sorted results
-  const totalShortagesPages = Math.ceil(sortedShortages.length / itemsPerPage);
-  const totalAvailablePages = Math.ceil(allAvailable.length / availableItemsPerPage);
-  
-  const shortages = sortedShortages.slice(
-    (currentShortagesPage - 1) * itemsPerPage,
-    currentShortagesPage * itemsPerPage
-  );
-  
-  const available = allAvailable.slice(
-    (currentAvailablePage - 1) * availableItemsPerPage,
-    currentAvailablePage * availableItemsPerPage
-  );
+  const available = filteredMedicines.filter(m => m.status === 'available');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,14 +237,14 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       doc.setTextColor(0, 0, 0);
       yPosition += 15;
       
-      // Use sorted shortages for export to maintain consistent order
-      const uniqueShortages = sortedShortages.reduce((acc, medicine) => {
+      // Use shortages for export to maintain consistent order
+      const uniqueShortages = shortages.reduce((acc, medicine) => {
         const existingMedicine = acc.find(m => m.name.toLowerCase() === medicine.name.toLowerCase());
         if (!existingMedicine) {
           acc.push(medicine);
         }
         return acc;
-      }, [] as typeof sortedShortages);
+      }, [] as typeof shortages);
       
       // Draw table data - smaller rows
       uniqueShortages.forEach((medicine, index) => {
@@ -431,7 +408,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-600 text-sm">
                       <AlertCircle className="w-4 h-4" />
-                      <span>{t('dashboard.shortages')} ({sortedShortages.length})</span>
+                      <span>{t('dashboard.shortages')} ({shortages.length})</span>
                     </CardTitle>
                     <div className="flex items-center space-x-2 space-x-reverse">
                       <select 
@@ -522,35 +499,6 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                    )}
                  </div>
 
-                 {/* Pagination for Shortages */}
-                 {totalShortagesPages > 1 && (
-                   <div className="flex items-center justify-between mt-4 px-4 pb-4">
-                     <div className="text-sm text-gray-500">
-                       {language === 'ar' 
-                         ? `صفحة ${currentShortagesPage} من ${totalShortagesPages}` 
-                         : `Page ${currentShortagesPage} of ${totalShortagesPages}`
-                       }
-                     </div>
-                     <div className="flex items-center space-x-2">
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         onClick={() => setCurrentShortagesPage(prev => Math.max(1, prev - 1))}
-                         disabled={currentShortagesPage === 1}
-                       >
-                         <ChevronRight className="w-4 h-4" />
-                       </Button>
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         onClick={() => setCurrentShortagesPage(prev => Math.min(totalShortagesPages, prev + 1))}
-                         disabled={currentShortagesPage === totalShortagesPages}
-                       >
-                         <ChevronLeft className="w-4 h-4" />
-                       </Button>
-                     </div>
-                   </div>
-                 )}
                </CardContent>
              </Card>
 
