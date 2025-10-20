@@ -3,6 +3,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export const usePushNotifications = () => {
   const { toast } = useToast();
@@ -35,9 +36,18 @@ export const usePushNotifications = () => {
         await PushNotifications.register();
 
         // Listen for registration
-        PushNotifications.addListener('registration', (token) => {
+        PushNotifications.addListener('registration', async (token) => {
           console.log('Push notification registration token:', token.value);
-          // Here you could send the token to your backend
+          
+          // Save token to database
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('profiles')
+              .update({ fcm_token: token.value })
+              .eq('id', user.id);
+            console.log('FCM token saved to database');
+          }
         });
 
         // Listen for registration errors
