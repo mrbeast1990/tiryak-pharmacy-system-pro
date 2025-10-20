@@ -74,6 +74,29 @@ serve(async (req) => {
 
     if (rpcError) throw rpcError;
 
+    // Send push notification via FCM
+    try {
+      const pushResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify({
+          title,
+          body: message,
+          recipient,
+          notificationType: 'general',
+        }),
+      });
+
+      const pushResult = await pushResponse.json();
+      console.log('Push notification result:', pushResult);
+    } catch (pushError) {
+      console.error('Error sending push notification:', pushError);
+      // Don't fail the request if push notification fails
+    }
+
     return new Response(JSON.stringify({ message: 'Notification sent successfully', notification_id: data }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

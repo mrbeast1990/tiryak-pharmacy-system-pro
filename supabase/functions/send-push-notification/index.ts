@@ -58,24 +58,10 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Get the session user
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
-
-    if (!user) {
-      throw new Error('No user found');
-    }
-
-    const { title, body, recipient, data } = await req.json();
+    const { title, body, recipient, data, notificationType = 'general' } = await req.json();
 
     // Get FCM server key from environment
     const fcmServerKey = Deno.env.get('FCM_SERVER_KEY');
@@ -117,6 +103,20 @@ serve(async (req) => {
       );
     }
 
+    // Log notification to database
+    const { error: logError } = await supabaseClient
+      .from('notifications_log')
+      .insert({
+        title,
+        body,
+        notification_type: notificationType,
+        sent_at: new Date().toISOString(),
+      });
+
+    if (logError) {
+      console.error('Error logging notification:', logError);
+    }
+
     // Send push notifications
     const results = await sendFCMNotification(
       {
@@ -127,6 +127,8 @@ serve(async (req) => {
       },
       fcmServerKey
     );
+
+    console.log(`Push notification sent: ${title} to ${tokens.length} devices`);
 
     return new Response(
       JSON.stringify({ 

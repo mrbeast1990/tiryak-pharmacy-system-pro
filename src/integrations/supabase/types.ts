@@ -168,6 +168,33 @@ export type Database = {
           },
         ]
       }
+      notifications_log: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          notification_type: string
+          sent_at: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          notification_type?: string
+          sent_at?: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          notification_type?: string
+          sent_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           fcm_token: string | null
