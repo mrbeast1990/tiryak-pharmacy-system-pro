@@ -170,16 +170,19 @@ export type Database = {
       }
       profiles: {
         Row: {
+          fcm_token: string | null
           id: string
           name: string | null
           role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
+          fcm_token?: string | null
           id: string
           name?: string | null
           role: Database["public"]["Enums"]["app_role"]
         }
         Update: {
+          fcm_token?: string | null
           id?: string
           name?: string | null
           role?: Database["public"]["Enums"]["app_role"]
