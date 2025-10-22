@@ -55,39 +55,54 @@ export const usePushNotifications = () => {
           console.error('Push notification registration error:', error);
         });
 
-        // Listen for push notifications received (show in system notification bar)
+        // Listen for push notifications received (show in system notification bar & lock screen)
         PushNotifications.addListener('pushNotificationReceived', async (notification) => {
-          console.log('Push notification received:', notification);
+          console.log('📱 Push notification received:', notification);
           
-          // Show system notification (appears in notification bar)
+          // Schedule local notification to ensure it appears in:
+          // - Status bar (notification tray)
+          // - Lock screen
+          // - Even when app is in background/closed
           try {
             await LocalNotifications.schedule({
               notifications: [{
-                title: notification.title || 'إشعار جديد',
+                title: notification.title || 'نواقصي - إشعار جديد',
                 body: notification.body || '',
                 id: Date.now(),
                 schedule: { at: new Date(Date.now() + 100) },
-                sound: 'beep.wav',
+                sound: 'default', // Use system default sound (calm and professional)
+                smallIcon: 'ic_stat_notification', // App icon in status bar
+                iconColor: '#1EAEDB', // Notification icon color
                 attachments: [],
                 actionTypeId: '',
-                extra: notification.data
+                extra: notification.data,
+                // Ensure notification shows on lock screen
+                ongoing: false,
+                autoCancel: true,
               }]
             });
+            console.log('✅ System notification scheduled successfully');
           } catch (error) {
-            console.error('Error scheduling local notification:', error);
+            console.error('❌ Error scheduling local notification:', error);
           }
 
-          // Also show toast for in-app visibility
+          // Also show toast for in-app visibility (when app is open)
           toast({
-            title: notification.title || 'إشعار جديد',
+            title: notification.title || 'نواقصي - إشعار جديد',
             description: notification.body || '',
           });
         });
 
         // Listen for notification tap (when user taps notification)
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-          console.log('Push notification action performed:', notification);
-          // Handle notification tap - could navigate to specific page
+          console.log('📲 Notification tapped:', notification);
+          
+          // Just open the app (no specific page navigation)
+          // App will automatically open to dashboard
+          toast({
+            title: 'مرحباً بك',
+            description: 'تم فتح التطبيق',
+          });
         });
 
       } catch (error) {
@@ -106,23 +121,27 @@ export const usePushNotifications = () => {
 
   const sendLocalNotification = async (title: string, body: string, data?: any) => {
     try {
-      // Show notification in system notification bar
+      // Show notification in system notification bar, lock screen, and status bar
       await LocalNotifications.schedule({
         notifications: [{
-          title,
+          title: title || 'نواقصي',
           body,
           id: Date.now(),
           schedule: { at: new Date(Date.now() + 100) },
-          sound: 'beep.wav',
+          sound: 'default', // Calm system notification sound
+          smallIcon: 'ic_stat_notification', // App icon
+          iconColor: '#1EAEDB',
           attachments: [],
           actionTypeId: '',
-          extra: data
+          extra: data,
+          ongoing: false,
+          autoCancel: true,
         }]
       });
       
-      console.log('Local notification scheduled successfully');
+      console.log('✅ Local notification scheduled successfully');
     } catch (error) {
-      console.error('Error sending local notification:', error);
+      console.error('❌ Error sending local notification:', error);
     }
   };
 
