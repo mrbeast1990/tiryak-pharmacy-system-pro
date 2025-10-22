@@ -76,14 +76,15 @@ serve(async (req) => {
       );
     }
 
-    // Get tokens based on recipient
+    // Get tokens based on recipient (only for users with notifications enabled)
     let tokens: string[] = [];
     
     if (recipient === 'all') {
       const { data: profiles } = await supabaseClient
         .from('profiles')
         .select('fcm_token')
-        .not('fcm_token', 'is', null);
+        .not('fcm_token', 'is', null)
+        .eq('notifications_enabled', true);
       
       tokens = profiles?.map(p => p.fcm_token).filter(Boolean) || [];
     } else {
@@ -91,7 +92,8 @@ serve(async (req) => {
         .from('profiles')
         .select('fcm_token')
         .eq('role', recipient)
-        .not('fcm_token', 'is', null);
+        .not('fcm_token', 'is', null)
+        .eq('notifications_enabled', true);
       
       tokens = profiles?.map(p => p.fcm_token).filter(Boolean) || [];
     }

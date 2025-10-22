@@ -200,18 +200,21 @@ export type Database = {
           fcm_token: string | null
           id: string
           name: string | null
+          notifications_enabled: boolean
           role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
           fcm_token?: string | null
           id: string
           name?: string | null
+          notifications_enabled?: boolean
           role: Database["public"]["Enums"]["app_role"]
         }
         Update: {
           fcm_token?: string | null
           id?: string
           name?: string | null
+          notifications_enabled?: boolean
           role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []

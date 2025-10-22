@@ -59,6 +59,21 @@ export const usePushNotifications = () => {
         PushNotifications.addListener('pushNotificationReceived', async (notification) => {
           console.log('📱 Push notification received:', notification);
           
+          // Check if notifications are enabled for this user
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('notifications_enabled')
+              .eq('id', user.id)
+              .single();
+            
+            if (profile && !profile.notifications_enabled) {
+              console.log('🔕 Notifications disabled for this user, skipping notification display');
+              return;
+            }
+          }
+          
           // Schedule local notification to ensure it appears in:
           // - Status bar (notification tray)
           // - Lock screen

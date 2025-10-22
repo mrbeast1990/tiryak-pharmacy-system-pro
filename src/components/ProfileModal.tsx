@@ -10,6 +10,7 @@ import { useLanguageStore } from '@/store/languageStore';
 import { User, Shield, Clock, Fingerprint, Check, Bell } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Preferences } from '@capacitor/preferences';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) => {
   const [fingerprintEnabled, setFingerprintEnabled] = useState(false);
   const [isCheckingFingerprint, setIsCheckingFingerprint] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isCheckingNotifications, setIsCheckingNotifications] = useState(true);
   const { language } = useLanguageStore();
   const { toast } = useToast();
 
@@ -31,10 +34,25 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
       setIsCheckingFingerprint(false);
     };
 
-    if (isOpen) {
+    const checkNotificationsStatus = async () => {
+      setIsCheckingNotifications(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('notifications_enabled')
+        .eq('id', user?.id)
+        .single();
+      
+      if (!error && data) {
+        setNotificationsEnabled(data.notifications_enabled);
+      }
+      setIsCheckingNotifications(false);
+    };
+
+    if (isOpen && user) {
       checkFingerprintStatus();
+      checkNotificationsStatus();
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   const handleFingerprintToggle = async (enabled: boolean) => {
     setFingerprintEnabled(enabled); // Optimistic UI update
@@ -100,6 +118,37 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
         variant: "destructive",
       });
       console.error("Biometric Error:", error);
+    }
+  };
+
+  const handleNotificationsToggle = async (enabled: boolean) => {
+    setNotificationsEnabled(enabled); // Optimistic UI update
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ notifications_enabled: enabled })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: language === 'ar' 
+          ? (enabled ? "تم تفعيل الإشعارات" : "تم إلغاء تفعيل الإشعارات")
+          : (enabled ? "Notifications Enabled" : "Notifications Disabled"),
+        description: language === 'ar'
+          ? (enabled ? "ستتلقى الآن إشعارات على هاتفك" : "لن تتلقى إشعارات على هاتفك")
+          : (enabled ? "You will now receive notifications on your phone" : "You will not receive notifications on your phone"),
+      });
+    } catch (error) {
+      setNotificationsEnabled(!enabled); // Revert on error
+      
+      toast({
+        title: language === 'ar' ? "فشل التحديث" : "Update Failed",
+        description: language === 'ar' ? "تعذر تحديث إعدادات الإشعارات" : "Could not update notification settings",
+        variant: "destructive",
+      });
+      console.error("Notifications Error:", error);
     }
   };
 
@@ -207,6 +256,50 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
                     <Check className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700">
                       {language === 'ar' ? 'البصمة مفعلة' : 'Fingerprint Active'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Push Notifications Settings */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-2 space-x-reverse text-base">
+                <Bell className="w-5 h-5" />
+                <span>{language === 'ar' ? 'إعدادات الإشعارات' : 'Notification Settings'}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">
+                    {language === 'ar' ? 'إشعارات التطبيق' : 'Push Notifications'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {language === 'ar' ? 'استقبال إشعارات على شريط الإشعارات' : 'Receive notifications on your device'}
+                  </p>
+                </div>
+                <Switch
+                  checked={notificationsEnabled}
+                  onCheckedChange={handleNotificationsToggle}
+                  disabled={isCheckingNotifications}
+                />
+              </div>
+              
+              {isCheckingNotifications ? (
+                <div className="mt-3 p-2 bg-yellow-50 rounded-lg text-center">
+                  <span className="text-sm text-yellow-700">
+                    {language === 'ar' ? 'جارٍ التحقق من حالة الإشعارات...' : 'Checking notification status...'}
+                  </span>
+                </div>
+              ) : notificationsEnabled && (
+                <div className="mt-3 p-2 bg-green-50 rounded-lg">
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700">
+                      {language === 'ar' ? 'الإشعارات مفعلة' : 'Notifications Active'}
                     </span>
                   </div>
                 </div>
