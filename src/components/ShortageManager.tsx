@@ -199,7 +199,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     setEditedName('');
   };
 
-  const canEditMedicineName = checkPermission('manage_users');
+  const canEditMedicineName = true; // متاح لجميع المستخدمين
+  const canDeleteMedicine = checkPermission('manage_users');
   
   const handleDeleteMedicine = (medicine: Medicine) => {
     if (window.confirm(language === 'ar' ? `هل أنت متأكد من حذف ${medicine.name}؟` : `Are you sure you want to delete ${medicine.name}?`)) {
@@ -521,7 +522,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                           >
                             {t('shortages.provided')}
                           </Button>
-                          {canEditMedicineName && (
+                          {canDeleteMedicine && (
                             <Button 
                               variant="ghost" 
                               size="icon" 
