@@ -195,6 +195,30 @@ export type Database = {
         }
         Relationships: []
       }
+      periodic_notification_state: {
+        Row: {
+          created_at: string
+          current_message_index: number
+          id: string
+          last_sent_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_message_index?: number
+          id?: string
+          last_sent_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_message_index?: number
+          id?: string
+          last_sent_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           fcm_token: string | null
@@ -261,7 +285,7 @@ export type Database = {
     }
     Functions: {
       get_my_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       send_notification_to_role: {
