@@ -12,6 +12,16 @@ import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ShortageManagerProps {
   onBack: () => void;
@@ -25,6 +35,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const [editedName, setEditedName] = useState('');
   const [sortBy, setSortBy] = useState('');
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingMedicineName, setPendingMedicineName] = useState('');
   
   const { user, checkPermission } = useAuthStore();
   const { language, t } = useLanguageStore();
@@ -113,19 +125,26 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       return;
     }
 
+    setPendingMedicineName(medicineName);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmAddMedicine = () => {
     addMedicine({
-      name: medicineName,
+      name: pendingMedicineName,
       status: 'shortage',
       notes: null
     });
     
     toast({
       title: language === 'ar' ? "تم الإضافة" : "Added",
-      description: language === 'ar' ? `تم إضافة ${medicineName} كدواء ناقص` : `${medicineName} added as shortage`,
+      description: language === 'ar' ? `تم إضافة ${pendingMedicineName} كدواء ناقص` : `${pendingMedicineName} added as shortage`,
     });
 
     setMedicineName('');
+    setPendingMedicineName('');
     setShowSuggestions(false);
+    setShowConfirmDialog(false);
   };
 
   const toggleStatus = (medicine: Medicine) => {
@@ -280,7 +299,31 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative">
+    <>
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">
+              {language === 'ar' ? 'تأكيد الإضافة' : 'Confirm Addition'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              {language === 'ar' 
+                ? `هل أنت متأكد من إضافة "${pendingMedicineName}" إلى قائمة النواقص؟`
+                : `Are you sure you want to add "${pendingMedicineName}" to the shortages list?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogAction onClick={confirmAddMedicine}>
+              {language === 'ar' ? 'تأكيد' : 'Confirm'}
+            </AlertDialogAction>
+            <AlertDialogCancel>
+              {language === 'ar' ? 'إلغاء' : 'Cancel'}
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative">
       {/* Background Logo */}
       <div 
         className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
@@ -513,6 +556,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         <p>Al-tiryak Al-shafi Pharmacy</p>
       </div>
     </div>
+    </>
   );
 };
 
