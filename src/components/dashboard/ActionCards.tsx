@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Pill, DollarSign, CheckCircle } from 'lucide-react';
+import { Pill, DollarSign, CheckCircle, Package } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,6 +28,24 @@ const ActionCards: React.FC<ActionCardsProps> = ({ onNavigate, t }) => {
               </div>
               <div className="p-3 bg-orange-100 rounded-full">
                 <Pill className="w-6 h-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {(checkPermission('manage_shortages') || user?.role === 'admin') && (
+        <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('supplies-shortages')}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xl font-bold text-gray-700">تسجيل نواقص المستلزمات</p>
+                <p className="text-xs text-gray-500">
+                  إدارة وتسجيل نواقص المستلزمات
+                </p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-full">
+                <Package className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </CardContent>

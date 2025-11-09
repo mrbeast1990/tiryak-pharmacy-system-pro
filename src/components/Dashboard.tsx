@@ -6,6 +6,7 @@ import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { usePharmacyStore } from '@/store/pharmacyStore';
 import ProfileModal from './ProfileModal';
 import ShortageManager from './ShortageManager';
+import SuppliesShortageManager from './SuppliesShortageManager';
 import RevenueManager from './RevenueManager';
 import ReportsPage from './ReportsPage';
 import NotificationSender from './NotificationSender';
@@ -61,6 +62,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   if (currentPage === 'shortages') {
     return <ShortageManager onBack={handleBack} />;
+  }
+
+  if (currentPage === 'supplies-shortages') {
+    return <SuppliesShortageManager onBack={handleBack} />;
   }
 
   if (currentPage === 'revenue') {

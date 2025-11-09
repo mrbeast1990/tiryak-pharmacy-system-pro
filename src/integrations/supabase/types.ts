@@ -279,6 +279,42 @@ export type Database = {
         }
         Relationships: []
       }
+      supplies: {
+        Row: {
+          created_at: string
+          id: string
+          last_updated: string
+          name: string
+          notes: string | null
+          repeat_count: number | null
+          status: string
+          updated_by_id: string | null
+          updated_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          name: string
+          notes?: string | null
+          repeat_count?: number | null
+          status: string
+          updated_by_id?: string | null
+          updated_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_updated?: string
+          name?: string
+          notes?: string | null
+          repeat_count?: number | null
+          status?: string
+          updated_by_id?: string | null
+          updated_by_name?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

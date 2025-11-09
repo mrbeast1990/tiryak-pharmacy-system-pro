@@ -6,37 +6,49 @@ import { Tables } from '@/integrations/supabase/types';
 
 // Map Supabase types to our app interfaces.
 export type Medicine = Omit<Tables<'medicines'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
+export type Supply = Omit<Tables<'supplies'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
 export type Revenue = Omit<Tables<'revenues'>, 'created_by_id' | 'created_by_name' | 'amount'> & { createdBy: string; amount: number };
 
 interface PharmacyState {
   medicines: Medicine[];
+  supplies: Supply[];
   revenues: Revenue[];
   medicinesLoading: boolean;
+  suppliesLoading: boolean;
   revenuesLoading: boolean;
   fetchMedicines: () => Promise<void>;
+  fetchSupplies: () => Promise<void>;
   fetchRevenues: () => Promise<void>;
   addMedicine: (medicine: Pick<Medicine, 'name' | 'status' | 'notes'>) => Promise<void>;
+  addSupply: (supply: Pick<Supply, 'name' | 'status' | 'notes'>) => Promise<void>;
   updateMedicine: (id: string, updates: Partial<Pick<Medicine, 'name' | 'status' | 'notes'>>) => Promise<void>;
+  updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
+  deleteSupply: (id: string) => Promise<void>;
   addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy'>) => Promise<void>;
   updateRevenue: (id: string, updates: Partial<Revenue>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
+  getSuppliesByStatus: (status: 'available' | 'shortage') => Supply[];
   getRevenuesByDateRange: (startDate: string, endDate: string) => Revenue[];
   getRevenuesByPeriod: (period: string) => Revenue[];
   getTotalDailyRevenue: (date: string) => number;
   getTotalRevenue: () => number;
   getTodayRevenue: () => number;
-    getMedicineSuggestions: (query: string) => string[];
-    loadMedicines: () => Promise<void>;
-    loadRevenues: () => Promise<void>;
+  getMedicineSuggestions: (query: string) => string[];
+  getSupplySuggestions: (query: string) => string[];
+  loadMedicines: () => Promise<void>;
+  loadSupplies: () => Promise<void>;
+  loadRevenues: () => Promise<void>;
 }
 
 export const usePharmacyStore = create<PharmacyState>()(
   (set, get) => ({
     medicines: [],
+    supplies: [],
     revenues: [],
     medicinesLoading: false,
+    suppliesLoading: false,
     revenuesLoading: false,
 
     fetchMedicines: async () => {
@@ -49,6 +61,18 @@ export const usePharmacyStore = create<PharmacyState>()(
       }
       const medicines: Medicine[] = data.map(m => ({ ...m, updatedBy: m.updated_by_name || undefined }));
       set({ medicines, medicinesLoading: false });
+    },
+
+    fetchSupplies: async () => {
+      set({ suppliesLoading: true });
+      const { data, error } = await supabase.from('supplies').select('*').order('last_updated', { ascending: false });
+      if (error) {
+        console.error('Error fetching supplies:', error);
+        set({ supplies: [], suppliesLoading: false });
+        return;
+      }
+      const supplies: Supply[] = data.map(s => ({ ...s, updatedBy: s.updated_by_name || undefined }));
+      set({ supplies, suppliesLoading: false });
     },
 
     fetchRevenues: async () => {
@@ -176,6 +200,94 @@ export const usePharmacyStore = create<PharmacyState>()(
       if (error) console.error("Error deleting medicine:", error);
       await get().fetchMedicines();
     },
+
+    addSupply: async (supply) => {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        console.error("❌ User not authenticated");
+        return;
+      }
+      
+      console.log('🔵 إضافة مستلزم:', supply.name, 'بحالة:', supply.status);
+
+      const { data: existingSupply } = await supabase
+        .from('supplies')
+        .select('id, status, repeat_count')
+        .eq('name', supply.name)
+        .maybeSingle();
+      
+      if (existingSupply) {
+        if (existingSupply.status === 'shortage' && supply.status === 'shortage') {
+          const newRepeatCount = (existingSupply.repeat_count || 1) + 1;
+          const { error } = await supabase
+            .from('supplies')
+            .update({ 
+              repeat_count: newRepeatCount,
+              last_updated: new Date().toISOString(),
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              notes: supply.notes 
+            })
+            .eq('id', existingSupply.id);
+          
+          if (error) console.error("❌ خطأ في تحديث المستلزم:", error);
+        } else if (existingSupply.status === 'available' && supply.status === 'shortage') {
+          const { error } = await supabase
+            .from('supplies')
+            .update({ 
+              status: 'shortage',
+              repeat_count: 1,
+              last_updated: new Date().toISOString(),
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              notes: supply.notes 
+            })
+            .eq('id', existingSupply.id);
+          
+          if (error) console.error("❌ خطأ في تحويل المستلزم:", error);
+        } else {
+          const { error } = await supabase
+            .from('supplies')
+            .update({ 
+              status: supply.status,
+              last_updated: new Date().toISOString(),
+              updated_by_id: user.id,
+              updated_by_name: user.name,
+              notes: supply.notes 
+            })
+            .eq('id', existingSupply.id);
+          
+          if (error) console.error("❌ خطأ في تحديث المستلزم:", error);
+        }
+      } else {
+        const { error } = await supabase.from('supplies').insert({
+          name: supply.name,
+          status: supply.status,
+          notes: supply.notes,
+          updated_by_id: user.id,
+          updated_by_name: user.name,
+          repeat_count: 1
+        });
+        
+        if (error) console.error("❌ خطأ في إضافة المستلزم:", error);
+      }
+      await get().fetchSupplies();
+    },
+    
+    updateSupply: async (id, updates) => {
+      const { error } = await supabase.from('supplies').update({ 
+        ...updates, 
+        last_updated: new Date().toISOString() 
+      }).eq('id', id);
+      if (error) console.error("Error updating supply:", error);
+      await get().fetchSupplies();
+    },
+    
+    deleteSupply: async (id) => {
+      const { error } = await supabase.from('supplies').delete().eq('id', id);
+      if (error) console.error("Error deleting supply:", error);
+      await get().fetchSupplies();
+    },
     
     addRevenue: async (revenue) => {
       const user = useAuthStore.getState().user;
@@ -248,8 +360,27 @@ export const usePharmacyStore = create<PharmacyState>()(
         .slice(0, 5);
     },
 
+    getSuppliesByStatus: (status) => {
+      return get().supplies.filter((supply) => supply.status === status);
+    },
+
+    getSupplySuggestions: (query) => {
+      if (query.length < 2) return [];
+      const supplies = get().supplies;
+      return supplies
+        .filter(supply => 
+          supply.name.toLowerCase().includes(query.toLowerCase())
+        )
+        .map(supply => supply.name)
+        .slice(0, 5);
+    },
+
     loadMedicines: async () => {
       await get().fetchMedicines();
+    },
+
+    loadSupplies: async () => {
+      await get().fetchSupplies();
     },
 
     loadRevenues: async () => {
