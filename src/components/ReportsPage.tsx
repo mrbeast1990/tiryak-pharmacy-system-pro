@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { addArabicFont } from '@/lib/pdf-utils';
 
 interface ReportsPageProps {
   onBack: () => void;
@@ -77,6 +78,9 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ onBack }) => {
 
     try {
       const doc = new jsPDF();
+      
+      // Add Arabic font support
+      await addArabicFont(doc);
       
       // Header with logo
       const logoSize = 30;

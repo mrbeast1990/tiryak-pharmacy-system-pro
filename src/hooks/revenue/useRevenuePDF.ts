@@ -5,6 +5,7 @@ import { Revenue } from '@/store/pharmacyStore';
 import { usePDFExport } from '@/hooks/usePDFExport';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { addArabicFont } from '@/lib/pdf-utils';
 
 export const useRevenuePDF = () => {
   const { language } = useLanguageStore();
@@ -23,6 +24,9 @@ export const useRevenuePDF = () => {
 
     try {
       const doc = new jsPDF();
+      
+      // Add Arabic font support
+      await addArabicFont(doc);
       
       const logoSize = 40;
       const pageWidth = doc.internal.pageSize.getWidth();

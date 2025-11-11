@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
+import { addArabicFont } from '@/lib/pdf-utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -207,6 +208,9 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
     try {
       const doc = new jsPDF();
       
+      // Add Arabic font support
+      await addArabicFont(doc);
+      
       const logoSize = 30;
       doc.addImage('/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png', 'PNG', 15, 10, logoSize, logoSize);
       
@@ -261,7 +265,7 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
         
         doc.setFontSize(10);
         doc.text((index + 1).toString(), 40, yPosition - 2, { align: 'center' });
-        doc.text(supply.name, 55, yPosition - 2, { align: 'left' });
+        doc.text(supply.name, 55, yPosition - 2, { align: 'left' }); // Arabic text will now render correctly
         
         yPosition += 10;
         
