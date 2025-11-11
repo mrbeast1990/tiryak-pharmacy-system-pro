@@ -84,51 +84,60 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       }
 
       // Perform biometric verification
-      const result = await NativeBiometric.verifyIdentity({
+      await NativeBiometric.verifyIdentity({
         reason: language === 'ar' ? "استخدم البصمة لتسجيل الدخول" : "Use your biometric to authenticate",
         title: language === 'ar' ? "تسجيل الدخول بالبصمة" : "Biometric Login",
         subtitle: language === 'ar' ? "ضع إصبعك على المستشعر" : "Place your finger on the sensor",
         description: language === 'ar' ? "تأكيد الهوية للدخول إلى النظام" : "Verify your identity to access the system"
       });
 
-      if (result) {
-        // Get stored credentials (you might want to store these securely)
-        const credentials = await NativeBiometric.getCredentials({
-          server: "al-tiryak-pharmacy",
-        });
+      // إذا وصلنا هنا، فهذا يعني نجاح التحقق من البصمة
+      // Get stored credentials
+      const credentials = await NativeBiometric.getCredentials({
+        server: "al-tiryak-pharmacy",
+      });
 
-        if (credentials.username && credentials.password) {
-          setAuthRememberMe(true);
-          const success = await login(credentials.username, credentials.password);
-          
-          if (success) {
-            toast({
-              title: language === 'ar' ? "تم تسجيل الدخول بالبصمة" : "Biometric Login Successful",
-              description: language === 'ar' ? "تم التحقق من الهوية بنجاح" : "Identity verified successfully",
-            });
-            onLogin();
-          } else {
-            toast({
-              title: language === 'ar' ? "خطأ في البيانات المحفوظة" : "Stored Credentials Error",
-              description: language === 'ar' ? "يرجى تسجيل الدخول يدوياً لتحديث البيانات" : "Please login manually to update credentials",
-              variant: "destructive",
-            });
-          }
+      if (credentials.username && credentials.password) {
+        setAuthRememberMe(true);
+        const success = await login(credentials.username, credentials.password);
+        
+        if (success) {
+          toast({
+            title: language === 'ar' ? "تم تسجيل الدخول بالبصمة" : "Biometric Login Successful",
+            description: language === 'ar' ? "تم التحقق من الهوية بنجاح" : "Identity verified successfully",
+          });
+          onLogin();
         } else {
           toast({
-            title: language === 'ar' ? "لا توجد بيانات محفوظة" : "No Stored Credentials",
-            description: language === 'ar' ? "يرجى تسجيل الدخول يدوياً أولاً" : "Please login manually first to enable biometric login",
+            title: language === 'ar' ? "خطأ في البيانات المحفوظة" : "Stored Credentials Error",
+            description: language === 'ar' ? "يرجى تسجيل الدخول يدوياً لتحديث البيانات" : "Please login manually to update credentials",
             variant: "destructive",
           });
         }
+      } else {
+        toast({
+          title: language === 'ar' ? "لا توجد بيانات محفوظة" : "No Stored Credentials",
+          description: language === 'ar' ? "يرجى تسجيل الدخول يدوياً أولاً" : "Please login manually first to enable biometric login",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Biometric authentication error:', error);
-      toast({
-        title: language === 'ar' ? "خطأ في البصمة" : "Biometric Error",
-        description: language === 'ar' ? "فشل في التحقق من البصمة" : "Failed to verify biometric",
-        variant: "destructive",
-      });
+      
+      // التحقق إذا كان المستخدم ألغى العملية
+      if (error.code === 10 || error.message?.includes('cancel') || error.message?.includes('user')) {
+        toast({
+          title: language === 'ar' ? "تم الإلغاء" : "Cancelled",
+          description: language === 'ar' ? "تم إلغاء التحقق من البصمة" : "Biometric verification cancelled",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: language === 'ar' ? "فشل التحقق من البصمة" : "Biometric Verification Failed",
+          description: language === 'ar' ? "فشل التحقق من البصمة" : "Failed to verify biometric",
+          variant: "destructive",
+        });
+      }
     }
     
     setIsBiometricLoading(false);

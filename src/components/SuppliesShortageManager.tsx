@@ -192,7 +192,7 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
   };
 
   const canEditSupplyName = true;
-  const canDeleteSupply = checkPermission('manage_users');
+  const canDeleteSupply = true; // جميع المستخدمين يمكنهم الحذف
   
   const handleDeleteSupply = (supply: Supply) => {
     if (window.confirm(language === 'ar' ? `هل أنت متأكد من حذف ${supply.name}؟` : `Are you sure you want to delete ${supply.name}?`)) {
