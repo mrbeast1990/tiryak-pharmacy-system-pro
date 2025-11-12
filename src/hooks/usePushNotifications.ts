@@ -112,12 +112,9 @@ export const usePushNotifications = () => {
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
           console.log('📲 Notification tapped:', notification);
           
-          // Just open the app (no specific page navigation)
-          // App will automatically open to dashboard
-          toast({
-            title: 'مرحباً بك',
-            description: 'تم فتح التطبيق',
-          });
+          // Open the app - it will automatically navigate to dashboard if logged in
+          // The app's main routing will handle navigation based on auth state
+          console.log('✅ App opened from notification');
         });
 
       } catch (error) {

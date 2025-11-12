@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { usePharmacyStore } from '@/store/pharmacyStore';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import ProfileModal from './ProfileModal';
 import ShortageManager from './ShortageManager';
 import SuppliesShortageManager from './SuppliesShortageManager';
@@ -29,6 +30,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { language, toggleLanguage, t } = useLanguageStore();
   const { syncOfflineData } = useOfflineSync();
   const { loadMedicines, fetchRevenues } = usePharmacyStore();
+  
+  // تفعيل نظام الإشعارات
+  usePushNotifications();
 
   // تحميل البيانات عند بداية فتح Dashboard
   useEffect(() => {

@@ -34,6 +34,8 @@ async function sendFCMNotification(payload: NotificationPayload, fcmServerKey: s
           },
           data: payload.data || {},
           priority: 'high',
+          content_available: true,
+          mutable_content: true,
         }),
       });
 
