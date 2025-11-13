@@ -17,13 +17,24 @@ export const usePushNotifications = () => {
       }
 
       try {
+        // Wait for platform to be ready (critical for Android 13+)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('✅ Platform ready, checking notification permissions...');
+
         // Request permission for push notifications
         let permStatus = await PushNotifications.checkPermissions();
+        console.log('📋 Current permission status:', permStatus);
 
         if (permStatus.receive === 'prompt') {
           try {
+            console.log('🔔 Requesting push notification permission...');
             permStatus = await PushNotifications.requestPermissions();
-            console.log('✅ Push notification permission granted:', permStatus);
+            console.log('✅ Push notification permission result:', permStatus);
+            
+            // CRITICAL: Wait after permission grant to prevent crash on Android 13+
+            // This allows Android to complete the permission lifecycle
+            await new Promise(resolve => setTimeout(resolve, 500));
+            console.log('✅ Permission lifecycle completed');
           } catch (permError) {
             console.error('❌ Error requesting push notification permission:', permError);
             return;
@@ -31,14 +42,21 @@ export const usePushNotifications = () => {
         }
 
         if (permStatus.receive !== 'granted') {
-          console.log('Push notification permission denied');
+          console.log('❌ Push notification permission denied or not granted');
           return;
         }
 
+        console.log('✅ Push notification permission granted, proceeding with setup...');
+
         // Request permission for local notifications with error handling
         try {
+          // Add delay before local notification permission request
+          await new Promise(resolve => setTimeout(resolve, 300));
           const localPermStatus = await LocalNotifications.requestPermissions();
           console.log('✅ Local notification permission:', localPermStatus);
+          
+          // Wait after local permission
+          await new Promise(resolve => setTimeout(resolve, 300));
         } catch (localError) {
           console.error('❌ Error requesting local notification permission:', localError);
           // Continue even if local notifications fail
@@ -46,8 +64,12 @@ export const usePushNotifications = () => {
 
         // Register with FCM/APNS with error handling
         try {
+          console.log('📱 Starting FCM/APNS registration...');
           await PushNotifications.register();
           console.log('✅ Push notifications registration initiated');
+          
+          // Wait after registration
+          await new Promise(resolve => setTimeout(resolve, 500));
         } catch (registerError) {
           console.error('❌ Error registering push notifications:', registerError);
           return;
