@@ -2,8 +2,11 @@ import { useEffect } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+
+const PERMISSION_KEY = 'push_notification_permission_requested';
 
 export const usePushNotifications = () => {
   const { toast } = useToast();
@@ -17,23 +20,37 @@ export const usePushNotifications = () => {
       }
 
       try {
+        // CRITICAL: Check if we already requested permission to avoid crash loop
+        const { value: alreadyRequested } = await Preferences.get({ key: PERMISSION_KEY });
+        
         // Wait for platform to be ready (critical for Android 13+)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         console.log('✅ Platform ready, checking notification permissions...');
 
-        // Request permission for push notifications
+        // Check current permission status
         let permStatus = await PushNotifications.checkPermissions();
         console.log('📋 Current permission status:', permStatus);
 
+        // If already requested and denied, don't ask again
+        if (alreadyRequested === 'true' && permStatus.receive === 'denied') {
+          console.log('⚠️ Permission previously denied, skipping initialization');
+          return;
+        }
+
+        // Only request if status is 'prompt'
         if (permStatus.receive === 'prompt') {
           try {
             console.log('🔔 Requesting push notification permission...');
+            
+            // Mark as requested BEFORE requesting to prevent crash loop
+            await Preferences.set({ key: PERMISSION_KEY, value: 'true' });
+            
             permStatus = await PushNotifications.requestPermissions();
             console.log('✅ Push notification permission result:', permStatus);
             
-            // CRITICAL: Wait after permission grant to prevent crash on Android 13+
-            // This allows Android to complete the permission lifecycle
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // CRITICAL: Extended wait after permission grant (Android 13+ fix)
+            // This allows Android to complete the permission lifecycle properly
+            await new Promise(resolve => setTimeout(resolve, 2000));
             console.log('✅ Permission lifecycle completed');
           } catch (permError) {
             console.error('❌ Error requesting push notification permission:', permError);
@@ -50,13 +67,13 @@ export const usePushNotifications = () => {
 
         // Request permission for local notifications with error handling
         try {
-          // Add delay before local notification permission request
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Extended delay before local notification permission request
+          await new Promise(resolve => setTimeout(resolve, 500));
           const localPermStatus = await LocalNotifications.requestPermissions();
           console.log('✅ Local notification permission:', localPermStatus);
           
           // Wait after local permission
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 500));
         } catch (localError) {
           console.error('❌ Error requesting local notification permission:', localError);
           // Continue even if local notifications fail
@@ -65,11 +82,15 @@ export const usePushNotifications = () => {
         // Register with FCM/APNS with error handling
         try {
           console.log('📱 Starting FCM/APNS registration...');
+          
+          // Extended delay before registration
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           await PushNotifications.register();
           console.log('✅ Push notifications registration initiated');
           
-          // Wait after registration
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Extended wait after registration
+          await new Promise(resolve => setTimeout(resolve, 1000));
         } catch (registerError) {
           console.error('❌ Error registering push notifications:', registerError);
           return;
@@ -178,16 +199,26 @@ export const usePushNotifications = () => {
         });
 
       } catch (error) {
-        console.error('Error initializing push notifications:', error);
+        console.error('❌ CRITICAL ERROR in push notifications initialization:', error);
+        // Don't re-throw - just log and continue to prevent crash loop
       }
     };
 
-    initializePushNotifications();
+    // Wrap in another try-catch to prevent any crash from escaping
+    try {
+      initializePushNotifications();
+    } catch (outerError) {
+      console.error('❌ OUTER CATCH - Push notifications failed to initialize:', outerError);
+    }
 
     // Cleanup
     return () => {
-      PushNotifications.removeAllListeners();
-      LocalNotifications.removeAllListeners();
+      try {
+        PushNotifications.removeAllListeners();
+        LocalNotifications.removeAllListeners();
+      } catch (cleanupError) {
+        console.error('❌ Error during cleanup:', cleanupError);
+      }
     };
   }, [toast]);
 

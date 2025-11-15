@@ -5,6 +5,7 @@ import { useLanguageStore } from '@/store/languageStore';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { usePharmacyStore } from '@/store/pharmacyStore';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import SafeWrapper from './SafeWrapper';
 import ProfileModal from './ProfileModal';
 import ShortageManager from './ShortageManager';
 import SuppliesShortageManager from './SuppliesShortageManager';
@@ -31,8 +32,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { syncOfflineData } = useOfflineSync();
   const { loadMedicines, fetchRevenues } = usePharmacyStore();
   
-  // تفعيل نظام الإشعارات
-  usePushNotifications();
+  // تفعيل نظام الإشعارات مع حماية من الأخطاء
+  try {
+    usePushNotifications();
+  } catch (error) {
+    console.error('❌ Error initializing push notifications in Dashboard:', error);
+  }
 
   // تحميل البيانات عند بداية فتح Dashboard
   useEffect(() => {
@@ -85,30 +90,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      <BackgroundLogo />
+    <SafeWrapper name="Dashboard">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+        <BackgroundLogo />
 
-      <DashboardHeader
-        onOpenProfile={() => setShowProfileModal(true)}
-      />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        <ActionCards onNavigate={handleNavigate} t={t} />
-        <AdminTools onNavigate={handleNavigate} t={t} />
-      </main>
-
-      <DashboardFooter />
-
-      {showProfileModal && (
-        <ProfileModal
-          isOpen={showProfileModal}
-          onClose={() => setShowProfileModal(false)}
-          user={user}
+        <DashboardHeader
+          onOpenProfile={() => setShowProfileModal(true)}
         />
-      )}
-      
-      <OfflineIndicator />
-    </div>
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+          <ActionCards onNavigate={handleNavigate} t={t} />
+          <AdminTools onNavigate={handleNavigate} t={t} />
+        </main>
+
+        <DashboardFooter />
+
+        {showProfileModal && (
+          <ProfileModal
+            isOpen={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
+            user={user}
+          />
+        )}
+        
+        <OfflineIndicator />
+      </div>
+    </SafeWrapper>
   );
 };
 
