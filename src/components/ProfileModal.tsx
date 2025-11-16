@@ -7,10 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
-import { User, Shield, Clock, Fingerprint, Check, Bell } from 'lucide-react';
+import { User, Shield, Clock, Fingerprint, Check, Bell, AlertCircle, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Preferences } from '@capacitor/preferences';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
+import { checkNotificationPermissions, requestNotificationPermissions } from '@/hooks/usePushNotifications';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -23,6 +26,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
   const [isCheckingFingerprint, setIsCheckingFingerprint] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isCheckingNotifications, setIsCheckingNotifications] = useState(true);
+  const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const { language } = useLanguageStore();
   const { toast } = useToast();
 
@@ -36,6 +42,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
 
     const checkNotificationsStatus = async () => {
       setIsCheckingNotifications(true);
+      
+      // Check database setting
       const { data, error } = await supabase
         .from('profiles')
         .select('notifications_enabled')
@@ -45,6 +53,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
       if (!error && data) {
         setNotificationsEnabled(data.notifications_enabled);
       }
+      
+      // Check system permission status
+      if (Capacitor.isNativePlatform()) {
+        const status = await checkNotificationPermissions();
+        setPermissionStatus(status);
+      }
+      
       setIsCheckingNotifications(false);
     };
 
@@ -149,6 +164,47 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
         variant: "destructive",
       });
       console.error("Notifications Error:", error);
+    }
+  };
+
+  const handleRequestPermission = async () => {
+    setIsRequestingPermission(true);
+    
+    try {
+      const success = await requestNotificationPermissions();
+      
+      if (success) {
+        setPermissionStatus('granted');
+        toast({
+          title: language === 'ar' ? '✅ تم تفعيل الإشعارات' : '✅ Notifications Enabled',
+          description: language === 'ar' 
+            ? 'ستتلقى الآن إشعارات فورية' 
+            : 'You will now receive instant notifications',
+        });
+      } else {
+        toast({
+          title: language === 'ar' ? '❌ فشل تفعيل الإشعارات' : '❌ Failed to Enable Notifications',
+          description: language === 'ar'
+            ? 'يرجى تفعيل الإشعارات من إعدادات الجهاز'
+            : 'Please enable notifications from device settings',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error requesting permission:', error);
+      toast({
+        title: language === 'ar' ? '❌ حدث خطأ' : '❌ Error Occurred',
+        description: language === 'ar'
+          ? 'تعذر تفعيل الإشعارات'
+          : 'Could not enable notifications',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRequestingPermission(false);
+      
+      // Recheck status after attempt
+      const newStatus = await checkNotificationPermissions();
+      setPermissionStatus(newStatus);
     }
   };
 
