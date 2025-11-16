@@ -7,6 +7,7 @@ import { usePharmacyStore } from '@/store/pharmacyStore';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import SafeWrapper from './SafeWrapper';
 import ProfileModal from './ProfileModal';
+import NotificationPromptCard from './NotificationPromptCard';
 import ShortageManager from './ShortageManager';
 import SuppliesShortageManager from './SuppliesShortageManager';
 import RevenueManager from './RevenueManager';
@@ -32,12 +33,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { syncOfflineData } = useOfflineSync();
   const { loadMedicines, fetchRevenues } = usePharmacyStore();
   
-  // تفعيل نظام الإشعارات مع حماية من الأخطاء
-  try {
-    usePushNotifications();
-  } catch (error) {
-    console.error('❌ Error initializing push notifications in Dashboard:', error);
-  }
+  // Initialize push notification listeners only (no automatic permission request)
+  usePushNotifications();
 
   // تحميل البيانات عند بداية فتح Dashboard
   useEffect(() => {
@@ -99,6 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+          <NotificationPromptCard />
           <ActionCards onNavigate={handleNavigate} t={t} />
           <AdminTools onNavigate={handleNavigate} t={t} />
         </main>
