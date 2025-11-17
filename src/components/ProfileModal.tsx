@@ -327,39 +327,97 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user }) =>
                 <span>{language === 'ar' ? 'إعدادات الإشعارات' : 'Notification Settings'}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 space-y-3">
+              {/* Permission Status Display */}
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium">
-                    {language === 'ar' ? 'إشعارات التطبيق' : 'Push Notifications'}
+                    {language === 'ar' ? 'حالة الإذن' : 'Permission Status'}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {language === 'ar' ? 'استقبال إشعارات على شريط الإشعارات' : 'Receive notifications on your device'}
+                  <p className="text-xs text-muted-foreground">
+                    {permissionStatus === 'granted' && (language === 'ar' ? '✅ ممنوح' : '✅ Granted')}
+                    {permissionStatus === 'denied' && (language === 'ar' ? '❌ مرفوض' : '❌ Denied')}
+                    {permissionStatus === 'prompt' && (language === 'ar' ? '⚠️ لم يتم الطلب' : '⚠️ Not Requested')}
                   </p>
                 </div>
                 <Switch
                   checked={notificationsEnabled}
                   onCheckedChange={handleNotificationsToggle}
-                  disabled={isCheckingNotifications}
+                  disabled={isCheckingNotifications || permissionStatus !== 'granted'}
                 />
               </div>
-              
-              {isCheckingNotifications ? (
-                <div className="mt-3 p-2 bg-yellow-50 rounded-lg text-center">
-                  <span className="text-sm text-yellow-700">
-                    {language === 'ar' ? 'جارٍ التحقق من حالة الإشعارات...' : 'Checking notification status...'}
-                  </span>
-                </div>
-              ) : notificationsEnabled && (
-                <div className="mt-3 p-2 bg-green-50 rounded-lg">
+
+              {/* Enable Notifications Button */}
+              {permissionStatus !== 'granted' && (
+                <Button
+                  onClick={handleRequestPermission}
+                  disabled={isRequestingPermission}
+                  className="w-full"
+                  variant="default"
+                >
+                  <Bell className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                  {isRequestingPermission 
+                    ? (language === 'ar' ? 'جارٍ التفعيل...' : 'Enabling...') 
+                    : (language === 'ar' ? 'تفعيل الإشعارات' : 'Enable Notifications')}
+                </Button>
+              )}
+
+              {/* Manual Setup Alert for Denied Permission */}
+              {permissionStatus === 'denied' && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    {language === 'ar' 
+                      ? 'تم رفض إذن الإشعارات. يرجى تفعيلها يدوياً من إعدادات الجهاز.' 
+                      : 'Notification permission denied. Please enable manually from device settings.'}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Success Indicator */}
+              {permissionStatus === 'granted' && notificationsEnabled && (
+                <div className="p-2 bg-green-50 dark:bg-green-950 rounded-lg">
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    <Check className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700">
-                      {language === 'ar' ? 'الإشعارات مفعلة' : 'Notifications Active'}
+                    <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      {language === 'ar' ? 'الإشعارات مفعلة بنجاح' : 'Notifications Enabled Successfully'}
                     </span>
                   </div>
                 </div>
               )}
+
+              {/* Help Section */}
+              <div className="pt-2 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowHelp(!showHelp)}
+                  className="w-full justify-start text-xs"
+                >
+                  <HelpCircle className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                  {language === 'ar' ? 'كيفية تفعيل الإشعارات يدوياً' : 'How to Enable Notifications Manually'}
+                </Button>
+                
+                {showHelp && (
+                  <div className="mt-2 p-3 bg-muted rounded-lg text-xs space-y-2">
+                    <p className="font-medium">
+                      {language === 'ar' ? 'خطوات التفعيل اليدوي:' : 'Manual Setup Steps:'}
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                      <li>{language === 'ar' ? 'افتح إعدادات الجهاز' : 'Open device settings'}</li>
+                      <li>{language === 'ar' ? 'اختر "التطبيقات" أو "Applications"' : 'Select "Apps" or "Applications"'}</li>
+                      <li>{language === 'ar' ? 'ابحث عن تطبيق الصيدلية' : 'Find the pharmacy app'}</li>
+                      <li>{language === 'ar' ? 'اختر "الإشعارات" أو "Notifications"' : 'Select "Notifications"'}</li>
+                      <li>{language === 'ar' ? 'فعّل خيار "السماح بالإشعارات"' : 'Enable "Allow Notifications"'}</li>
+                    </ol>
+                    <p className="text-muted-foreground pt-2">
+                      {language === 'ar' 
+                        ? '💡 لماذا الإشعارات مهمة؟ ستتلقى تحديثات فورية عن النواقص، الإيرادات، والتنبيهات المهمة.' 
+                        : '💡 Why are notifications important? You\'ll receive instant updates about shortages, revenues, and important alerts.'}
+                    </p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
