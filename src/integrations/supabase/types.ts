@@ -60,6 +60,7 @@ export type Database = {
       }
       medicines: {
         Row: {
+          company: string | null
           created_at: string
           id: string
           last_updated: string
@@ -71,6 +72,7 @@ export type Database = {
           updated_by_name: string | null
         }
         Insert: {
+          company?: string | null
           created_at?: string
           id?: string
           last_updated?: string
@@ -82,6 +84,7 @@ export type Database = {
           updated_by_name?: string | null
         }
         Update: {
+          company?: string | null
           created_at?: string
           id?: string
           last_updated?: string
