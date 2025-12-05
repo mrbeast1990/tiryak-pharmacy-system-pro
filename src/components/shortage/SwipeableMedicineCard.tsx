@@ -43,6 +43,10 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
 
   const handlers = useSwipeable({
     onSwiping: (e) => {
+      // Only track horizontal swipes - ignore if vertical movement is dominant
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        return;
+      }
       const maxSwipe = 80;
       const offset = Math.max(-maxSwipe, Math.min(maxSwipe, e.deltaX));
       setSwipeOffset(offset);
@@ -64,8 +68,9 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
     },
     trackMouse: false,
     trackTouch: true,
-    delta: 10,
-    preventScrollOnSwipe: true,
+    delta: 15,
+    preventScrollOnSwipe: false,
+    swipeDuration: 250,
   });
 
   const handleSave = () => {
