@@ -222,11 +222,8 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
                     </div>
                   )}
                   
-                  {/* Meta info - Company + Date (English numerals) */}
+                  {/* Meta info - Date (English numerals) */}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {(medicine as any).company && (
-                      <span>{(medicine as any).company} • </span>
-                    )}
                     <span>{new Date(medicine.last_updated).toLocaleDateString('en-GB')}</span>
                     {medicine.updatedBy && (
                       <span> • {medicine.updatedBy}</span>
