@@ -27,34 +27,7 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
   const { toast } = useToast();
   
   const [medicineName, setMedicineName] = useState('');
-  const [company, setCompany] = useState('');
   const [showMedicineSuggestions, setShowMedicineSuggestions] = useState(false);
-  const [showCompanySuggestions, setShowCompanySuggestions] = useState(false);
-  const [companySuggestions, setCompanySuggestions] = useState<string[]>([]);
-
-  // Fetch unique companies from the database
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      if (company.length < 2) {
-        setCompanySuggestions([]);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('medicines')
-        .select('company')
-        .not('company', 'is', null)
-        .ilike('company', `%${company}%`)
-        .limit(10);
-
-      if (!error && data) {
-        const uniqueCompanies = [...new Set(data.map(d => d.company).filter(Boolean))] as string[];
-        setCompanySuggestions(uniqueCompanies);
-      }
-    };
-
-    fetchCompanies();
-  }, [company]);
 
   const medicineSuggestions = getFilteredSuggestions(medicines, medicineName);
 
@@ -83,7 +56,6 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
       name: medicineName.trim(),
       status: 'shortage',
       notes: null,
-      company: company.trim() || null,
     } as any);
     
     toast({
@@ -92,7 +64,6 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
     });
 
     setMedicineName('');
-    setCompany('');
     onOpenChange(false);
   };
 
@@ -168,43 +139,6 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
               )}
             </div>
           </div>
-
-          {/* Company Field */}
-          <div className="space-y-2">
-            <Label className="text-right block">
-              {language === 'ar' ? 'الشركة' : 'Company'}
-            </Label>
-            <div className="relative">
-              <Input
-                value={company}
-                onChange={(e) => {
-                  setCompany(e.target.value);
-                  setShowCompanySuggestions(e.target.value.length >= 2);
-                }}
-                onFocus={() => setShowCompanySuggestions(company.length >= 2)}
-                onBlur={() => setTimeout(() => setShowCompanySuggestions(false), 200)}
-                placeholder={language === 'ar' ? 'أدخل اسم الشركة (اختياري)' : 'Enter company name (optional)'}
-                className="text-right"
-              />
-              {showCompanySuggestions && companySuggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                  {companySuggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        setCompany(suggestion);
-                        setShowCompanySuggestions(false);
-                      }}
-                      className="px-3 py-2 hover:bg-accent cursor-pointer text-right text-sm"
-                    >
-                      {suggestion}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
           <Button type="submit" className="w-full pharmacy-gradient">
             <Plus className="w-4 h-4 ml-2" />
             {language === 'ar' ? 'إضافة' : 'Add'}
