@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface AddMedicineDialogProps {
   open: boolean;
@@ -27,6 +28,7 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
   const { toast } = useToast();
   
   const [medicineName, setMedicineName] = useState('');
+  const [priority, setPriority] = useState<'1' | '2' | '3'>('1');
   const [showMedicineSuggestions, setShowMedicineSuggestions] = useState(false);
 
   const medicineSuggestions = getFilteredSuggestions(medicines, medicineName);
@@ -56,14 +58,22 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
       name: medicineName.trim(),
       status: 'shortage',
       notes: null,
+      repeat_count: parseInt(priority),
     } as any);
+    
+    const priorityLabels = {
+      '1': language === 'ar' ? 'عادي' : 'Normal',
+      '2': language === 'ar' ? 'متوسط' : 'Medium', 
+      '3': language === 'ar' ? 'عالي' : 'High',
+    };
     
     toast({
       title: language === 'ar' ? "تم الإضافة" : "Added",
-      description: language === 'ar' ? `تم إضافة ${medicineName} كدواء ناقص` : `${medicineName} added as shortage`,
+      description: language === 'ar' ? `تم إضافة ${medicineName} (${priorityLabels[priority]})` : `${medicineName} added (${priorityLabels[priority]})`,
     });
 
     setMedicineName('');
+    setPriority('1');
     onOpenChange(false);
   };
 
@@ -139,6 +149,69 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
               )}
             </div>
           </div>
+
+          {/* Priority Selection */}
+          <div className="space-y-3">
+            <Label className="text-right block">
+              {language === 'ar' ? 'حالة الأولوية' : 'Priority Level'}
+            </Label>
+            <RadioGroup
+              value={priority}
+              onValueChange={(value) => setPriority(value as '1' | '2' | '3')}
+              className="flex gap-2"
+              dir={language === 'ar' ? 'rtl' : 'ltr'}
+            >
+              <div className="flex-1">
+                <RadioGroupItem
+                  value="1"
+                  id="priority-normal"
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor="priority-normal"
+                  className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
+                    <span className="text-sm font-medium">{language === 'ar' ? 'عادي' : 'Normal'}</span>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex-1">
+                <RadioGroupItem
+                  value="2"
+                  id="priority-medium"
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor="priority-medium"
+                  className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-warning peer-data-[state=checked]:bg-warning/10 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-warning"></div>
+                    <span className="text-sm font-medium">{language === 'ar' ? 'متوسط' : 'Medium'}</span>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex-1">
+                <RadioGroupItem
+                  value="3"
+                  id="priority-high"
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor="priority-high"
+                  className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-destructive peer-data-[state=checked]:bg-destructive/10 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-destructive"></div>
+                    <span className="text-sm font-medium">{language === 'ar' ? 'عالي' : 'High'}</span>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <Button type="submit" className="w-full pharmacy-gradient">
             <Plus className="w-4 h-4 ml-2" />
             {language === 'ar' ? 'إضافة' : 'Add'}
