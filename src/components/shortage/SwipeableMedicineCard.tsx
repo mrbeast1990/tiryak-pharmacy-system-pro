@@ -167,19 +167,21 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
           </span>
         </div>
 
-        {/* Card content */}
+        {/* Card content - LTR Layout */}
         <div 
           {...handlers}
           className="relative bg-card shadow-md rounded-lg transition-transform touch-pan-y"
           style={{ transform: `translateX(${swipeOffset}px)` }}
+          dir="ltr"
         >
           <div className="flex">
-            {/* Priority strip */}
-            <div className={`w-1.5 rounded-r-lg ${getPriorityColor()}`} />
+            {/* Priority strip - LEFT side */}
+            <div className={`w-1.5 rounded-l-lg ${getPriorityColor()}`} />
             
             {/* Content */}
             <div className="flex-1 p-3">
               <div className="flex items-start justify-between gap-2">
+                {/* Left side - Medicine name and meta */}
                 <div className="flex-1 min-w-0">
                   {isEditing ? (
                     <div className="flex items-center gap-2">
@@ -205,52 +207,55 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-sm text-foreground truncate">
-                        {medicine.name}
-                      </h3>
-                      {canEdit && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-5 w-5 shrink-0" 
-                          onClick={() => setIsEditing(true)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
+                    <>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-base text-foreground truncate">
+                          {medicine.name}
+                        </h3>
+                      </div>
+                      {/* Meta info - Date (English numerals) */}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        <span>{new Date(medicine.last_updated).toLocaleDateString('en-GB')}</span>
+                        {medicine.updatedBy && (
+                          <span> • {medicine.updatedBy}</span>
+                        )}
+                      </p>
+                    </>
                   )}
-                  
-                  {/* Meta info - Date (English numerals) */}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    <span>{new Date(medicine.last_updated).toLocaleDateString('en-GB')}</span>
-                    {medicine.updatedBy && (
-                      <span> • {medicine.updatedBy}</span>
-                    )}
-                  </p>
                 </div>
 
-                {/* Badges */}
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  {medicine.repeat_count && medicine.repeat_count > 1 && (
-                    <Badge variant="outline" className="text-xs px-1.5 py-0.5 flex items-center gap-1">
-                      <RotateCcw className="w-2.5 h-2.5" />
-                      <span>{medicine.repeat_count}x</span>
-                    </Badge>
+                {/* Right side - Badges and Edit button */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {canEdit && !isEditing && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6" 
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                    </Button>
                   )}
-                  <Badge 
-                    variant="outline" 
-                    className={`text-xs px-1.5 py-0.5 ${
-                      medicine.repeat_count && medicine.repeat_count >= 3 
-                        ? 'border-destructive text-destructive' 
-                        : medicine.repeat_count && medicine.repeat_count >= 2 
-                          ? 'border-warning text-warning'
-                          : 'border-primary text-primary'
-                    }`}
-                  >
-                    {getPriorityLabel()}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    {medicine.repeat_count && medicine.repeat_count > 1 && (
+                      <Badge variant="outline" className="text-xs px-1.5 py-0.5 flex items-center gap-1">
+                        <RotateCcw className="w-2.5 h-2.5" />
+                        <span>{medicine.repeat_count}x</span>
+                      </Badge>
+                    )}
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs px-1.5 py-0.5 ${
+                        medicine.repeat_count && medicine.repeat_count >= 3 
+                          ? 'border-destructive text-destructive' 
+                          : medicine.repeat_count && medicine.repeat_count >= 2 
+                            ? 'border-warning text-warning'
+                            : 'border-primary text-primary'
+                      }`}
+                    >
+                      {getPriorityLabel()}
+                    </Badge>
+                  </div>
                 </div>
               </div>
             </div>
