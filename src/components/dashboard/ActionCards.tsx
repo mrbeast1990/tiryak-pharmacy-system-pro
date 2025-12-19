@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Pill, DollarSign, CheckCircle, Package } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
@@ -14,82 +13,74 @@ const ActionCards: React.FC<ActionCardsProps> = ({ onNavigate, t }) => {
   const { checkPermission, user } = useAuthStore();
   const navigate = useNavigate();
 
+  const cards = [
+    {
+      id: 'shortages',
+      title: t('dashboard.registerShortage'),
+      description: t('dashboard.registerShortage.desc'),
+      icon: Pill,
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600',
+      show: checkPermission('manage_shortages') || user?.role === 'admin',
+      onClick: () => onNavigate('shortages'),
+    },
+    {
+      id: 'supplies',
+      title: 'تسجيل نواقص المستلزمات',
+      description: 'إدارة وتسجيل نواقص المستلزمات',
+      icon: Package,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      show: checkPermission('manage_shortages') || user?.role === 'admin',
+      onClick: () => onNavigate('supplies-shortages'),
+    },
+    {
+      id: 'revenue',
+      title: t('dashboard.registerRevenue'),
+      description: t('dashboard.registerRevenue.desc'),
+      icon: DollarSign,
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
+      show: checkPermission('register_revenue_all') || 
+            checkPermission('register_revenue_morning') || 
+            checkPermission('register_revenue_evening') || 
+            checkPermission('register_revenue_night') || 
+            user?.role === 'admin' || 
+            user?.role === 'ahmad_rajili',
+      onClick: () => onNavigate('revenue'),
+    },
+    {
+      id: 'available',
+      title: 'الأصناف التي تم توفيرها',
+      description: 'عرض وإدارة الأصناف المتوفرة',
+      icon: CheckCircle,
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600',
+      show: true,
+      onClick: () => navigate('/available-medicines'),
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      {(checkPermission('manage_shortages') || user?.role === 'admin') && (
-        <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('shortages')}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-bold text-gray-700">{t('dashboard.registerShortage')}</p>
-                <p className="text-xs text-gray-500">
-                  {t('dashboard.registerShortage.desc')}
-                </p>
-              </div>
-              <div className="p-3 bg-orange-100 rounded-full">
-                <Pill className="w-6 h-6 text-orange-600" />
-              </div>
+    <div className="space-y-2 mb-4">
+      {cards.filter(card => card.show).map((card) => {
+        const Icon = card.icon;
+        return (
+          <div
+            key={card.id}
+            onClick={card.onClick}
+            className="bg-card rounded-xl shadow-sm border border-border/50 p-4 flex items-center gap-4 cursor-pointer hover:shadow-md transition-shadow active:scale-[0.99]"
+          >
+            <div className={`w-12 h-12 rounded-full ${card.iconBg} flex items-center justify-center flex-shrink-0`}>
+              <Icon className={`w-6 h-6 ${card.iconColor}`} />
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {(checkPermission('manage_shortages') || user?.role === 'admin') && (
-        <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('supplies-shortages')}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-bold text-gray-700">تسجيل نواقص المستلزمات</p>
-                <p className="text-xs text-gray-500">
-                  إدارة وتسجيل نواقص المستلزمات
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Package className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {(checkPermission('register_revenue_all') || 
-        checkPermission('register_revenue_morning') || 
-        checkPermission('register_revenue_evening') || 
-        checkPermission('register_revenue_night') || 
-        user?.role === 'admin' || 
-        user?.role === 'ahmad_rajili') && (
-        <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onNavigate('revenue')}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xl font-bold text-gray-700">{t('dashboard.registerRevenue')}</p>
-                <p className="text-xs text-gray-500">
-                  {t('dashboard.registerRevenue.desc')}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      <Card className="card-shadow hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/available-medicines')}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xl font-bold text-gray-700">الأصناف التي تم توفيرها</p>
-              <p className="text-xs text-gray-500">
-                عرض وإدارة الأصناف المتوفرة
-              </p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="flex-1 min-w-0 text-right">
+              <h3 className="text-base font-semibold text-foreground">{card.title}</h3>
+              <p className="text-xs text-muted-foreground truncate">{card.description}</p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        );
+      })}
     </div>
   );
 };

@@ -17,7 +17,6 @@ import DashboardHeader from './dashboard/DashboardHeader';
 import ActionCards from './dashboard/ActionCards';
 import AdminTools from './dashboard/AdminTools';
 import DashboardFooter from './dashboard/DashboardFooter';
-import BackgroundLogo from './dashboard/BackgroundLogo';
 import OfflineIndicator from './OfflineIndicator';
 
 interface DashboardProps {
@@ -33,16 +32,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { syncOfflineData } = useOfflineSync();
   const { loadMedicines, fetchRevenues } = usePharmacyStore();
   
-  // Initialize push notification listeners only (no automatic permission request)
   usePushNotifications();
 
-  // تحميل البيانات عند بداية فتح Dashboard
   useEffect(() => {
     loadMedicines();
     fetchRevenues();
   }, [loadMedicines, fetchRevenues]);
 
-  // الاستماع لأحداث المزامنة من Service Worker
   useEffect(() => {
     const handleSyncEvent = () => {
       syncOfflineData();
@@ -88,14 +84,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   return (
     <SafeWrapper name="Dashboard">
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-        <BackgroundLogo />
-
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         <DashboardHeader
           onOpenProfile={() => setShowProfileModal(true)}
         />
 
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <main className="max-w-3xl mx-auto px-4 py-4">
           <NotificationPromptCard />
           <ActionCards onNavigate={handleNavigate} t={t} />
           <AdminTools onNavigate={handleNavigate} t={t} />

@@ -1,9 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { Lock, Mail, Globe, UserPlus, Fingerprint } from 'lucide-react';
@@ -11,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { NativeBiometric } from 'capacitor-native-biometric';
 import { Capacitor } from '@capacitor/core';
+import pharmacyLogo from '@/assets/pharmacy-logo.png';
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -32,7 +31,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Set remember me preference before login
     setAuthRememberMe(rememberMe);
     
     const success = await login(email, password);
@@ -55,7 +53,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   };
 
   const handleBiometricLogin = async () => {
-    // التحقق من أن التطبيق يعمل على منصة الهاتف
     if (!Capacitor.isNativePlatform()) {
       toast({
         title: language === 'ar' ? "غير مدعوم" : "Not Supported",
@@ -71,7 +68,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     console.log('🔐 Starting biometric login...');
     
     try {
-      // Check if biometric is available
       const isAvailable = await NativeBiometric.isAvailable();
       
       if (!isAvailable.isAvailable) {
@@ -87,7 +83,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
       console.log('✅ Biometric available, showing verification...');
 
-      // Perform biometric verification
       try {
         await NativeBiometric.verifyIdentity({
           reason: language === 'ar' ? "استخدم البصمة لتسجيل الدخول" : "Use your biometric to authenticate",
@@ -98,8 +93,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         
         console.log('✅ Biometric verification successful!');
 
-        // إذا وصلنا هنا، فهذا يعني نجاح التحقق من البصمة
-        // Get stored credentials
         const credentials = await NativeBiometric.getCredentials({
           server: "al-tiryak-pharmacy",
         });
@@ -135,7 +128,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           });
         }
       } catch (verifyError: any) {
-        // User cancelled or biometric verification failed
         console.error('❌ Biometric verification error:', verifyError);
         
         if (verifyError.code === 10 || verifyError.message?.includes('cancel') || verifyError.message?.includes('user')) {
@@ -168,11 +160,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     navigate('/signup');
   };
 
-  // Email autocomplete logic
   const handleEmailChange = (newEmail: string) => {
     setEmail(newEmail);
     
-    // Enhanced autocomplete: check if we can complete the email after 2 characters
     if (newEmail.length >= 2) {
       const availableEmails = [
         'deltanorthpharm@gmail.com',
@@ -188,10 +178,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       );
       
       if (matchingEmail && matchingEmail !== newEmail) {
-        // Auto-complete the email
         setEmail(matchingEmail);
         
-        // Try to load saved password for this email if remember me was used
         const savedData = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
         if (savedData[matchingEmail]) {
           setPassword(savedData[matchingEmail].password);
@@ -201,7 +189,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     }
   };
 
-  // Load saved credentials on component mount
   React.useEffect(() => {
     const loadSavedCredentials = async () => {
       try {
@@ -216,7 +203,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             setRememberMe(true);
           }
         } else {
-          // For web, load the most recent credentials
           const savedEmail = localStorage.getItem('last-email');
           const savedCredentials = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
           
@@ -234,7 +220,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     loadSavedCredentials();
   }, []);
 
-  // Store credentials when successful login with remember me
   const storeCredentials = React.useCallback(async () => {
     if (rememberMe && email && password) {
       if (Capacitor.isNativePlatform()) {
@@ -248,14 +233,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           console.error('Failed to store biometric credentials:', error);
         }
       } else {
-        // Enhanced web storage - store multiple credentials
         const existingCredentials = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
         existingCredentials[email] = { password, rememberMe: true };
         localStorage.setItem('saved-credentials', JSON.stringify(existingCredentials));
         localStorage.setItem('last-email', email);
       }
     } else if (!rememberMe) {
-      // Clear saved credentials when remember me is unchecked
       if (Capacitor.isNativePlatform()) {
         try {
           await NativeBiometric.deleteCredentials({
@@ -265,7 +248,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
           console.error('Failed to delete biometric credentials:', error);
         }
       } else {
-        // For web, remove this email's credentials
         const existingCredentials = JSON.parse(localStorage.getItem('saved-credentials') || '{}');
         delete existingCredentials[email];
         localStorage.setItem('saved-credentials', JSON.stringify(existingCredentials));
@@ -276,9 +258,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     }
   }, [rememberMe, email, password]);
 
-  // Store credentials after successful login
   React.useEffect(() => {
-    // Only store if login was successful and we have a user
     if (user && rememberMe && email && password) {
       console.log('💾 Saving credentials for biometric login...');
       storeCredentials();
@@ -290,164 +270,162 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   }, [user, storeCredentials, rememberMe, email, password, toast, language]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 relative pt-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Background Logo */}
-      <div 
-        className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
-        style={{
-          backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
-          backgroundSize: '400px 400px',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      />
-      
-      {/* Language Toggle - in foreground */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-emerald-50 to-teal-100" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Language Toggle */}
       <div className={`absolute top-4 ${language === 'ar' ? 'left-4' : 'right-4'} z-20`}>
         <Button
           onClick={toggleLanguage}
           variant="outline"
           size="sm"
-          className="flex items-center space-x-2 bg-white shadow-lg"
+          className="flex items-center gap-2 bg-card/80 backdrop-blur-sm border-border/50 shadow-sm"
         >
-          <Globe className="w-3 h-3" />
+          <Globe className="w-4 h-4" />
           <span className="text-sm">{t('language')}</span>
         </Button>
       </div>
 
-      <div className="flex flex-col items-center space-y-4 relative z-10 w-full max-w-md px-4">
-        <Card className="w-full card-shadow">
-          <CardHeader className="text-center pb-4">
-            <div className="flex items-center justify-center mx-auto mb-1">
-              <img 
-                src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
-                alt="Al-Tiryak Logo" 
-                className="w-40 h-40"
-              />
-            </div>
-            <CardTitle className="text-lg font-bold text-gray-900">
-              {t('pharmacy.name')}
-            </CardTitle>
-            <CardDescription className="text-xs leading-relaxed">
-              {language === 'ar' 
-                ? 'مرحباً بك في عالم حيث التفاصيل الصغيرة تصنع فارقاً كبيراً... تسجيل دخولك اليوم هو بداية لرعاية أفضل...' 
-                : 'Welcome to a world where small details make a big difference... Your login today is the start of better care...'
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-                </label>
-                <div className="relative">
-                  <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => handleEmailChange(e.target.value)}
-                    placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
-                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                    autoComplete="email"
-                    list="email-suggestions"
-                    required
-                  />
-                  <datalist id="email-suggestions">
-                    <option value="deltanorthpharm@gmail.com" />
-                    <option value="thepanaceapharmacy@gmail.com" />
-                    <option value="ahmad@tiryak.com" />
-                    <option value="morning@tiryak.com" />
-                    <option value="evening@tiryak.com" />
-                    <option value="night@tiryak.com" />
-                  </datalist>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  {language === 'ar' ? 'كلمة المرور' : 'Password'}
-                </label>
-                <div className="relative">
-                  <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-3 h-4 w-4 text-gray-400`} />
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
-                    className={`${language === 'ar' ? 'pr-10' : 'pl-10'} text-sm`}
-                    autoComplete="current-password"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <Checkbox 
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+        {/* Logo */}
+        <div className="mb-6">
+          <img 
+            src={pharmacyLogo}
+            alt="Al-Tiryak Al-Shafi Pharmacy" 
+            className="w-32 h-32 object-contain"
+          />
+        </div>
+        
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          {t('pharmacy.name')}
+        </h1>
+        <p className="text-sm text-muted-foreground text-center mb-8 max-w-xs leading-relaxed">
+          {language === 'ar' 
+            ? 'مرحباً بك في عالم حيث التفاصيل الصغيرة تصنع فارقاً كبيراً... تسجيل دخولك اليوم هو بداية لرعاية أفضل...' 
+            : 'Welcome to a world where small details make a big difference... Your login today is the start of better care...'
+          }
+        </p>
+        
+        {/* Form Card */}
+        <div className="w-full max-w-sm bg-card rounded-2xl shadow-lg p-6 space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">
+                {language === 'ar' ? 'البريد الإلكتروني' : 'Email'}
+              </label>
+              <div className="relative">
+                <Mail className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  placeholder={language === 'ar' ? 'أدخل بريدك الإلكتروني' : 'Enter your email'}
+                  className={`${language === 'ar' ? 'pr-10' : 'pl-10'} h-11 rounded-xl border-border/50 bg-background`}
+                  autoComplete="email"
+                  list="email-suggestions"
+                  required
                 />
-                <label 
-                  htmlFor="remember-me" 
-                  className="text-sm font-medium text-gray-700 cursor-pointer"
-                >
-                  {language === 'ar' ? 'تذكرني' : 'Remember me'}
-                </label>
+                <datalist id="email-suggestions">
+                  <option value="deltanorthpharm@gmail.com" />
+                  <option value="thepanaceapharmacy@gmail.com" />
+                  <option value="ahmad@tiryak.com" />
+                  <option value="morning@tiryak.com" />
+                  <option value="evening@tiryak.com" />
+                  <option value="night@tiryak.com" />
+                </datalist>
               </div>
-              
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full pharmacy-gradient"
-              >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  language === 'ar' ? 'تسجيل الدخول' : 'Sign In'
-                )}
-              </Button>
+            </div>
+            
+            {/* Password Field */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">
+                {language === 'ar' ? 'كلمة المرور' : 'Password'}
+              </label>
+              <div className="relative">
+                <Lock className={`absolute ${language === 'ar' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={language === 'ar' ? 'أدخل كلمة المرور' : 'Enter your password'}
+                  className={`${language === 'ar' ? 'pr-10' : 'pl-10'} h-11 rounded-xl border-border/50 bg-background`}
+                  autoComplete="current-password"
+                  required
+                />
+              </div>
+            </div>
 
-              {/* Biometric Login Button - فقط على الهاتف */}
-              {Capacitor.isNativePlatform() && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleBiometricLogin}
-                  disabled={isBiometricLoading}
-                >
-                  {isBiometricLoading ? (
-                    <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Fingerprint className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
-                      {language === 'ar' ? 'تسجيل الدخول بالبصمة' : 'Login with Biometric'}
-                    </>
-                  )}
-                </Button>
+            {/* Remember Me */}
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+              />
+              <label 
+                htmlFor="remember-me" 
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                {language === 'ar' ? 'تذكرني' : 'Remember me'}
+              </label>
+            </div>
+            
+            {/* Login Button */}
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-11 rounded-xl pharmacy-gradient text-base font-medium"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              ) : (
+                language === 'ar' ? 'تسجيل الدخول' : 'Sign In'
               )}
-              
+            </Button>
+
+            {/* Biometric Login Button */}
+            {Capacitor.isNativePlatform() && (
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
-                onClick={handleSignUpClick}
+                className="w-full h-11 rounded-xl border-border/50"
+                onClick={handleBiometricLogin}
+                disabled={isBiometricLoading}
               >
-                <UserPlus className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
-                {language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'}
+                {isBiometricLoading ? (
+                  <div className="w-5 h-5 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Fingerprint className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                    {language === 'ar' ? 'تسجيل الدخول بالبصمة' : 'Login with Biometric'}
+                  </>
+                )}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-        
-        {/* Footer - now below the card */}
-        <div className="text-center text-sm text-gray-700 bg-white/90 px-6 py-3 rounded-lg shadow-lg">
-          <p className="font-semibold">Ahmed A Alrjele</p>
-          <p>Founder & CEO</p>
-          <p>Al-tiryak Al-shafi Pharmacy</p>
+            )}
+            
+            {/* Sign Up Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 rounded-xl border-border/50"
+              onClick={handleSignUpClick}
+            >
+              <UserPlus className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+              {language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'}
+            </Button>
+          </form>
         </div>
+      </div>
+      
+      {/* Footer */}
+      <div className="py-4 text-center">
+        <p className="text-xs text-muted-foreground">
+          Ahmed A Alrjele • Founder & CEO
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Al-tiryak Al-shafi Pharmacy
+        </p>
       </div>
     </div>
   );

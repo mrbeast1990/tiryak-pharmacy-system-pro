@@ -194,9 +194,9 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         />
 
         {/* Header */}
-        <header className="bg-card shadow-sm border-b sticky top-0 z-20">
+        <header className="bg-card shadow-sm border-b border-border sticky top-0 z-20">
           <div className="max-w-3xl mx-auto px-4">
-            <div className="flex items-center justify-between h-12">
+            <div className="flex items-center justify-between h-14">
               <h1 className="text-base font-bold text-foreground">{t('shortages.title')}</h1>
               <Button
                 onClick={onBack}
@@ -212,45 +212,45 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         </header>
 
         {/* Sticky Search and Controls */}
-        <div className="sticky top-12 z-10 bg-gradient-to-br from-emerald-50 to-teal-100 py-3 px-4">
-          <div className="max-w-3xl mx-auto space-y-2">
-            {/* Search Bar - Full width on its own row */}
+        <div className="sticky top-14 z-10 bg-gradient-to-br from-emerald-50 to-teal-100 pt-3 pb-2 px-4">
+          <div className="max-w-3xl mx-auto space-y-3">
+            {/* Shortages Count */}
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-destructive" />
+              <span className="text-sm font-semibold text-foreground">
+                {language === 'ar' ? 'النواقص' : 'Shortages'} ({shortages.length})
+              </span>
+            </div>
+            
+            {/* Search Bar - Full width */}
             <div className="relative">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder={language === 'ar' ? 'البحث عن دواء...' : 'Search for medicine...'}
-                className="pr-10 bg-card"
+                className="pr-10 bg-card h-10 rounded-xl"
               />
             </div>
             
             {/* Sort and Export - Separate row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-destructive" />
-                <span className="text-sm font-medium text-foreground">
-                  {language === 'ar' ? 'النواقص' : 'Shortages'} ({shortages.length})
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <select 
-                  className="border border-input rounded-md px-2 py-1.5 text-xs bg-card"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
-                  <option value="">{language === 'ar' ? 'ترتيب حسب' : 'Sort by'}</option>
-                  <option value="name">{language === 'ar' ? 'الاسم' : 'Name'}</option>
-                  <option value="date">{language === 'ar' ? 'التاريخ' : 'Date'}</option>
-                  <option value="repeat">{language === 'ar' ? 'التكرار' : 'Repeat'}</option>
-                </select>
-                {checkPermission('export_shortages_pdf') && (
-                  <Button onClick={exportShortagesPDF} size="sm" variant="outline" className="text-xs">
-                    <FileText className="w-3 h-3 ml-1" />
-                    PDF
-                  </Button>
-                )}
-              </div>
+            <div className="flex items-center justify-end gap-2">
+              <select 
+                className="border border-input rounded-lg px-3 py-1.5 text-xs bg-card"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="">{language === 'ar' ? 'ترتيب حسب' : 'Sort by'}</option>
+                <option value="name">{language === 'ar' ? 'الاسم' : 'Name'}</option>
+                <option value="date">{language === 'ar' ? 'التاريخ' : 'Date'}</option>
+                <option value="repeat">{language === 'ar' ? 'التكرار' : 'Repeat'}</option>
+              </select>
+              {checkPermission('export_shortages_pdf') && (
+                <Button onClick={exportShortagesPDF} size="sm" variant="outline" className="text-xs rounded-lg">
+                  <FileText className="w-3 h-3 ml-1" />
+                  PDF
+                </Button>
+              )}
             </div>
           </div>
         </div>
