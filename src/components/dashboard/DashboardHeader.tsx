@@ -1,9 +1,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Globe, Settings, LogOut, User } from 'lucide-react';
+import { Globe, LogOut } from 'lucide-react';
 import { useLanguageStore } from '@/store/languageStore';
 import { useAuthStore } from '@/store/authStore';
 import NotificationCenter from '@/components/NotificationCenter';
+import pharmacyLogo from '@/assets/pharmacy-logo.png';
 
 interface DashboardHeaderProps {
   onOpenProfile: () => void;
@@ -18,56 +19,50 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b relative z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo clickable for profile */}
+    <header className="bg-card shadow-sm border-b border-border sticky top-0 z-20">
+      <div className="max-w-3xl mx-auto px-4">
+        <div className="flex items-center justify-between h-14">
+          {/* Logo and Title */}
           <Button
             onClick={onOpenProfile}
             variant="ghost"
-            className="flex items-center space-x-3 space-x-reverse hover:bg-gray-50 p-2 rounded-lg"
+            className="flex items-center gap-2 hover:bg-accent/50 p-1.5 rounded-lg -ml-1.5"
           >
             <img 
-              src="/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png" 
+              src={pharmacyLogo}
               alt="Al-Tiryak Logo" 
-              className="w-8 h-8"
+              className="w-9 h-9 object-contain"
             />
             <div className="text-right">
-              <h1 className="text-lg font-bold text-gray-900">
+              <h1 className="text-sm font-bold text-foreground leading-tight">
                 {t('pharmacy.name')}
               </h1>
-              <p className="text-xs text-gray-600">
-                مرحباً مدير
+              <p className="text-xs text-muted-foreground">
+                مرحباً {user?.name || 'مدير'}
               </p>
             </div>
           </Button>
           
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <span className="text-sm text-gray-600 hidden sm:block">
-              {language === 'ar' ? 'مرحباً' : 'Welcome'}, {user?.name}
-            </span>
-            
-            {/* مكون الإشعارات */}
+          {/* Actions */}
+          <div className="flex items-center gap-1">
             <NotificationCenter />
             
             <Button
               onClick={toggleLanguage}
               variant="ghost"
-              size="sm"
-              className="flex items-center space-x-1"
+              size="icon"
+              className="w-9 h-9"
             >
               <Globe className="w-4 h-4" />
-              <span className="text-xs hidden md:block">{t('language')}</span>
             </Button>
             
             <Button
               onClick={handleLogout}
               variant="ghost"
-              size="sm"
-              className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+              size="icon"
+              className="w-9 h-9 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <LogOut className="w-4 h-4" />
-              <span className="text-xs hidden lg:block">{t('logout')}</span>
             </Button>
           </div>
         </div>
