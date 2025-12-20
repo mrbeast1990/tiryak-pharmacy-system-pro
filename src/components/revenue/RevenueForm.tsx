@@ -1,13 +1,13 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, DollarSign, Building2, FileText, Loader2, Save, Calculator } from 'lucide-react';
+import { Calendar, DollarSign, FileText, Loader2, Save, Calculator } from 'lucide-react';
 import { Period } from '@/hooks/revenue/useRevenueState';
 import CustomNumpad from './CustomNumpad';
+import BankingServiceInput, { BankingServiceItem } from './BankingServiceInput';
 
 interface RevenueFormProps {
   selectedDate: string;
@@ -42,14 +42,31 @@ const RevenueForm: React.FC<RevenueFormProps> = ({
   handleSubmit,
   formSubmitting,
 }) => {
-  const [activeNumpad, setActiveNumpad] = useState<'income' | 'banking' | null>(null);
+  const [activeNumpad, setActiveNumpad] = useState<'income' | null>(null);
+  const [bankingItems, setBankingItems] = useState<BankingServiceItem[]>([]);
+
+  // Calculate banking services total from items
+  const bankingTotal = useMemo(() => {
+    return bankingItems.reduce((sum, item) => sum + item.amount, 0);
+  }, [bankingItems]);
+
+  // Sync banking total with parent state
+  useEffect(() => {
+    setBankingServices(bankingTotal > 0 ? bankingTotal.toString() : '');
+  }, [bankingTotal, setBankingServices]);
 
   // Calculate current total
   const currentTotal = useMemo(() => {
     const incomeAmount = parseFloat(income) || 0;
-    const bankingAmount = parseFloat(bankingServices) || 0;
-    return incomeAmount + bankingAmount;
-  }, [income, bankingServices]);
+    return incomeAmount + bankingTotal;
+  }, [income, bankingTotal]);
+
+  // Clear banking items when form is submitted (bankingServices becomes empty)
+  useEffect(() => {
+    if (bankingServices === '' && bankingItems.length > 0) {
+      setBankingItems([]);
+    }
+  }, [bankingServices, bankingItems.length]);
 
   return (
     <Card className="bg-white border-0 shadow-lg rounded-2xl overflow-hidden">
@@ -89,7 +106,7 @@ const RevenueForm: React.FC<RevenueFormProps> = ({
                       <SelectTrigger className="text-sm text-right h-10 border-border/50 focus:border-primary bg-muted/30 rounded-lg">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white z-50">
                         <SelectItem value="morning">صباحية</SelectItem>
                         <SelectItem value="evening">مسائية</SelectItem>
                         <SelectItem value="night">ليلية</SelectItem>
@@ -136,40 +153,15 @@ const RevenueForm: React.FC<RevenueFormProps> = ({
                 )}
               </div>
 
-              {/* Banking Services */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground text-right block flex items-center justify-end gap-1.5">
-                  <span>خدمات مصرفية (دينار)</span>
-                  <Building2 className="w-3.5 h-3.5 text-blue-600" />
-                </label>
-                <div 
-                  className="relative cursor-pointer"
-                  onClick={() => setActiveNumpad(activeNumpad === 'banking' ? null : 'banking')}
-                >
-                  <Input
-                    type="text"
-                    value={bankingServices}
-                    readOnly
-                    placeholder="اضغط لإدخال المبلغ"
-                    className="text-sm text-right h-11 border-blue-200 focus:border-blue-500 bg-blue-50/50 rounded-lg cursor-pointer pr-10"
-                  />
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Building2 className="w-4 h-4 text-blue-600" />
-                    </div>
-                  </div>
-                </div>
-                {activeNumpad === 'banking' && (
-                  <CustomNumpad
-                    value={bankingServices}
-                    onChange={setBankingServices}
-                    onClose={() => setActiveNumpad(null)}
-                  />
-                )}
-              </div>
+              {/* Dynamic Banking Services Input */}
+              <BankingServiceInput
+                items={bankingItems}
+                onItemsChange={setBankingItems}
+                totalAmount={bankingTotal}
+              />
 
               {/* Current Total Display */}
-              {(income || bankingServices) && (
+              {(income || bankingTotal > 0) && (
                 <div className="bg-gradient-to-l from-primary/10 to-primary/5 rounded-xl p-4 border border-primary/20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -182,7 +174,7 @@ const RevenueForm: React.FC<RevenueFormProps> = ({
                   </div>
                   <div className="flex justify-end gap-4 mt-2 text-xs text-muted-foreground">
                     <span>كاش: {parseFloat(income) || 0} د</span>
-                    <span>شبكة: {parseFloat(bankingServices) || 0} د</span>
+                    <span>شبكة: {bankingTotal.toFixed(2)} د</span>
                   </div>
                 </div>
               )}
