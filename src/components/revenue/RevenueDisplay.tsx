@@ -2,9 +2,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ArrowRight, TrendingUp, DollarSign, Building2, Calendar } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, ArrowRight, DollarSign, Building2, Calendar, TrendingUp } from 'lucide-react';
 
 interface RevenueDisplayProps {
   dailyRevenue: number;
@@ -35,109 +34,166 @@ const RevenueDisplay: React.FC<RevenueDisplayProps> = ({
   showPeriodBanking,
   canNavigateDate,
 }) => {
-  return (
-    <Card className="card-shadow hover:shadow-lg transition-shadow duration-300">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
-        <CardTitle className="text-right text-blue-800 flex items-center justify-end gap-2">
-          <span>📊 عرض النتائج</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-6">
-        {/* Daily Revenue Summary */}
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 mb-6 border-2 border-emerald-200">
-          <h3 className="text-base font-bold text-gray-800 text-right mb-4 flex items-center justify-end gap-2">
-            <span>إيراد اليوم النقدي</span>
-            <DollarSign className="w-5 h-5 text-emerald-600" />
-          </h3>
-          <div className="flex items-center justify-between">
-            {canNavigateDate ? (
-              <Button
-                onClick={() => navigateDate('next')}
-                variant="outline"
-                size="sm"
-                className="border-2 hover:bg-emerald-100"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            ) : (
-              <div className="w-10 h-9" />
-            )}
-            
-            <div className="text-center cursor-pointer" onClick={() => setShowDailyDetails(true)}>
-              <p className="text-2xl font-bold text-green-700 mb-1">{dailyRevenue.toFixed(2)} دينار</p>
-              <p className="text-xs text-gray-600 font-medium">{selectedDate}</p>
-            </div>
-            
-            {canNavigateDate ? (
-              <Button
-                onClick={() => navigateDate('prev')}
-                variant="outline"
-                size="sm"
-                className="border-2 hover:bg-emerald-100"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <div className="w-10 h-9" />
-            )}
-          </div>
-        </div>
+  const dailyTotal = dailyRevenue + dailyBankingServices;
 
-        {/* Period Analysis */}
-        <div className="space-y-4">
-          <h3 className="text-base font-bold text-gray-800 text-right flex items-center justify-end gap-2">
-            <span>تحليل الفترة الزمنية</span>
-            <Calendar className="w-5 h-5 text-blue-600" />
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-700 text-right block">
-                من
-              </label>
-              <Input
-                type="date"
-                value={periodStartDate}
-                onChange={(e) => setPeriodStartDate(e.target.value)}
-                className="text-xs text-right border-2 focus:border-blue-500"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-gray-700 text-right block">
-                إلى
-              </label>
-              <Input
-                type="date"
-                value={periodEndDate}
-                onChange={(e) => setPeriodEndDate(e.target.value)}
-                className="text-xs text-right border-2 focus:border-blue-500"
-              />
-            </div>
+  return (
+    <div className="space-y-4">
+      {/* Summary Cards - 3 cards in a row */}
+      <div className="grid grid-cols-3 gap-3">
+        {/* Cash Card */}
+        <Card 
+          className="bg-white border-0 shadow-md rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => setShowDailyDetails(true)}
+        >
+          <div className="flex h-full">
+            <div className="w-1 bg-green-500" />
+            <CardContent className="p-3 flex-1">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mb-2">
+                  <DollarSign className="w-4 h-4 text-green-600" />
+                </div>
+                <span className="text-xs text-muted-foreground mb-1">كاش</span>
+                <span className="text-sm font-bold text-green-600">{dailyRevenue.toFixed(0)}</span>
+              </div>
+            </CardContent>
           </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={showPeriodBanking}
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 shadow-md"
-              size="sm"
-            >
-              <Building2 className="w-4 h-4 ml-2" />
-              الخدمات المصرفية
-            </Button>
-            
-            <Button
-              onClick={showPeriodRevenue}
-              className="w-full pharmacy-gradient text-white font-semibold py-3 shadow-md"
-              size="sm"
-            >
-              <DollarSign className="w-4 h-4 ml-2" />
-              الإيرادات النقدية
-            </Button>
+        </Card>
+
+        {/* Banking Card */}
+        <Card 
+          className="bg-white border-0 shadow-md rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => setShowDailyDetails(true)}
+        >
+          <div className="flex h-full">
+            <div className="w-1 bg-blue-500" />
+            <CardContent className="p-3 flex-1">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-xs text-muted-foreground mb-1">شبكة</span>
+                <span className="text-sm font-bold text-blue-600">{dailyBankingServices.toFixed(0)}</span>
+              </div>
+            </CardContent>
           </div>
+        </Card>
+
+        {/* Total Card */}
+        <Card 
+          className="bg-white border-0 shadow-md rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+          onClick={() => setShowDailyDetails(true)}
+        >
+          <div className="flex h-full">
+            <div className="w-1 bg-primary" />
+            <CardContent className="p-3 flex-1">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground mb-1">إجمالي</span>
+                <span className="text-sm font-bold text-primary">{dailyTotal.toFixed(0)}</span>
+              </div>
+            </CardContent>
+          </div>
+        </Card>
+      </div>
+
+      {/* Date Navigation */}
+      <Card className="bg-white border-0 shadow-md rounded-xl overflow-hidden">
+        <div className="flex">
+          <div className="w-1.5 bg-primary" />
+          <CardContent className="p-4 flex-1">
+            <div className="flex items-center justify-between">
+              {canNavigateDate ? (
+                <Button
+                  onClick={() => navigateDate('next')}
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 hover:bg-primary/10 rounded-full"
+                >
+                  <ArrowLeft className="w-4 h-4 text-primary" />
+                </Button>
+              ) : (
+                <div className="w-9 h-9" />
+              )}
+              
+              <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground mb-0.5">إيراد يوم</p>
+                <p className="text-sm font-bold text-foreground">{selectedDate}</p>
+              </div>
+              
+              {canNavigateDate ? (
+                <Button
+                  onClick={() => navigateDate('prev')}
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 hover:bg-primary/10 rounded-full"
+                >
+                  <ArrowRight className="w-4 h-4 text-primary" />
+                </Button>
+              ) : (
+                <div className="w-9 h-9" />
+              )}
+            </div>
+          </CardContent>
         </div>
-      </CardContent>
-    </Card>
+      </Card>
+
+      {/* Period Analysis */}
+      <Card className="bg-white border-0 shadow-md rounded-xl overflow-hidden">
+        <div className="flex">
+          <div className="w-1.5 bg-blue-500" />
+          <CardContent className="p-4 flex-1">
+            <h3 className="text-sm font-bold text-foreground text-right flex items-center justify-end gap-2 mb-3">
+              <span>تحليل الفترة الزمنية</span>
+              <Calendar className="w-4 h-4 text-blue-500" />
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground text-right block">من</label>
+                <Input
+                  type="date"
+                  value={periodStartDate}
+                  onChange={(e) => setPeriodStartDate(e.target.value)}
+                  className="text-xs text-right h-9 border-border/50 focus:border-blue-500 bg-muted/30 rounded-lg"
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground text-right block">إلى</label>
+                <Input
+                  type="date"
+                  value={periodEndDate}
+                  onChange={(e) => setPeriodEndDate(e.target.value)}
+                  className="text-xs text-right h-9 border-border/50 focus:border-blue-500 bg-muted/30 rounded-lg"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={showPeriodBanking}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold h-10 rounded-lg shadow-sm"
+                size="sm"
+              >
+                <Building2 className="w-4 h-4 ml-1.5" />
+                شبكة
+              </Button>
+              
+              <Button
+                onClick={showPeriodRevenue}
+                className="w-full pharmacy-gradient text-white font-semibold h-10 rounded-lg shadow-sm"
+                size="sm"
+              >
+                <DollarSign className="w-4 h-4 ml-1.5" />
+                كاش
+              </Button>
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+    </div>
   );
 };
 

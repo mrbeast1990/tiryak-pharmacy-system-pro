@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, Wallet } from 'lucide-react';
 
 import { useRevenueManager } from '@/hooks/useRevenueManager';
 
@@ -10,6 +10,7 @@ import PeriodRevenueDetails from './revenue/PeriodRevenueDetails';
 import RevenueForm from './revenue/RevenueForm';
 import RevenueDisplay from './revenue/RevenueDisplay';
 import RevenueReportExporter from './revenue/RevenueReportExporter';
+import pharmacyLogo from '@/assets/pharmacy-logo.png';
 
 interface RevenueManagerProps {
   onBack: () => void;
@@ -53,8 +54,13 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
   if (revenuesLoading && !showDailyDetails && !showPeriodDetails) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
-        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          </div>
+          <span className="text-sm text-muted-foreground">جاري التحميل...</span>
+        </div>
       </div>
     );
   }
@@ -93,39 +99,43 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Background Logo */}
       <div 
-        className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none"
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
         style={{
-          backgroundImage: 'url(/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png)',
-          backgroundSize: '600px 600px',
+          backgroundImage: `url(${pharmacyLogo})`,
+          backgroundSize: '400px 400px',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.03
         }}
       />
 
       {/* Header */}
-      <header className="bg-white shadow-sm border-b relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <Button
-                onClick={onBack}
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 space-x-reverse text-sm"
-              >
-                <ArrowRight className="w-4 h-4" />
-                <span>العودة للرئيسية</span>
-              </Button>
-              <h1 className="text-lg font-bold text-gray-900">إدارة الإيرادات</h1>
+      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-border/50 sticky top-0 z-20">
+        <div className="max-w-md mx-auto px-4">
+          <div className="flex items-center justify-between h-14">
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10"
+            >
+              <ArrowRight className="w-4 h-4" />
+              <span>العودة للرئيسية</span>
+            </Button>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold text-foreground">إدارة الإيرادات</h1>
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-primary" />
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-md mx-auto px-4 py-8 relative z-10">
+      <main className="max-w-md mx-auto px-4 py-5 relative z-10 space-y-4">
         <RevenueForm
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
