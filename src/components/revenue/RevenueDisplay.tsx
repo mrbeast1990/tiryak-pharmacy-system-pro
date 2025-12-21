@@ -71,7 +71,7 @@ const RevenueDisplay: React.FC<RevenueDisplayProps> = ({
                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-2">
                   <Building2 className="w-4 h-4 text-blue-600" />
                 </div>
-                <span className="text-xs text-muted-foreground mb-1">شبكة</span>
+                <span className="text-[10px] text-muted-foreground mb-1">خدمات مصرفية</span>
                 <span className="text-sm font-bold text-blue-600">{dailyBankingServices.toFixed(0)}</span>
               </div>
             </CardContent>
@@ -174,11 +174,11 @@ const RevenueDisplay: React.FC<RevenueDisplayProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <Button
                 onClick={showPeriodBanking}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold h-10 rounded-lg shadow-sm"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold h-10 rounded-lg shadow-sm text-xs"
                 size="sm"
               >
                 <Building2 className="w-4 h-4 ml-1.5" />
-                شبكة
+                خدمات مصرفية
               </Button>
               
               <Button
