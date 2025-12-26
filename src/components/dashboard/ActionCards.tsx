@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Pill, DollarSign, CheckCircle, Package } from 'lucide-react';
+import { Pill, DollarSign, CheckCircle, Package, BookOpen } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,6 +33,16 @@ const ActionCards: React.FC<ActionCardsProps> = ({ onNavigate, t }) => {
       iconColor: 'text-blue-600',
       show: checkPermission('manage_shortages') || user?.role === 'admin',
       onClick: () => onNavigate('supplies-shortages'),
+    },
+    {
+      id: 'tiryak-guide',
+      title: 'دليل الترياق',
+      description: 'البحث عن الأدوية والبدائل ومستشار AI',
+      icon: BookOpen,
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600',
+      show: true,
+      onClick: () => onNavigate('tiryak-guide'),
     },
     {
       id: 'revenue',

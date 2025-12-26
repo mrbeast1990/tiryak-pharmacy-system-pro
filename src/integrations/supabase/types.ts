@@ -222,6 +222,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pharmacy_guide: {
+        Row: {
+          concentration: string | null
+          created_at: string
+          id: string
+          keywords: string[] | null
+          origin: string | null
+          pharmacist_notes: string | null
+          scientific_name: string
+          trade_name: string
+          updated_at: string
+        }
+        Insert: {
+          concentration?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          origin?: string | null
+          pharmacist_notes?: string | null
+          scientific_name: string
+          trade_name: string
+          updated_at?: string
+        }
+        Update: {
+          concentration?: string | null
+          created_at?: string
+          id?: string
+          keywords?: string[] | null
+          origin?: string | null
+          pharmacist_notes?: string | null
+          scientific_name?: string
+          trade_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           fcm_token: string | null
