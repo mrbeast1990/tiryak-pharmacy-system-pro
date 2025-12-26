@@ -1,1 +1,25 @@
 project_id = "qoyawkfbyocgtyxlpgnp"
+
+[functions.approve-request]
+verify_jwt = true
+
+[functions.create-admin-user]
+verify_jwt = true
+
+[functions.delete-old-notifications]
+verify_jwt = false
+
+[functions.reject-request]
+verify_jwt = true
+
+[functions.send-notification]
+verify_jwt = true
+
+[functions.send-periodic-notification]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.tiryak-ai]
+verify_jwt = true

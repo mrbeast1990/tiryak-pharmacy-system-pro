@@ -13,6 +13,7 @@ import SuppliesShortageManager from './SuppliesShortageManager';
 import RevenueManager from './RevenueManager';
 import ReportsPage from './ReportsPage';
 import NotificationSender from './NotificationSender';
+import TiryakGuide from './TiryakGuide';
 import DashboardHeader from './dashboard/DashboardHeader';
 import ActionCards from './dashboard/ActionCards';
 import AdminTools from './dashboard/AdminTools';
@@ -80,6 +81,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   if (currentPage === 'notifications') {
     return <NotificationSender onBack={handleBack} />;
+  }
+
+  if (currentPage === 'tiryak-guide') {
+    return <TiryakGuide onBack={handleBack} />;
   }
 
   return (
