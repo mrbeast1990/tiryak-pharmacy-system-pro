@@ -88,10 +88,13 @@ export const useAIConversations = () => {
 
   // Create new conversation
   const createConversation = useCallback(async (): Promise<AIConversation | null> => {
-    if (!user?.id) {
+    // التحقق من جلسة Supabase الحقيقية
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user?.id) {
       toast({
         title: 'خطأ',
-        description: 'يجب تسجيل الدخول أولاً',
+        description: 'انتهت الجلسة، يرجى تسجيل الدخول مجدداً',
         variant: 'destructive',
       });
       return null;
@@ -101,7 +104,7 @@ export const useAIConversations = () => {
       const { data, error } = await supabase
         .from('ai_conversations')
         .insert({
-          user_id: user.id,
+          user_id: session.user.id, // استخدام ID الجلسة الحقيقية
           title: 'محادثة جديدة'
         })
         .select()
@@ -124,7 +127,7 @@ export const useAIConversations = () => {
       });
       return null;
     }
-  }, [user?.id]);
+  }, []);
 
   // Start new chat (clear current and prepare for new)
   const startNewChat = useCallback(() => {
