@@ -1,7 +1,10 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuthStore } from "@/store/authStore";
 import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
 import AccountRequests from "./pages/Admin/AccountRequests";
@@ -28,6 +31,17 @@ const AppContent = () => {
 };
 
 const App = () => {
+  // مزامنة حالة الجلسة مع authStore
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        useAuthStore.getState().logout();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="light">
