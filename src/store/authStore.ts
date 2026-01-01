@@ -119,7 +119,10 @@ export const useAuthStore = create<AuthState>()(
         user: state.rememberMe ? state.user : null,
         isAuthenticated: state.rememberMe ? state.isAuthenticated : false,
         rememberMe: state.rememberMe
-      })
+      }),
+      onRehydrateStorage: () => (state) => {
+        console.log('Auth store hydration complete:', !!state?.user);
+      }
     }
   )
 );

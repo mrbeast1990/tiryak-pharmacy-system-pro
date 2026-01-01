@@ -5,48 +5,89 @@ import LoginForm from '@/components/LoginForm';
 import Dashboard from '@/components/Dashboard';
 import SafeWrapper from '@/components/SafeWrapper';
 
+const INIT_TIMEOUT = 3000; // 3 seconds max wait
+
 const Index = () => {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [storesReady, setStoresReady] = useState(false);
-  const [authState, setAuthState] = useState({ isAuthenticated: false, user: null });
-  const [langState, setLangState] = useState({ language: 'ar' });
+  const [authState, setAuthState] = useState({ isAuthenticated: false, user: null as any });
+  const [langState, setLangState] = useState({ language: 'ar' as 'ar' | 'en' });
 
   useEffect(() => {
-    try {
-      console.log('تهيئة التطبيق...');
-      
-      const authStore = useAuthStore.getState();
-      const langStore = useLanguageStore.getState();
-      
-      setAuthState({
-        isAuthenticated: authStore.isAuthenticated,
-        user: authStore.user
-      });
-      
-      setLangState({
-        language: langStore.language
-      });
-      
-      document.documentElement.lang = langStore.language;
-      document.documentElement.dir = langStore.language === 'ar' ? 'rtl' : 'ltr';
-      
-      console.log('حالة المصادقة:', { isAuthenticated: authStore.isAuthenticated, user: !!authStore.user });
-      console.log('حالة اللغة:', { language: langStore.language });
-      
-      setStoresReady(true);
-      
-      const timer = setTimeout(() => {
+    let mounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    const initializeApp = async () => {
+      try {
+        console.log('تهيئة التطبيق...');
+        
+        // Wait for hydration with timeout
+        await Promise.race([
+          new Promise<void>((resolve) => {
+            // Check if already hydrated
+            const authStore = useAuthStore.getState();
+            if (authStore.user !== undefined) {
+              resolve();
+              return;
+            }
+            
+            // Wait for hydration
+            const unsubscribe = useAuthStore.persist.onFinishHydration(() => {
+              unsubscribe();
+              resolve();
+            });
+          }),
+          new Promise<void>((resolve) => setTimeout(resolve, 1500)) // 1.5s hydration timeout
+        ]);
+
+        if (!mounted) return;
+
+        const authStore = useAuthStore.getState();
+        const langStore = useLanguageStore.getState();
+        
+        setAuthState({
+          isAuthenticated: authStore.isAuthenticated,
+          user: authStore.user
+        });
+        
+        setLangState({
+          language: langStore.language
+        });
+        
+        document.documentElement.lang = langStore.language;
+        document.documentElement.dir = langStore.language === 'ar' ? 'rtl' : 'ltr';
+        
+        console.log('حالة المصادقة:', { isAuthenticated: authStore.isAuthenticated, user: !!authStore.user });
+        console.log('حالة اللغة:', { language: langStore.language });
+        
+        setStoresReady(true);
         setIsReady(true);
         console.log('تم تهيئة التطبيق بنجاح');
-      }, 50);
-      
-      return () => clearTimeout(timer);
-    } catch (error) {
-      console.error('خطأ في تهيئة الصفحة:', error);
-      setInitError('فشل في تهيئة التطبيق: ' + (error as Error).message);
-      setIsReady(true);
-    }
+      } catch (error) {
+        console.error('خطأ في تهيئة الصفحة:', error);
+        if (mounted) {
+          setInitError('فشل في تهيئة التطبيق: ' + (error as Error).message);
+          setIsReady(true);
+        }
+      }
+    };
+
+    // Fallback timeout - force app to load after INIT_TIMEOUT
+    timeoutId = setTimeout(() => {
+      if (!isReady && mounted) {
+        console.warn('تجاوز وقت التهيئة، متابعة بالإعدادات الافتراضية');
+        setStoresReady(true);
+        setIsReady(true);
+      }
+    }, INIT_TIMEOUT);
+
+    initializeApp();
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   if (initError) {
