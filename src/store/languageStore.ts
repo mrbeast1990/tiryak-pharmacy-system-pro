@@ -166,7 +166,10 @@ export const useLanguageStore = create<LanguageState>()(
       }
     }),
     {
-      name: 'language-storage'
+      name: 'language-storage',
+      onRehydrateStorage: () => (state) => {
+        console.log('Language store hydration complete:', state?.language);
+      }
     }
   )
 );
