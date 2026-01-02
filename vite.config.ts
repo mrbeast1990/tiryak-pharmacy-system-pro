@@ -21,11 +21,12 @@ export default defineConfig(({ mode }) => ({
       'react': path.resolve(__dirname, './node_modules/react'),
       'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
     },
-    dedupe: ['react', 'react-dom', 'zustand'],
+    dedupe: ['react', 'react-dom', 'zustand', '@tanstack/react-query'],
   },
   optimizeDeps: {
     exclude: ['capacitor-native-biometric'],
-    include: ['zustand', 'sonner', 'next-themes', 'react', 'react-dom'],
+    include: ['zustand', 'sonner', 'next-themes', 'react', 'react-dom', '@tanstack/react-query'],
+    force: true,
     esbuildOptions: {
       resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
     }
