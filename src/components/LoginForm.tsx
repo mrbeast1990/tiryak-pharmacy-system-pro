@@ -11,11 +11,7 @@ import { NativeBiometric } from 'capacitor-native-biometric';
 import { Capacitor } from '@capacitor/core';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
 
-interface LoginFormProps {
-  onLogin: () => void;
-}
-
-const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
+const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -40,7 +36,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         title: language === 'ar' ? "تم تسجيل الدخول بنجاح" : "Login Successful",
         description: language === 'ar' ? "مرحباً بك في نظام صيدلية الترياق الشافي" : "Welcome to Al-Tiryak Al-Shafi System",
       });
-      onLogin();
     } else {
       toast({
         title: language === 'ar' ? "خطأ في تسجيل الدخول" : "Login Error",
@@ -110,7 +105,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               title: '✅ ' + (language === 'ar' ? "تم تسجيل الدخول بالبصمة" : "Biometric Login Successful"),
               description: language === 'ar' ? "تم التحقق من الهوية بنجاح" : "Identity verified successfully",
             });
-            onLogin();
           } else {
             console.error('❌ Login failed with saved credentials');
             toast({
