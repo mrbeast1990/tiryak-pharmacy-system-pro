@@ -21,6 +21,7 @@ interface AuthState {
   rememberMe: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  clearAuthState: () => void;
   setRememberMe: (remember: boolean) => void;
   checkPermission: (permission: string) => boolean;
 }
@@ -91,6 +92,14 @@ export const useAuthStore = create<AuthState>()(
       },
       
       logout: async () => {
+        const { isAuthenticated } = get();
+        
+        // حماية من التكرار
+        if (!isAuthenticated) {
+          console.log('المستخدم غير مسجل أصلاً');
+          return;
+        }
+        
         await supabase.auth.signOut();
         set({
           user: null,
@@ -98,11 +107,14 @@ export const useAuthStore = create<AuthState>()(
           rememberMe: false
         });
         console.log('تم تسجيل الخروج');
-        
-        // إعادة تحميل الصفحة لضمان التوجيه الصحيح
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
+      },
+      
+      clearAuthState: () => {
+        set({
+          user: null,
+          isAuthenticated: false,
+        });
+        console.log('تم مسح حالة المصادقة محلياً');
       },
       
       checkPermission: (permission: string) => {

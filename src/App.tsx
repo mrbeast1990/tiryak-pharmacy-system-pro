@@ -34,8 +34,11 @@ const App = () => {
   // مزامنة حالة الجلسة مع authStore
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth Event]', event, !!session);
+      
       if (event === 'SIGNED_OUT' || !session) {
-        useAuthStore.getState().logout();
+        // مسح الحالة المحلية فقط - بدون signOut أو reload
+        useAuthStore.getState().clearAuthState();
       }
     });
 

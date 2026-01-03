@@ -11,8 +11,11 @@ const Index = () => {
   const [isReady, setIsReady] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const [storesReady, setStoresReady] = useState(false);
-  const [authState, setAuthState] = useState({ isAuthenticated: false, user: null as any });
-  const [langState, setLangState] = useState({ language: 'ar' as 'ar' | 'en' });
+  
+  // استخدام الـ store مباشرة للتحديث التلقائي
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const language = useLanguageStore((s) => s.language);
 
   useEffect(() => {
     let mounted = true;
@@ -43,22 +46,12 @@ const Index = () => {
 
         if (!mounted) return;
 
-        const authStore = useAuthStore.getState();
         const langStore = useLanguageStore.getState();
-        
-        setAuthState({
-          isAuthenticated: authStore.isAuthenticated,
-          user: authStore.user
-        });
-        
-        setLangState({
-          language: langStore.language
-        });
         
         document.documentElement.lang = langStore.language;
         document.documentElement.dir = langStore.language === 'ar' ? 'rtl' : 'ltr';
         
-        console.log('حالة المصادقة:', { isAuthenticated: authStore.isAuthenticated, user: !!authStore.user });
+        console.log('حالة المصادقة:', { isAuthenticated, user: !!user });
         console.log('حالة اللغة:', { language: langStore.language });
         
         setStoresReady(true);
@@ -90,6 +83,12 @@ const Index = () => {
     };
   }, []);
 
+  // تحديث اتجاه الصفحة عند تغير اللغة
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
+
   if (initError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
@@ -115,32 +114,23 @@ const Index = () => {
             <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
           <p className="text-gray-600">
-            {langState.language === 'ar' ? 'جاري تحميل النظام...' : 'Loading system...'}
+            {language === 'ar' ? 'جاري تحميل النظام...' : 'Loading system...'}
           </p>
         </div>
       </div>
     );
   }
 
-  const handleSuccessfulLogin = () => {
-    console.log('تم تسجيل الدخول بنجاح');
-    const authStore = useAuthStore.getState();
-    setAuthState({
-      isAuthenticated: authStore.isAuthenticated,
-      user: authStore.user
-    });
-  };
-
   return (
     <SafeWrapper name="Index Page">
       <div className="min-h-screen">
-        {!authState.isAuthenticated ? (
+        {!isAuthenticated ? (
           <SafeWrapper name="Login Form">
-            <LoginForm onLogin={handleSuccessfulLogin} />
+            <LoginForm />
           </SafeWrapper>
         ) : (
           <SafeWrapper name="Dashboard">
-            <Dashboard user={authState.user} />
+            <Dashboard user={user} />
           </SafeWrapper>
         )}
       </div>
