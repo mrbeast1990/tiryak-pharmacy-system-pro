@@ -98,6 +98,21 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     });
   };
 
+  const handleUpdatePriority = (id: string, priority: number) => {
+    updateMedicine(id, { repeat_count: priority });
+    const priorityLabels: Record<number, string> = {
+      1: language === 'ar' ? 'عادي' : 'Normal',
+      2: language === 'ar' ? 'متوسط' : 'Medium',
+      3: language === 'ar' ? 'عالي' : 'High',
+    };
+    toast({
+      title: language === 'ar' ? "تم التحديث" : "Updated",
+      description: language === 'ar' 
+        ? `تم تغيير الأولوية إلى ${priorityLabels[priority]}`
+        : `Priority changed to ${priorityLabels[priority]}`,
+    });
+  };
+
   const exportShortagesPDF = async () => {
     try {
       const doc = new jsPDF();
@@ -193,20 +208,22 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
           }}
         />
 
-        {/* Header */}
-        <header className="bg-card shadow-sm border-b border-border sticky top-0 z-20">
-          <div className="max-w-3xl mx-auto px-4">
-            <div className="flex items-center justify-between h-14">
-              <h1 className="text-base font-bold text-foreground">{t('shortages.title')}</h1>
-              <Button
-                onClick={onBack}
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-1 text-sm"
-              >
-                <ArrowRight className="w-4 h-4" />
-                <span>{t('back')}</span>
-              </Button>
+        {/* Header - Fixed with safe area */}
+        <header className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-emerald-200 sticky top-0 z-20">
+          <div className="pt-[env(safe-area-inset-top)]">
+            <div className="max-w-3xl mx-auto px-4">
+              <div className="flex items-center justify-between h-16">
+                <h1 className="text-lg font-bold text-emerald-800">{t('shortages.title')}</h1>
+                <Button
+                  onClick={onBack}
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 font-semibold"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  <span>{t('back')}</span>
+                </Button>
+              </div>
             </div>
           </div>
         </header>
@@ -258,7 +275,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         <main className="max-w-3xl mx-auto px-4 pb-24 relative z-10 pt-2">
 
           {/* Medicine List */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             {shortages.map((medicine) => (
               <SwipeableMedicineCard
                 key={medicine.id}
@@ -266,6 +283,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                 onMarkAvailable={handleMarkAvailable}
                 onDelete={handleDelete}
                 onUpdateName={handleUpdateName}
+                onUpdatePriority={handleUpdatePriority}
                 canEdit={true}
                 canDelete={canDeleteMedicine}
               />

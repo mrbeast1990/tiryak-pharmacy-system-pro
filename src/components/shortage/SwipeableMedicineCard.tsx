@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useSwipeable } from 'react-swipeable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Save, X, RotateCcw, Building2 } from 'lucide-react';
+import { Edit, Save, X, RotateCcw, CheckCircle } from 'lucide-react';
 import { Medicine } from '@/store/pharmacyStore';
 import { useLanguageStore } from '@/store/languageStore';
 import {
@@ -16,12 +15,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SwipeableMedicineCardProps {
   medicine: Medicine;
   onMarkAvailable: (medicine: Medicine) => void;
   onDelete: (medicine: Medicine) => void;
   onUpdateName: (id: string, name: string) => void;
+  onUpdatePriority?: (id: string, priority: number) => void;
   canEdit: boolean;
   canDelete: boolean;
 }
@@ -31,47 +36,16 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
   onMarkAvailable,
   onDelete,
   onUpdateName,
+  onUpdatePriority,
   canEdit,
   canDelete,
 }) => {
   const { language } = useLanguageStore();
-  const [swipeOffset, setSwipeOffset] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(medicine.name);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAvailableDialog, setShowAvailableDialog] = useState(false);
-
-  const handlers = useSwipeable({
-    onSwiping: (e) => {
-      // Only track horizontal swipes - ignore if vertical movement is dominant
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        return;
-      }
-      const maxSwipe = 80;
-      const offset = Math.max(-maxSwipe, Math.min(maxSwipe, e.deltaX));
-      setSwipeOffset(offset);
-    },
-    onSwipedLeft: () => {
-      if (swipeOffset < -40 && canDelete) {
-        setShowDeleteDialog(true);
-      }
-      setSwipeOffset(0);
-    },
-    onSwipedRight: () => {
-      if (swipeOffset > 40) {
-        setShowAvailableDialog(true);
-      }
-      setSwipeOffset(0);
-    },
-    onTouchEndOrOnMouseUp: () => {
-      setSwipeOffset(0);
-    },
-    trackMouse: false,
-    trackTouch: true,
-    delta: 15,
-    preventScrollOnSwipe: false,
-    swipeDuration: 250,
-  });
+  const [showPriorityPopover, setShowPriorityPopover] = useState(false);
 
   const handleSave = () => {
     if (editedName.trim() && !/^\s/.test(editedName)) {
@@ -80,11 +54,18 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
     }
   };
 
+  const handlePriorityChange = (newPriority: number) => {
+    if (onUpdatePriority) {
+      onUpdatePriority(medicine.id, newPriority);
+    }
+    setShowPriorityPopover(false);
+  };
+
   const getPriorityColor = () => {
     const count = medicine.repeat_count || 1;
-    if (count >= 3) return 'bg-destructive';
-    if (count >= 2) return 'bg-warning';
-    return 'bg-primary';
+    if (count >= 3) return 'bg-red-500';
+    if (count >= 2) return 'bg-amber-500';
+    return 'bg-emerald-500';
   };
 
   const getPriorityLabel = () => {
@@ -92,6 +73,13 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
     if (count >= 3) return language === 'ar' ? 'عالي' : 'High';
     if (count >= 2) return language === 'ar' ? 'متوسط' : 'Medium';
     return language === 'ar' ? 'عادي' : 'Normal';
+  };
+
+  const getPriorityBadgeStyle = () => {
+    const count = medicine.repeat_count || 1;
+    if (count >= 3) return 'border-red-500 text-red-600 bg-red-50';
+    if (count >= 2) return 'border-amber-500 text-amber-600 bg-amber-50';
+    return 'border-emerald-500 text-emerald-600 bg-emerald-50';
   };
 
   return (
@@ -137,7 +125,7 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
           <AlertDialogFooter className="flex-row-reverse gap-2">
             <AlertDialogAction 
               onClick={() => onMarkAvailable(medicine)}
-              className="bg-success hover:bg-success/90"
+              className="bg-emerald-600 hover:bg-emerald-700"
             >
               {language === 'ar' ? 'نعم، تم توفيره' : 'Yes, provided'}
             </AlertDialogAction>
@@ -148,115 +136,137 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="relative overflow-hidden rounded-lg">
-        {/* Swipe indicators */}
-        <div 
-          className="absolute inset-y-0 right-0 w-20 bg-success/20 flex items-center justify-center transition-opacity"
-          style={{ opacity: swipeOffset > 20 ? 1 : 0 }}
-        >
-          <span className="text-success font-medium text-xs">
-            {language === 'ar' ? 'تم توفيره' : 'Available'}
-          </span>
-        </div>
-        <div 
-          className="absolute inset-y-0 left-0 w-20 bg-destructive/20 flex items-center justify-center transition-opacity"
-          style={{ opacity: swipeOffset < -20 ? 1 : 0 }}
-        >
-          <span className="text-destructive font-medium text-xs">
-            {language === 'ar' ? 'حذف' : 'Delete'}
-          </span>
-        </div>
-
-        {/* Card content - LTR Layout */}
-        <div 
-          {...handlers}
-          className="relative bg-card shadow-md rounded-lg transition-transform touch-pan-y"
-          style={{ transform: `translateX(${swipeOffset}px)` }}
-          dir="ltr"
-        >
-          <div className="flex">
-            {/* Priority strip - LEFT side */}
-            <div className={`w-1.5 rounded-l-lg ${getPriorityColor()}`} />
-            
-            {/* Content */}
-            <div className="flex-1 p-3">
-              <div className="flex items-start justify-between gap-2">
-                {/* Left side - Medicine name and meta */}
-                <div className="flex-1 min-w-0">
-                  {isEditing ? (
+      {/* Card without swipe */}
+      <div className="relative bg-card shadow-md rounded-xl overflow-hidden border border-border/50">
+        <div className="flex">
+          {/* Priority strip - RIGHT side for RTL */}
+          <div className={`w-1.5 ${getPriorityColor()}`} />
+          
+          {/* Content */}
+          <div className="flex-1 p-3">
+            <div className="flex items-start justify-between gap-3">
+              {/* Right side - Medicine name and meta (RTL) */}
+              <div className="flex-1 min-w-0">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      value={editedName} 
+                      onChange={(e) => setEditedName(e.target.value)} 
+                      className="h-8 text-sm"
+                      autoFocus
+                    />
+                    <Button size="icon" className="h-8 w-8 shrink-0 bg-emerald-600 hover:bg-emerald-700" onClick={handleSave}>
+                      <Save className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8 shrink-0" 
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditedName(medicine.name);
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                     <div className="flex items-center gap-2">
-                      <Input 
-                        value={editedName} 
-                        onChange={(e) => setEditedName(e.target.value)} 
-                        className="h-7 text-sm"
-                        autoFocus
-                      />
-                      <Button size="icon" className="h-7 w-7 shrink-0" onClick={handleSave}>
-                        <Save className="h-3 w-3" />
+                      <h3 className="font-semibold text-base text-foreground leading-tight">
+                        {medicine.name}
+                      </h3>
+                      {canEdit && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground" 
+                          onClick={() => setIsEditing(true)}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    {/* Meta info */}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <span>{new Date(medicine.last_updated).toLocaleDateString('en-GB')}</span>
+                      {medicine.updatedBy && (
+                        <span> • {medicine.updatedBy}</span>
+                      )}
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* Left side - Priority badge and Available button */}
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                {/* Priority Badge - Clickable */}
+                <Popover open={showPriorityPopover} onOpenChange={setShowPriorityPopover}>
+                  <PopoverTrigger asChild>
+                    <button className="focus:outline-none">
+                      <Badge 
+                        variant="outline" 
+                        className={`text-xs px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity ${getPriorityBadgeStyle()}`}
+                      >
+                        {medicine.repeat_count && medicine.repeat_count > 1 && (
+                          <span className="flex items-center gap-1">
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            <span>{medicine.repeat_count}x</span>
+                            <span className="mx-1">•</span>
+                          </span>
+                        )}
+                        {getPriorityLabel()}
+                      </Badge>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-40 p-2" align="end">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground text-center mb-2">
+                        {language === 'ar' ? 'تغيير الأولوية' : 'Change Priority'}
+                      </p>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full justify-start gap-2 text-emerald-600 hover:bg-emerald-50"
+                        onClick={() => handlePriorityChange(1)}
+                      >
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        {language === 'ar' ? 'عادي' : 'Normal'}
                       </Button>
                       <Button 
-                        size="icon" 
                         variant="ghost" 
-                        className="h-7 w-7 shrink-0" 
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditedName(medicine.name);
-                        }}
+                        size="sm" 
+                        className="w-full justify-start gap-2 text-amber-600 hover:bg-amber-50"
+                        onClick={() => handlePriorityChange(2)}
                       >
-                        <X className="h-3 w-3" />
+                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                        {language === 'ar' ? 'متوسط' : 'Medium'}
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full justify-start gap-2 text-red-600 hover:bg-red-50"
+                        onClick={() => handlePriorityChange(3)}
+                      >
+                        <div className="w-2 h-2 rounded-full bg-red-500" />
+                        {language === 'ar' ? 'عالي' : 'High'}
                       </Button>
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-base text-foreground truncate">
-                          {medicine.name}
-                        </h3>
-                      </div>
-                      {/* Meta info - Date (English numerals) */}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        <span>{new Date(medicine.last_updated).toLocaleDateString('en-GB')}</span>
-                        {medicine.updatedBy && (
-                          <span> • {medicine.updatedBy}</span>
-                        )}
-                      </p>
-                    </>
-                  )}
-                </div>
+                  </PopoverContent>
+                </Popover>
 
-                {/* Right side - Badges and Edit button */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {canEdit && !isEditing && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6" 
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Edit className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                  <div className="flex flex-col items-end gap-1">
-                    {medicine.repeat_count && medicine.repeat_count > 1 && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0.5 flex items-center gap-1">
-                        <RotateCcw className="w-2.5 h-2.5" />
-                        <span>{medicine.repeat_count}x</span>
-                      </Badge>
-                    )}
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs px-1.5 py-0.5 ${
-                        medicine.repeat_count && medicine.repeat_count >= 3 
-                          ? 'border-destructive text-destructive' 
-                          : medicine.repeat_count && medicine.repeat_count >= 2 
-                            ? 'border-warning text-warning'
-                            : 'border-primary text-primary'
-                      }`}
-                    >
-                      {getPriorityLabel()}
-                    </Badge>
-                  </div>
-                </div>
+                {/* Available Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-3 bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 transition-colors"
+                  onClick={() => setShowAvailableDialog(true)}
+                >
+                  <CheckCircle className="h-3.5 w-3.5 ml-1.5" />
+                  <span className="text-xs font-medium">
+                    {language === 'ar' ? 'تم التوفير' : 'Available'}
+                  </span>
+                </Button>
               </div>
             </div>
           </div>
