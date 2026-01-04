@@ -21,8 +21,8 @@ interface PharmacyState {
   fetchRevenues: () => Promise<void>;
   addMedicine: (medicine: Pick<Medicine, 'name' | 'status' | 'notes'>) => Promise<void>;
   addSupply: (supply: Pick<Supply, 'name' | 'status' | 'notes'>) => Promise<void>;
-  updateMedicine: (id: string, updates: Partial<Pick<Medicine, 'name' | 'status' | 'notes'>>) => Promise<void>;
-  updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes'>>) => Promise<void>;
+  updateMedicine: (id: string, updates: Partial<Pick<Medicine, 'name' | 'status' | 'notes' | 'repeat_count'>>) => Promise<void>;
+  updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes' | 'repeat_count'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
   deleteSupply: (id: string) => Promise<void>;
   addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy'>) => Promise<void>;
