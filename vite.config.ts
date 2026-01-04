@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -20,12 +19,14 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
       'react': path.resolve(__dirname, './node_modules/react'),
       'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
+      'react/jsx-runtime': path.resolve(__dirname, './node_modules/react/jsx-runtime'),
+      'react/jsx-dev-runtime': path.resolve(__dirname, './node_modules/react/jsx-dev-runtime'),
     },
-    dedupe: ['react', 'react-dom', 'zustand', '@tanstack/react-query'],
+    dedupe: ['react', 'react-dom', 'zustand', '@tanstack/react-query', 'sonner', 'next-themes'],
   },
   optimizeDeps: {
     exclude: ['capacitor-native-biometric'],
-    include: ['zustand', 'sonner', 'next-themes', 'react', 'react-dom', '@tanstack/react-query'],
+    include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'zustand', 'sonner', 'next-themes', '@tanstack/react-query'],
     force: true,
     esbuildOptions: {
       resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
@@ -37,4 +38,5 @@ export default defineConfig(({ mode }) => ({
       transformMixedEsModules: true,
     }
   },
+  cacheDir: '.vite-cache-' + Date.now(),
 }));

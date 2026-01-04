@@ -1,6 +1,7 @@
-import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
 
 console.log('🚀 بدء تحميل التطبيق...');
 
@@ -14,7 +15,11 @@ try {
   const root = createRoot(rootElement);
   
   console.log('✅ إنشاء React root بنجاح');
-  root.render(<App />);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
   
   console.log('✅ تم تشغيل التطبيق بنجاح');
 } catch (error) {
@@ -100,4 +105,3 @@ if ('serviceWorker' in navigator) {
     }
   });
 }
-
