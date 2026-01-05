@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { useAIConversations, AIMessage } from '@/hooks/useAIConversations';
 import { cn } from '@/lib/utils';
+import AIMessageRenderer from './AIMessageRenderer';
 
 const SUPABASE_URL = 'https://qoyawkfbyocgtyxlpgnp.supabase.co';
 const CHAT_URL = `${SUPABASE_URL}/functions/v1/tiryak-ai`;
@@ -360,13 +361,17 @@ const AIConsultant: React.FC = () => {
                       )}
                     </div>
                     <div
-                      className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 py-2 sm:px-4 sm:py-2 text-sm ${
+                      className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 ${
                         message.role === 'user'
-                          ? 'bg-purple-600 text-white rounded-tr-sm'
+                          ? 'bg-purple-600 text-white rounded-tr-sm text-sm'
                           : 'bg-muted rounded-tl-sm'
                       }`}
                     >
-                      <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                      {message.role === 'user' ? (
+                        <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                      ) : (
+                        <AIMessageRenderer content={message.content} />
+                      )}
                     </div>
                   </div>
                 ))}
