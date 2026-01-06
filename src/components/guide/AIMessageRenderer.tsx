@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Pill, FileText, RefreshCw, Info } from 'lucide-react';
+import { AlertTriangle, Pill, FileText, RefreshCw, Info, CheckCircle } from 'lucide-react';
 
 interface AIMessageRendererProps {
   content: string;
@@ -15,6 +15,7 @@ const AIMessageRenderer: React.FC<AIMessageRendererProps> = ({ content }) => {
     const patterns = [
       { regex: /\[SUMMARY\]([\s\S]*?)\[\/SUMMARY\]/g, type: 'summary' },
       { regex: /\[DOSE\]([\s\S]*?)\[\/DOSE\]/g, type: 'dose' },
+      { regex: /\[DECISION\]([\s\S]*?)\[\/DECISION\]/g, type: 'decision' },
       { regex: /\[WARNING\]([\s\S]*?)\[\/WARNING\]/g, type: 'warning' },
       { regex: /\[USAGE\]([\s\S]*?)\[\/USAGE\]/g, type: 'usage' },
       { regex: /\[ALT\]([\s\S]*?)\[\/ALT\]/g, type: 'alternative' },
@@ -134,12 +135,25 @@ const AIMessageRenderer: React.FC<AIMessageRendererProps> = ({ content }) => {
 
       case 'alternative':
         return (
-          <div key={key} className="bg-green-50 border-r-4 border-green-500 p-3 my-2 rounded-l-lg">
+          <div key={key} className="bg-teal-50 border-r-4 border-teal-500 p-3 my-2 rounded-l-lg">
             <div className="flex items-start gap-2">
-              <RefreshCw className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <RefreshCw className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="font-bold text-green-800 text-sm">🔄 البدائل المتوفرة</p>
-                <div className="text-green-700 text-sm mt-1">{renderInlineMarkdown(content)}</div>
+                <p className="font-bold text-teal-800 text-sm">🔄 البدائل المتوفرة</p>
+                <div className="text-teal-700 text-sm mt-1">{renderInlineMarkdown(content)}</div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'decision':
+        return (
+          <div key={key} className="bg-emerald-50 border-r-4 border-emerald-500 p-4 my-3 rounded-l-lg shadow-sm">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold text-emerald-800 text-base">✅ القرار النهائي</p>
+                <div className="text-emerald-700 text-sm mt-2 space-y-1">{renderInlineMarkdown(content)}</div>
               </div>
             </div>
           </div>
