@@ -274,8 +274,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
 
         <main className="max-w-3xl mx-auto px-4 pb-24 relative z-10 pt-2">
 
-          {/* Medicine List */}
-          <div className="space-y-3">
+          {/* Medicine List - Compact spacing */}
+          <div className="space-y-2">
             {shortages.map((medicine) => (
               <SwipeableMedicineCard
                 key={medicine.id}
