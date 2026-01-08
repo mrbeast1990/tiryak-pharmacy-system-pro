@@ -280,35 +280,47 @@ export type Database = {
       }
       pharmacy_guide: {
         Row: {
+          barcode: string | null
           concentration: string | null
           created_at: string
+          expiry_date: string | null
           id: string
           keywords: string[] | null
           origin: string | null
           pharmacist_notes: string | null
-          scientific_name: string
+          price: number | null
+          quantity: number | null
+          scientific_name: string | null
           trade_name: string
           updated_at: string
         }
         Insert: {
+          barcode?: string | null
           concentration?: string | null
           created_at?: string
+          expiry_date?: string | null
           id?: string
           keywords?: string[] | null
           origin?: string | null
           pharmacist_notes?: string | null
-          scientific_name: string
+          price?: number | null
+          quantity?: number | null
+          scientific_name?: string | null
           trade_name: string
           updated_at?: string
         }
         Update: {
+          barcode?: string | null
           concentration?: string | null
           created_at?: string
+          expiry_date?: string | null
           id?: string
           keywords?: string[] | null
           origin?: string | null
           pharmacist_notes?: string | null
-          scientific_name?: string
+          price?: number | null
+          quantity?: number | null
+          scientific_name?: string | null
           trade_name?: string
           updated_at?: string
         }

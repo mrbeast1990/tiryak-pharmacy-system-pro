@@ -9,11 +9,14 @@ import DrugCard from './DrugCard';
 interface PharmacyGuideItem {
   id: string;
   trade_name: string;
-  scientific_name: string;
+  scientific_name: string | null;
   concentration: string | null;
   origin: string | null;
   pharmacist_notes: string | null;
   keywords: string[] | null;
+  price: number | null;
+  quantity: number | null;
+  expiry_date: string | null;
 }
 
 const DrugSearch: React.FC = () => {
@@ -56,7 +59,7 @@ const DrugSearch: React.FC = () => {
     const query = searchQuery.toLowerCase();
     return guideItems.filter(item => 
       item.trade_name.toLowerCase().includes(query) ||
-      item.scientific_name.toLowerCase().includes(query) ||
+      (item.scientific_name && item.scientific_name.toLowerCase().includes(query)) ||
       item.keywords?.some(k => k.toLowerCase().includes(query))
     );
   }, [searchQuery, guideItems]);
@@ -65,7 +68,7 @@ const DrugSearch: React.FC = () => {
   const groupedByScientific = useMemo(() => {
     const groups: Record<string, PharmacyGuideItem[]> = {};
     filteredItems.forEach(item => {
-      const key = item.scientific_name.toLowerCase();
+      const key = (item.scientific_name || item.trade_name).toLowerCase();
       if (!groups[key]) groups[key] = [];
       groups[key].push(item);
     });
@@ -127,7 +130,7 @@ const DrugSearch: React.FC = () => {
               <CardHeader className="py-3 px-4 bg-purple-50 border-b border-purple-100">
                 <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
                   <Pill className="w-4 h-4" />
-                  {items[0].scientific_name}
+                  {items[0].scientific_name || items[0].trade_name}
                   <span className="text-purple-400 font-normal">
                     ({items.length} {items.length === 1 ? 'منتج' : 'منتجات'})
                   </span>
@@ -142,6 +145,8 @@ const DrugSearch: React.FC = () => {
                     concentration={item.concentration}
                     origin={item.origin}
                     pharmacistNotes={item.pharmacist_notes}
+                    price={item.price}
+                    quantity={item.quantity}
                     isShortage={isShortage(item.trade_name)}
                   />
                 ))}
@@ -160,6 +165,8 @@ const DrugSearch: React.FC = () => {
               concentration={item.concentration}
               origin={item.origin}
               pharmacistNotes={item.pharmacist_notes}
+              price={item.price}
+              quantity={item.quantity}
               isShortage={isShortage(item.trade_name)}
             />
           ))}
