@@ -12,12 +12,55 @@ import * as XLSX from 'xlsx';
 
 interface ParsedDrug {
   trade_name: string;
-  scientific_name: string;
-  concentration?: string;
-  origin?: string;
-  pharmacist_notes?: string;
+  scientific_name?: string | null;
+  concentration?: string | null;
+  origin?: string | null;
+  pharmacist_notes?: string | null;
   keywords?: string[];
+  price?: number | null;
+  quantity?: number | null;
+  expiry_date?: string | null;
+  barcode?: string | null;
 }
+
+// تحويل تنسيقات التاريخ المختلفة
+const parseExpiryDate = (value: any): string | null => {
+  if (!value) return null;
+  
+  // إذا كان رقم (تنسيق Excel serial date)
+  if (typeof value === 'number') {
+    const excelEpoch = new Date(1899, 11, 30);
+    const date = new Date(excelEpoch.getTime() + value * 86400000);
+    return date.toISOString().split('T')[0];
+  }
+  
+  // إذا كان نص
+  const strValue = String(value).trim();
+  if (!strValue) return null;
+  
+  // محاولة تحويل التنسيقات المختلفة
+  const formats = [
+    /^(\d{4})-(\d{1,2})-(\d{1,2})$/, // YYYY-MM-DD
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // DD/MM/YYYY or MM/DD/YYYY
+    /^(\d{1,2})-(\d{1,2})-(\d{4})$/, // DD-MM-YYYY
+  ];
+  
+  for (const format of formats) {
+    const match = strValue.match(format);
+    if (match) {
+      try {
+        const date = new Date(strValue);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+  
+  return null;
+};
 
 const DrugUploader: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -60,24 +103,47 @@ const DrugUploader: React.FC = () => {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-      // Map columns to our schema
+      // Map columns to our schema - دعم ملف الترياق الجديد
       const parsed: ParsedDrug[] = jsonData.map((row: any) => ({
-        trade_name: row['الاسم التجاري'] || row['trade_name'] || row['Trade Name'] || '',
-        scientific_name: row['الاسم العلمي'] || row['scientific_name'] || row['Scientific Name'] || '',
+        // الاسم التجاري - دعم أعمدة متعددة
+        trade_name: row['اسم الصنف'] || row['الاسم التجاري'] || row['trade_name'] || row['Trade Name'] || '',
+        
+        // الاسم العلمي - اختياري الآن (الـ AI سيستنتجه)
+        scientific_name: row['الاسم العلمي'] || row['scientific_name'] || row['Scientific Name'] || null,
+        
+        // التركيز
         concentration: row['التركيز'] || row['concentration'] || row['Concentration'] || null,
+        
+        // المنشأ
         origin: row['المنشأ'] || row['origin'] || row['Origin'] || null,
+        
+        // ملاحظات الصيدلي
         pharmacist_notes: row['ملاحظات الصيدلي'] || row['pharmacist_notes'] || row['Notes'] || null,
+        
+        // الكلمات المفتاحية
         keywords: (row['الكلمات المفتاحية'] || row['keywords'] || row['Keywords'] || '')
           .toString()
           .split(',')
           .map((k: string) => k.trim())
           .filter((k: string) => k.length > 0),
-      })).filter((item: ParsedDrug) => item.trade_name && item.scientific_name);
+        
+        // السعر - من ملف الترياق
+        price: row['السعر'] ? parseFloat(String(row['السعر']).replace(/[^\d.]/g, '')) : null,
+        
+        // الكمية - من ملف الترياق
+        quantity: row['الكمية'] ? parseInt(String(row['الكمية']).replace(/[^\d]/g, '')) : null,
+        
+        // تاريخ الصلاحية - من ملف الترياق
+        expiry_date: parseExpiryDate(row['الصلاحيه'] || row['الصلاحية'] || row['expiry_date']),
+        
+        // الرقم التجاري/الباركود - من ملف الترياق
+        barcode: row['الرقم التجاري'] || row['barcode'] || row['Barcode'] || null,
+      })).filter((item: ParsedDrug) => item.trade_name); // فقط الأصناف التي لها اسم
 
       if (parsed.length === 0) {
         toast({
           title: 'لا توجد بيانات صالحة',
-          description: 'تأكد من أن الملف يحتوي على أعمدة "الاسم التجاري" و "الاسم العلمي"',
+          description: 'تأكد من أن الملف يحتوي على عمود "اسم الصنف" أو "الاسم التجاري"',
           variant: 'destructive',
         });
         setFile(null);
@@ -168,6 +234,11 @@ const DrugUploader: React.FC = () => {
       fileInputRef.current.value = '';
     }
   };
+
+  // تحقق من وجود أعمدة معينة في البيانات
+  const hasPrice = parsedData.some(d => d.price != null);
+  const hasQuantity = parsedData.some(d => d.quantity != null);
+  const hasExpiry = parsedData.some(d => d.expiry_date != null);
 
   return (
     <div className="space-y-4">
@@ -274,19 +345,25 @@ const DrugUploader: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">الاسم التجاري</TableHead>
-                  <TableHead className="text-right">الاسم العلمي</TableHead>
-                  <TableHead className="text-right">التركيز</TableHead>
-                  <TableHead className="text-right">المنشأ</TableHead>
+                  <TableHead className="text-right">اسم الصنف</TableHead>
+                  {hasPrice && <TableHead className="text-right">السعر</TableHead>}
+                  {hasQuantity && <TableHead className="text-right">الكمية</TableHead>}
+                  {hasExpiry && <TableHead className="text-right">الصلاحية</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {parsedData.slice(0, 100).map((drug, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{drug.trade_name}</TableCell>
-                    <TableCell>{drug.scientific_name}</TableCell>
-                    <TableCell>{drug.concentration || '-'}</TableCell>
-                    <TableCell>{drug.origin || '-'}</TableCell>
+                    {hasPrice && (
+                      <TableCell>{drug.price ? `${drug.price} د.ل` : '-'}</TableCell>
+                    )}
+                    {hasQuantity && (
+                      <TableCell>{drug.quantity ?? '-'}</TableCell>
+                    )}
+                    {hasExpiry && (
+                      <TableCell>{drug.expiry_date || '-'}</TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -308,15 +385,15 @@ const DrugUploader: React.FC = () => {
             <div className="text-sm text-blue-700">
               <p className="font-medium mb-2">تنسيق الملف المطلوب:</p>
               <p className="text-blue-600 mb-2">
-                يجب أن يحتوي الملف على الأعمدة التالية (بالعربية أو الإنجليزية):
+                يدعم ملفات الإكسيل بالأعمدة التالية:
               </p>
               <ul className="list-disc list-inside space-y-1 text-blue-600">
-                <li><strong>الاسم التجاري</strong> (مطلوب)</li>
-                <li><strong>الاسم العلمي</strong> (مطلوب)</li>
-                <li>التركيز (اختياري)</li>
-                <li>المنشأ (اختياري)</li>
-                <li>ملاحظات الصيدلي (اختياري)</li>
-                <li>الكلمات المفتاحية (اختياري، مفصولة بفاصلة)</li>
+                <li><strong>اسم الصنف / الاسم التجاري</strong> (مطلوب)</li>
+                <li>السعر (اختياري)</li>
+                <li>الكمية (اختياري)</li>
+                <li>الصلاحية (اختياري)</li>
+                <li>الرقم التجاري / الباركود (اختياري)</li>
+                <li>الاسم العلمي (اختياري - الـ AI يستنتجه)</li>
               </ul>
             </div>
           </div>
