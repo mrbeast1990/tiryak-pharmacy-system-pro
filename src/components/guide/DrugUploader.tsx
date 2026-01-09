@@ -101,7 +101,31 @@ const DrugUploader: React.FC = () => {
       const workbook = XLSX.read(data);
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      // البحث عن صف العناوين الذي يحتوي على "اسم الصنف"
+      const findHeaderRow = (sheet: XLSX.WorkSheet): number => {
+        const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+        
+        for (let row = 0; row <= Math.min(range.e.r, 20); row++) {
+          for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+            const cell = sheet[cellAddress];
+            if (cell && cell.v && String(cell.v).includes('اسم الصنف')) {
+              return row;
+            }
+          }
+        }
+        return 0; // إذا لم يجد، يبدأ من الصف الأول
+      };
+      
+      const headerRow = findHeaderRow(worksheet);
+      console.log('Header row found at:', headerRow);
+      
+      // قراءة البيانات من صف العناوين
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+        range: headerRow,
+        defval: null 
+      });
 
       // Map columns to our schema - دعم ملف الترياق الجديد
       const parsed: ParsedDrug[] = jsonData.map((row: any) => ({
