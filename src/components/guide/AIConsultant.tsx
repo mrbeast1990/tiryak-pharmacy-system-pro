@@ -178,7 +178,7 @@ const AIConsultant: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-220px)] min-h-[400px] w-full overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-90px)] min-h-[400px] w-full overflow-hidden">
       {/* Mobile Overlay */}
       {showSidebar && (
         <div 
@@ -194,10 +194,10 @@ const AIConsultant: React.FC = () => {
         showSidebar ? "translate-x-0" : "translate-x-full md:hidden"
       )}>
         {/* Sidebar Header */}
-        <div className="p-3 border-b flex items-center justify-between">
+        <div className="p-2 border-b flex items-center justify-between">
           <Button 
             onClick={handleNewChat} 
-            className="flex-1 bg-purple-600 hover:bg-purple-700"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700"
             size="sm"
           >
             <Plus className="w-4 h-4 ml-2" />
@@ -225,7 +225,7 @@ const AIConsultant: React.FC = () => {
                   key={conv.id}
                   className={cn(
                     "group flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-muted transition-colors",
-                    currentConversation?.id === conv.id && "bg-purple-100"
+                    currentConversation?.id === conv.id && "bg-emerald-100"
                   )}
                   onClick={() => {
                     selectConversation(conv);
@@ -240,7 +240,7 @@ const AIConsultant: React.FC = () => {
                       {isAdmin && conv.user_name && (
                         <>
                           <span>•</span>
-                          <span className="text-purple-600">{conv.user_name}</span>
+                          <span className="text-emerald-600">{conv.user_name}</span>
                         </>
                       )}
                     </div>
@@ -265,56 +265,48 @@ const AIConsultant: React.FC = () => {
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col w-full min-w-0 overflow-hidden">
-        {/* Chat Header with Menu Button */}
-        <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 rounded-b-none flex-shrink-0">
-          <CardHeader className="py-3 px-3 sm:px-4">
+        {/* Compact Chat Header */}
+        <Card className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-0 rounded-b-none flex-shrink-0">
+          <CardHeader className="py-1.5 px-2">
             <div className="flex items-center gap-2">
               {/* Sidebar Toggle Button */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
+                className="h-7 w-7 text-white hover:bg-white/20 flex-shrink-0"
                 onClick={() => setShowSidebar(!showSidebar)}
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-4 h-4" />
               </Button>
               
               {/* Title */}
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Bot className="w-5 h-5 flex-shrink-0" />
-                  <span className="truncate">
-                    {currentConversation ? currentConversation.title : 'مستشار الترياق الذكي'}
-                  </span>
-                  <Sparkles className="w-4 h-4 text-yellow-300 flex-shrink-0" />
-                </CardTitle>
-                <p className="text-xs text-white/80 truncate mt-0.5">
-                  {currentConversation 
-                    ? `${messages.length} رسالة` 
-                    : 'مساعدتك في معلومات الأدوية'
-                  }
-                </p>
-              </div>
+              <CardTitle className="text-sm flex items-center gap-1.5 flex-1 min-w-0">
+                <Bot className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">
+                  {currentConversation ? currentConversation.title : 'مستشار الترياق'}
+                </span>
+                <Sparkles className="w-3.5 h-3.5 text-yellow-300 flex-shrink-0" />
+              </CardTitle>
             </div>
           </CardHeader>
         </Card>
 
-        {/* Chat Messages */}
+        {/* Chat Messages - Flex Grow */}
         <Card className="flex-1 rounded-t-none border-t-0 overflow-hidden">
-          <ScrollArea className="h-full px-3 py-4 sm:px-4" ref={scrollRef}>
+          <ScrollArea className="h-full px-2 py-3" ref={scrollRef}>
             {messages.length === 0 && !currentConversation ? (
-              <div className="space-y-4 px-1">
-                <div className="text-center py-6">
-                  <Bot className="w-12 h-12 mx-auto mb-3 text-purple-300" />
-                  <h3 className="font-semibold text-foreground mb-1">مرحباً! كيف يمكنني مساعدتك؟</h3>
-                  <p className="text-sm text-muted-foreground">
+              <div className="space-y-3 px-1">
+                <div className="text-center py-4">
+                  <Bot className="w-10 h-10 mx-auto mb-2 text-emerald-300" />
+                  <h3 className="font-semibold text-foreground text-sm mb-0.5">مرحباً! كيف يمكنني مساعدتك؟</h3>
+                  <p className="text-xs text-muted-foreground">
                     اسألني عن أي دواء أو جرعة أو بديل
                   </p>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <p className="text-xs text-muted-foreground text-center">أسئلة مقترحة:</p>
-                  <div className="grid gap-2">
+                  <div className="grid gap-1.5">
                     {suggestedQuestions.map((question, index) => (
                       <button
                         key={index}
@@ -322,7 +314,7 @@ const AIConsultant: React.FC = () => {
                           setInput(question);
                           inputRef.current?.focus();
                         }}
-                        className="text-right text-sm p-3 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors"
+                        className="text-right text-xs p-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
                       >
                         {question}
                       </button>
@@ -331,39 +323,39 @@ const AIConsultant: React.FC = () => {
                 </div>
               </div>
             ) : messages.length === 0 && currentConversation ? (
-              <div className="text-center py-6 px-1">
-                <Bot className="w-12 h-12 mx-auto mb-3 text-purple-300" />
-                <h3 className="font-semibold text-foreground mb-1">محادثة فارغة</h3>
-                <p className="text-sm text-muted-foreground">
+              <div className="text-center py-4 px-1">
+                <Bot className="w-10 h-10 mx-auto mb-2 text-emerald-300" />
+                <h3 className="font-semibold text-foreground text-sm mb-0.5">محادثة فارغة</h3>
+                <p className="text-xs text-muted-foreground">
                   ابدأ بكتابة سؤالك
                 </p>
               </div>
             ) : (
-              <div className="space-y-4 px-1">
+              <div className="space-y-3 px-1">
                 {messages.map((message, index) => (
                   <div
                     key={message.id || index}
-                    className={`flex gap-2 sm:gap-3 ${
+                    className={`flex gap-2 ${
                       message.role === 'user' ? 'flex-row-reverse' : ''
                     }`}
                   >
                     <div
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
                         message.role === 'user'
-                          ? 'bg-purple-100 text-purple-600'
-                          : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
+                          ? 'bg-emerald-100 text-emerald-600'
+                          : 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white'
                       }`}
                     >
                       {message.role === 'user' ? (
-                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <User className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       ) : (
-                        <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <Bot className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       )}
                     </div>
                     <div
-                      className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 ${
+                      className={`max-w-[88%] sm:max-w-[85%] rounded-2xl px-2.5 py-2 sm:px-3 sm:py-2.5 ${
                         message.role === 'user'
-                          ? 'bg-purple-600 text-white rounded-tr-sm text-sm'
+                          ? 'bg-emerald-600 text-white rounded-tr-sm text-sm'
                           : 'bg-muted rounded-tl-sm'
                       }`}
                     >
@@ -376,12 +368,12 @@ const AIConsultant: React.FC = () => {
                   </div>
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                  <div className="flex gap-2 sm:gap-3">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <div className="flex gap-2">
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </div>
-                    <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                      <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+                    <div className="bg-muted rounded-2xl rounded-tl-sm px-3 py-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-emerald-500" />
                     </div>
                   </div>
                 )}
@@ -390,22 +382,23 @@ const AIConsultant: React.FC = () => {
           </ScrollArea>
         </Card>
 
-        {/* Input Area */}
-        <div className="p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-white border border-t-0 rounded-b-lg shadow-sm flex-shrink-0">
-          <div className="flex gap-2">
+        {/* Compact Input Area */}
+        <div className="p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] bg-white border border-t-0 rounded-b-lg shadow-sm flex-shrink-0">
+          <div className="flex gap-1.5">
             <Input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="اكتب سؤالك هنا..."
+              placeholder="اكتب سؤالك..."
               disabled={isLoading}
-              className="flex-1 border-purple-200 focus:border-purple-400"
+              className="flex-1 h-9 text-sm border-emerald-200 focus:border-emerald-400"
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="bg-purple-600 hover:bg-purple-700 flex-shrink-0"
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 flex-shrink-0 h-9 w-9 p-0"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -414,9 +407,8 @@ const AIConsultant: React.FC = () => {
               )}
             </Button>
           </div>
-          <p className="text-[10px] text-muted-foreground text-center mt-2 flex items-center justify-center gap-1 px-2">
-            <AlertTriangle className="w-3 h-3 flex-shrink-0" />
-            <span>المعلومات المقدمة إرشادية ولا تغني عن استشارة الطبيب</span>
+          <p className="text-[9px] text-muted-foreground text-center mt-1 opacity-70">
+            ⚠️ إرشادي فقط - استشر الطبيب
           </p>
         </div>
       </div>
