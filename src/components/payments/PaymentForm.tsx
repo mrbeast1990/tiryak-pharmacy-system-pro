@@ -1,0 +1,322 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { usePaymentsStore } from '@/store/paymentsStore';
+import { useAuthStore } from '@/store/authStore';
+import { usePaymentAttachment } from '@/hooks/usePaymentAttachment';
+import CompanySelector from './CompanySelector';
+import { 
+  Plus, 
+  ChevronDown, 
+  ChevronUp, 
+  Camera, 
+  Paperclip, 
+  X, 
+  Loader2,
+  Banknote,
+  Building,
+  Calendar,
+  FileText
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
+const PaymentForm: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [paymentDate, setPaymentDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [paymentType, setPaymentType] = useState<'cash' | 'bank'>('cash');
+  const [notes, setNotes] = useState('');
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+  const [attachmentName, setAttachmentName] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { addPayment } = usePaymentsStore();
+  const { user } = useAuthStore();
+  const { uploadAttachment, captureFromCamera, selectFile, uploading } = usePaymentAttachment();
+
+  const handleCameraCapture = async () => {
+    const file = await captureFromCamera();
+    if (file) {
+      const url = await uploadAttachment(file);
+      if (url) {
+        setAttachmentUrl(url);
+        setAttachmentName('صورة من الكاميرا');
+        toast.success('تم رفع الصورة بنجاح');
+      }
+    }
+  };
+
+  const handleFileSelect = async () => {
+    const file = await selectFile();
+    if (file) {
+      const url = await uploadAttachment(file);
+      if (url) {
+        setAttachmentUrl(url);
+        setAttachmentName(file.name);
+        toast.success('تم رفع الملف بنجاح');
+      }
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachmentUrl(null);
+    setAttachmentName(null);
+  };
+
+  const resetForm = () => {
+    setCompanyName('');
+    setAmount('');
+    setPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+    setPaymentType('cash');
+    setNotes('');
+    setAttachmentUrl(null);
+    setAttachmentName(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!companyName.trim()) {
+      toast.error('يرجى اختيار الشركة');
+      return;
+    }
+
+    if (!amount || Number(amount) <= 0) {
+      toast.error('يرجى إدخال مبلغ صحيح');
+      return;
+    }
+
+    if (!user) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const success = await addPayment({
+      company_name: companyName.trim(),
+      amount: Number(amount),
+      payment_date: paymentDate,
+      payment_type: paymentType,
+      notes: notes.trim() || undefined,
+      attachment_url: attachmentUrl || undefined,
+      is_deducted: false,
+      created_by_id: user.id,
+      created_by_name: user.name,
+    });
+
+    setIsSubmitting(false);
+
+    if (success) {
+      toast.success('تم تسجيل السداد بنجاح');
+      resetForm();
+      setIsOpen(false);
+    } else {
+      toast.error('حدث خطأ أثناء تسجيل السداد');
+    }
+  };
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card className="overflow-hidden border-primary/20">
+        <CollapsibleTrigger asChild>
+          <CardHeader className="py-3 px-4 cursor-pointer hover:bg-muted/50 transition-colors">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Plus className="w-4 h-4 text-primary" />
+                </div>
+                إضافة سداد جديد
+              </span>
+              {isOpen ? (
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              )}
+            </CardTitle>
+          </CardHeader>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* اختيار الشركة */}
+              <CompanySelector value={companyName} onChange={setCompanyName} />
+
+              {/* المبلغ */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Banknote className="w-4 h-4 text-muted-foreground" />
+                  المبلغ (د.ل)
+                </label>
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  className="text-lg font-semibold"
+                  dir="ltr"
+                />
+              </div>
+
+              {/* التاريخ */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  التاريخ
+                </label>
+                <Input
+                  type="date"
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                  className="text-right"
+                />
+              </div>
+
+              {/* نوع السداد */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Building className="w-4 h-4 text-muted-foreground" />
+                  نوع السداد
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={paymentType === 'cash' ? 'default' : 'outline'}
+                    onClick={() => setPaymentType('cash')}
+                    className={cn(
+                      'h-12 text-base',
+                      paymentType === 'cash' && 'bg-green-600 hover:bg-green-700'
+                    )}
+                  >
+                    💵 كاش
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={paymentType === 'bank' ? 'default' : 'outline'}
+                    onClick={() => setPaymentType('bank')}
+                    className={cn(
+                      'h-12 text-base',
+                      paymentType === 'bank' && 'bg-blue-600 hover:bg-blue-700'
+                    )}
+                  >
+                    🏦 مصرف
+                  </Button>
+                </div>
+              </div>
+
+              {/* الملاحظات */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  ملاحظات (اختياري)
+                </label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="رقم الصك، اسم المستلم، اسم المصرف..."
+                  rows={2}
+                  className="resize-none"
+                />
+              </div>
+
+              {/* المرفقات */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Paperclip className="w-4 h-4 text-muted-foreground" />
+                  مرفق (اختياري)
+                </label>
+                
+                {attachmentUrl ? (
+                  <div className="flex items-center gap-2 bg-emerald-50 p-3 rounded-lg border border-emerald-200">
+                    <Paperclip className="w-4 h-4 text-emerald-600" />
+                    <span className="text-sm text-emerald-700 flex-1 truncate">
+                      {attachmentName}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeAttachment}
+                      className="h-6 w-6 p-0 text-emerald-600 hover:text-red-600 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCameraCapture}
+                      disabled={uploading}
+                      className="h-12"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Camera className="w-4 h-4 ml-2" />
+                          تصوير
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleFileSelect}
+                      disabled={uploading}
+                      className="h-12"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Paperclip className="w-4 h-4 ml-2" />
+                          رفع ملف
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* زر الإضافة */}
+              <Button
+                type="submit"
+                className="w-full h-12 text-base bg-primary hover:bg-primary/90"
+                disabled={isSubmitting || !companyName || !amount}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                    جاري التسجيل...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 ml-2" />
+                    تسجيل السداد
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+};
+
+export default PaymentForm;
