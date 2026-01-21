@@ -14,6 +14,7 @@ import RevenueManager from './RevenueManager';
 import ReportsPage from './ReportsPage';
 import NotificationSender from './NotificationSender';
 import TiryakGuide from './TiryakGuide';
+import PaymentsManager from './payments/PaymentsManager';
 import DashboardHeader from './dashboard/DashboardHeader';
 import ActionCards from './dashboard/ActionCards';
 import AdminTools from './dashboard/AdminTools';
@@ -85,6 +86,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   if (currentPage === 'tiryak-guide') {
     return <TiryakGuide onBack={handleBack} />;
+  }
+
+  if (currentPage === 'payments') {
+    return <PaymentsManager onBack={handleBack} />;
   }
 
   return (

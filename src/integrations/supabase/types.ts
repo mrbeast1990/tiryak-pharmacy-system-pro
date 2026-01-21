@@ -114,6 +114,24 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       medicines: {
         Row: {
           company: string | null
@@ -251,6 +269,57 @@ export type Database = {
           notification_type?: string
           sent_at?: string
           title?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          attachment_url: string | null
+          company_name: string
+          created_at: string
+          created_by_id: string
+          created_by_name: string
+          deducted_at: string | null
+          deducted_by_id: string | null
+          deducted_by_name: string | null
+          id: string
+          is_deducted: boolean
+          notes: string | null
+          payment_date: string
+          payment_type: string
+        }
+        Insert: {
+          amount: number
+          attachment_url?: string | null
+          company_name: string
+          created_at?: string
+          created_by_id: string
+          created_by_name: string
+          deducted_at?: string | null
+          deducted_by_id?: string | null
+          deducted_by_name?: string | null
+          id?: string
+          is_deducted?: boolean
+          notes?: string | null
+          payment_date?: string
+          payment_type: string
+        }
+        Update: {
+          amount?: number
+          attachment_url?: string | null
+          company_name?: string
+          created_at?: string
+          created_by_id?: string
+          created_by_name?: string
+          deducted_at?: string | null
+          deducted_by_id?: string | null
+          deducted_by_name?: string | null
+          id?: string
+          is_deducted?: boolean
+          notes?: string | null
+          payment_date?: string
+          payment_type?: string
         }
         Relationships: []
       }
