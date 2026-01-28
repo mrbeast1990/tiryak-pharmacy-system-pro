@@ -116,19 +116,28 @@ export type Database = {
       }
       companies: {
         Row: {
+          account_number: string | null
           created_at: string
           id: string
           name: string
+          phone: string | null
+          representative_name: string | null
         }
         Insert: {
+          account_number?: string | null
           created_at?: string
           id?: string
           name: string
+          phone?: string | null
+          representative_name?: string | null
         }
         Update: {
+          account_number?: string | null
           created_at?: string
           id?: string
           name?: string
+          phone?: string | null
+          representative_name?: string | null
         }
         Relationships: []
       }

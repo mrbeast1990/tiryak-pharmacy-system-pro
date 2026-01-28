@@ -22,6 +22,9 @@ export interface Payment {
 export interface Company {
   id: string;
   name: string;
+  representative_name?: string;
+  phone?: string;
+  account_number?: string;
   created_at: string;
 }
 
@@ -44,7 +47,9 @@ interface PaymentsState {
   updatePayment: (id: string, updates: Partial<Payment>) => Promise<boolean>;
   deletePayment: (id: string) => Promise<boolean>;
   toggleDeducted: (id: string, userId: string, userName: string) => Promise<boolean>;
-  addCompany: (name: string) => Promise<boolean>;
+  addCompany: (company: { name: string; representative_name?: string; phone?: string; account_number?: string }) => Promise<boolean>;
+  updateCompany: (id: string, updates: Partial<Company>) => Promise<boolean>;
+  deleteCompany: (id: string) => Promise<boolean>;
   setFilters: (filters: Partial<PaymentsFilters>) => void;
   
   // Computed
@@ -175,11 +180,11 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     }
   },
 
-  addCompany: async (name) => {
+  addCompany: async (company) => {
     try {
       const { error } = await supabase
         .from('companies')
-        .insert([{ name }]);
+        .insert([company]);
 
       if (error) throw error;
       
@@ -187,6 +192,40 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
       return true;
     } catch (error) {
       console.error('Error adding company:', error);
+      return false;
+    }
+  },
+
+  updateCompany: async (id, updates) => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      await get().fetchCompanies();
+      return true;
+    } catch (error) {
+      console.error('Error updating company:', error);
+      return false;
+    }
+  },
+
+  deleteCompany: async (id) => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      await get().fetchCompanies();
+      return true;
+    } catch (error) {
+      console.error('Error deleting company:', error);
       return false;
     }
   },
