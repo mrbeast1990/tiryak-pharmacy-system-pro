@@ -141,6 +141,51 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by_id: string
+          created_by_name: string
+          deducted_at: string | null
+          deducted_by_id: string | null
+          deducted_by_name: string | null
+          description: string
+          expense_date: string
+          id: string
+          is_deducted: boolean
+          notes: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by_id: string
+          created_by_name: string
+          deducted_at?: string | null
+          deducted_by_id?: string | null
+          deducted_by_name?: string | null
+          description: string
+          expense_date?: string
+          id?: string
+          is_deducted?: boolean
+          notes?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by_id?: string
+          created_by_name?: string
+          deducted_at?: string | null
+          deducted_by_id?: string | null
+          deducted_by_name?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          is_deducted?: boolean
+          notes?: string | null
+        }
+        Relationships: []
+      }
       medicines: {
         Row: {
           company: string | null
