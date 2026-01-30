@@ -61,8 +61,8 @@ const ActionCards: React.FC<ActionCardsProps> = ({ onNavigate, t }) => {
     },
     {
       id: 'payments',
-      title: 'إدارة السدادات',
-      description: 'تسجيل ومتابعة سدادات الشركات',
+      title: 'السدادات والمصاريف',
+      description: 'سدادات الشركات وإدارة المصاريف',
       icon: CreditCard,
       iconBg: 'bg-amber-100',
       iconColor: 'text-amber-600',
