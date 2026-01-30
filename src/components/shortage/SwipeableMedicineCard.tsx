@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Save, X, RotateCcw, CheckCircle } from 'lucide-react';
+import { Edit, Save, X, RotateCcw, CheckCircle, Trash2 } from 'lucide-react';
 import { Medicine } from '@/store/pharmacyStore';
 import { useLanguageStore } from '@/store/languageStore';
 import {
@@ -243,21 +243,35 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
                   </Popover>
                 </div>
                 
-                {/* Bottom row: Date & Employee (left) + Available Chip (right) */}
+                {/* Bottom row: Date & Employee (left) + Actions (right) */}
                 <div className="flex items-center justify-between mt-1.5">
                   <span className="text-[10px] text-muted-foreground/70">
                     {new Date(medicine.last_updated).toLocaleDateString('en-GB')}
                     {medicine.updatedBy && ` • ${medicine.updatedBy}`}
                   </span>
                   
-                  {/* Available Action Chip */}
-                  <button
-                    onClick={() => setShowAvailableDialog(true)}
-                    className="h-6 px-2 flex items-center gap-1 text-[11px] font-medium border border-emerald-400 text-emerald-600 bg-transparent hover:bg-emerald-50 rounded-full transition-colors"
-                  >
-                    <CheckCircle className="h-3 w-3" />
-                    {language === 'ar' ? 'تم التوفير' : 'Available'}
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    {/* Delete Button */}
+                    {canDelete && (
+                      <button
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="h-6 px-2 flex items-center gap-1 text-[11px] font-medium border border-destructive/50 text-destructive bg-transparent hover:bg-destructive/10 rounded-full transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        {language === 'ar' ? 'حذف' : 'Delete'}
+                      </button>
+                    )}
+                    
+                    {/* Available Action Chip */}
+                    <button
+                      onClick={() => setShowAvailableDialog(true)}
+                      className="h-6 px-2 flex items-center gap-1 text-[11px] font-medium border border-emerald-400 text-emerald-600 bg-transparent hover:bg-emerald-50 rounded-full transition-colors"
+                    >
+                      <CheckCircle className="h-3 w-3" />
+                      {language === 'ar' ? 'تم التوفير' : 'Available'}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
