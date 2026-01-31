@@ -38,9 +38,15 @@ serve(async (req) => {
          return new Response(JSON.stringify({ error: 'Forbidden: Admin access required.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
     }
     
-    const { requestId } = await req.json()
+    const { requestId, role } = await req.json()
     if (!requestId) {
       return new Response(JSON.stringify({ error: 'Request ID is required.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
+    }
+
+    // Validate role
+    const validRoles = ['admin', 'ahmad_rajili', 'morning_shift', 'evening_shift', 'night_shift', 'member']
+    if (!role || !validRoles.includes(role)) {
+      return new Response(JSON.stringify({ error: 'يجب تحديد دور صالح للمستخدم.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
     }
 
     // Fetch the request details using admin client
@@ -56,12 +62,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Pending request not found or could not be fetched.' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }})
     }
     
-    // Invite the user by email using admin client
+    // Invite the user by email using admin client with assigned role
     const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       request.email,
       {
-        data: { full_name: request.full_name },
-        redirectTo: req.headers.get('origin') || Deno.env.get('SITE_URL'), // Use origin or fallback
+        data: { 
+          full_name: request.full_name,
+          assigned_role: role 
+        },
+        redirectTo: req.headers.get('origin') || Deno.env.get('SITE_URL'),
       }
     )
 
