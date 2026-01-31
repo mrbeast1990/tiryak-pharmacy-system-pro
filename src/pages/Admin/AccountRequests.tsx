@@ -7,7 +7,17 @@ import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, UserCheck, UserX, ArrowRight } from 'lucide-react';
+
+const AVAILABLE_ROLES = [
+  { value: 'admin', label: 'المدير' },
+  { value: 'ahmad_rajili', label: 'أحمد الرجيلي' },
+  { value: 'morning_shift', label: 'الفترة الصباحية' },
+  { value: 'evening_shift', label: 'الفترة المسائية' },
+  { value: 'night_shift', label: 'الفترة الليلية' },
+  { value: 'member', label: 'عضو عادي' },
+];
 import { useToast } from '@/hooks/use-toast';
 
 const fetchAccountRequests = async () => {
@@ -29,6 +39,7 @@ const AccountRequests: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
   
   const canManageUsers = checkPermission('manage_users'); 
 
@@ -50,9 +61,9 @@ const AccountRequests: React.FC = () => {
   });
 
   const approveMutation = useMutation({
-    mutationFn: (requestId: string) => 
+    mutationFn: ({ requestId, role }: { requestId: string; role: string }) => 
       supabase.functions.invoke('approve-request', {
-        body: { requestId },
+        body: { requestId, role },
       }),
     onSuccess: (response) => {
       const { data, error } = response;
@@ -94,8 +105,10 @@ const AccountRequests: React.FC = () => {
   });
 
   const handleApprove = (id: string) => {
+    const role = selectedRoles[id];
+    if (!role) return;
     setProcessingId(id);
-    approveMutation.mutate(id);
+    approveMutation.mutate({ requestId: id, role });
   };
 
   const handleReject = (id: string) => {
@@ -150,27 +163,44 @@ const AccountRequests: React.FC = () => {
                         <TableCell>{req.email}</TableCell>
                         <TableCell>{req.phone}</TableCell>
                         <TableCell>{new Date(req.created_at).toLocaleDateString('ar-EG')}</TableCell>
-                        <TableCell className="text-center space-x-2 space-x-reverse">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700" 
-                            onClick={() => handleApprove(req.id)}
-                            disabled={processingId === req.id}
-                          >
-                            {processingId === req.id && approveMutation.isPending ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <UserCheck className="ml-2 h-4 w-4" />}
-                            قبول
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700" 
-                            onClick={() => handleReject(req.id)}
-                            disabled={processingId === req.id}
-                          >
-                            {processingId === req.id && rejectMutation.isPending ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <UserX className="ml-2 h-4 w-4" />}
-                            رفض
-                          </Button>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Select
+                              value={selectedRoles[req.id] || ''}
+                              onValueChange={(value) => setSelectedRoles(prev => ({ ...prev, [req.id]: value }))}
+                            >
+                              <SelectTrigger className="w-[140px]">
+                                <SelectValue placeholder="اختر الدور" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {AVAILABLE_ROLES.map((role) => (
+                                  <SelectItem key={role.value} value={role.value}>
+                                    {role.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700" 
+                              onClick={() => handleApprove(req.id)}
+                              disabled={processingId === req.id || !selectedRoles[req.id]}
+                            >
+                              {processingId === req.id && approveMutation.isPending ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <UserCheck className="ml-2 h-4 w-4" />}
+                              قبول
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700" 
+                              onClick={() => handleReject(req.id)}
+                              disabled={processingId === req.id}
+                            >
+                              {processingId === req.id && rejectMutation.isPending ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <UserX className="ml-2 h-4 w-4" />}
+                              رفض
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )) : (
