@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { NativeBiometric } from 'capacitor-native-biometric';
 import { Capacitor } from '@capacitor/core';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
+import ForgotPasswordDialog from './ForgotPasswordDialog';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +18,7 @@ const LoginForm: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isBiometricLoading, setIsBiometricLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   
   const { user, login, setRememberMe: setAuthRememberMe } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
@@ -350,19 +352,28 @@ const LoginForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Remember Me */}
-            <div className="flex items-center gap-2">
-              <Checkbox 
-                id="remember-me"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-              />
-              <label 
-                htmlFor="remember-me" 
-                className="text-sm text-muted-foreground cursor-pointer"
+            {/* Remember Me & Forgot Password */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Checkbox 
+                  id="remember-me"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <label 
+                  htmlFor="remember-me" 
+                  className="text-sm text-muted-foreground cursor-pointer"
+                >
+                  {language === 'ar' ? 'تذكرني' : 'Remember me'}
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-primary hover:underline"
               >
-                {language === 'ar' ? 'تذكرني' : 'Remember me'}
-              </label>
+                {language === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot Password?'}
+              </button>
             </div>
             
             {/* Login Button */}
@@ -409,6 +420,14 @@ const LoginForm: React.FC = () => {
               {language === 'ar' ? 'إنشاء حساب جديد' : 'Create New Account'}
             </Button>
           </form>
+
+          {/* Forgot Password Dialog */}
+          <ForgotPasswordDialog
+            open={showForgotPassword}
+            onOpenChange={setShowForgotPassword}
+            language={language}
+            defaultEmail={email}
+          />
         </div>
       </div>
       
