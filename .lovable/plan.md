@@ -1,144 +1,82 @@
 
 
-# خطة إضافة اختيار الدور عند الموافقة على طلبات الحسابات
+# خطة إنشاء حساب مستخدم جديد
 
-## الملخص
-إضافة قائمة منسدلة لاختيار دور المستخدم بجانب زر الموافقة، مع منع الموافقة حتى يتم تحديد الدور.
+## ملخص
+سأقوم بتعديل Edge Function الموجودة (`create-admin-user`) لتصبح مرنة وتقبل بيانات المستخدم من الطلب، ثم استدعائها لإنشاء الحساب الجديد:
 
-## التغييرات المطلوبة
+- **الاسم**: عبدالوهاب
+- **البريد الإلكتروني**: whab.alzwawy@tiryak.com
+- **كلمة المرور**: 12121212
+- **الدور**: admin
 
-### 1. تحديث صفحة طلبات الحسابات (AccountRequests.tsx)
+## المتطلبات
 
-**إضافة قائمة اختيار الدور:**
-- إضافة state لتخزين الأدوار المحددة لكل طلب
-- إضافة قائمة منسدلة (Select) لاختيار الدور
-- تعطيل زر الموافقة حتى يتم اختيار الدور
-- إرسال الدور المختار مع الطلب
+### 1. تعديل Edge Function: `create-admin-user`
 
-**الأدوار المتاحة للاختيار:**
-| الدور | الاسم العربي |
-|-------|-------------|
-| admin | المدير |
-| ahmad_rajili | أحمد الرجيلي |
-| morning_shift | الفترة الصباحية |
-| evening_shift | الفترة المسائية |
-| night_shift | الفترة الليلية |
-| member | عضو عادي |
+سأجعل الدالة تقبل البيانات من body الطلب بدلاً من القيم الثابتة:
 
-**تخطيط الواجهة الجديد:**
-```text
-┌────────────────────────────────────────────────────────────────────────────┐
-│ الاسم الكامل │ البريد │ الهاتف │ التاريخ │        الإجراءات              │
-├────────────────────────────────────────────────────────────────────────────┤
-│ محمد         │ m@x.com│ 05...  │ 2026   │ [اختر الدور ▼] [قبول] [رفض]  │
-└────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 2. تحديث Edge Function (approve-request/index.ts)
-
-**التغييرات:**
-- استقبال معامل `role` من الطلب
-- التحقق من صحة الدور المرسل
-- تعيين الدور للمستخدم الجديد عند إنشائه عبر `user_metadata`
-- تحديث الـ trigger أو إضافة تحديث للملف الشخصي بعد الإنشاء
-
-### 3. تحديث Trigger (handle_new_user)
-
-**المنطق الجديد:**
-- التحقق من وجود دور في `raw_user_meta_data`
-- إذا وُجد دور، استخدامه بدلاً من المنطق الافتراضي
-- هذا يسمح بتعيين الدور ديناميكياً عند الموافقة
-
-## الملفات المتأثرة
-
-| الملف | التغيير |
-|-------|---------|
-| `src/pages/Admin/AccountRequests.tsx` | إضافة Select للدور وتعديل منطق الموافقة |
-| `supabase/functions/approve-request/index.ts` | استقبال الدور وإرساله مع الدعوة |
-| Migration جديد | تحديث trigger لدعم الدور الديناميكي |
-
-## تفاصيل التنفيذ التقنية
-
-### الحالة الجديدة في AccountRequests
 ```typescript
-const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
-
-// التحقق قبل الموافقة
-const handleApprove = (id: string) => {
-  const role = selectedRoles[id];
-  if (!role) return; // لن يحدث لأن الزر معطل
-  approveMutation.mutate({ requestId: id, role });
-};
-```
-
-### تحديث Edge Function
-```typescript
-const { requestId, role } = await req.json();
-
-// التحقق من صحة الدور
-const validRoles = ['admin', 'ahmad_rajili', 'morning_shift', 'evening_shift', 'night_shift', 'member'];
-if (!validRoles.includes(role)) {
-  return new Response(JSON.stringify({ error: 'Invalid role' }), ...);
-}
-
-// إرسال الدور مع metadata
-await supabaseAdmin.auth.admin.inviteUserByEmail(request.email, {
-  data: { 
-    full_name: request.full_name,
-    assigned_role: role 
-  },
-  ...
+// supabase/functions/create-admin-user/index.ts
+serve(async (req: Request) => {
+  // ... CORS handling
+  
+  // استقبال البيانات من الطلب
+  const { email, password, name, role } = await req.json();
+  
+  // التحقق من وجود البيانات المطلوبة
+  if (!email || !password || !name || !role) {
+    return new Response(JSON.stringify({ 
+      error: 'جميع الحقول مطلوبة: email, password, name, role' 
+    }), { status: 400 });
+  }
+  
+  // إنشاء المستخدم بالبيانات المُرسلة
+  const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+    email: email,
+    password: password,
+    email_confirm: true,
+    user_metadata: { full_name: name }
+  });
+  
+  // ... باقي الكود
 });
 ```
 
-### تحديث Trigger
-```sql
--- استخدام الدور من metadata إذا وُجد
-user_role := COALESCE(
-  (NEW.raw_user_meta_data->>'assigned_role')::app_role, 
-  'member'::app_role
-);
+### 2. استدعاء الدالة لإنشاء الحساب
+
+بعد نشر التعديلات، سأستدعي الدالة مباشرة باستخدام أداة `curl_edge_functions`:
+
+```json
+{
+  "email": "whab.alzwawy@tiryak.com",
+  "password": "12121212",
+  "name": "عبدالوهاب",
+  "role": "admin"
+}
 ```
 
-## Migration مطلوب
+## خطوات التنفيذ
 
-```sql
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  user_role app_role;
-  user_name TEXT;
-  assigned_role_text TEXT;
-BEGIN
-  -- التحقق من وجود دور معين في metadata
-  assigned_role_text := NEW.raw_user_meta_data->>'assigned_role';
-  
-  IF assigned_role_text IS NOT NULL AND assigned_role_text != '' THEN
-    -- استخدام الدور المعين
-    user_role := assigned_role_text::app_role;
-    user_name := COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1));
-  ELSE
-    -- المنطق الافتراضي للمستخدمين الموجودين
-    CASE NEW.email
-      WHEN 'deltanorthpharm@gmail.com' THEN
-        user_role := 'admin';
-        user_name := 'المدير';
-      -- ... باقي الحالات
-      ELSE
-        user_role := 'member';
-        user_name := COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1));
-    END CASE;
-  END IF;
+| الخطوة | الوصف |
+|--------|-------|
+| 1 | تعديل `create-admin-user/index.ts` لتقبل البيانات ديناميكياً |
+| 2 | نشر Edge Function |
+| 3 | استدعاء الدالة لإنشاء حساب عبدالوهاب |
+| 4 | التحقق من إنشاء الحساب في قاعدة البيانات |
 
-  INSERT INTO public.profiles (id, name, role)
-  VALUES (NEW.id, user_name, user_role);
+## ملاحظات تقنية
 
-  RETURN NEW;
-END;
-$$;
-```
+- الدالة تستخدم `SUPABASE_SERVICE_ROLE_KEY` مما يمنحها صلاحيات كاملة لإنشاء المستخدمين
+- سيتم تأكيد البريد الإلكتروني تلقائياً (`email_confirm: true`) بدون الحاجة لرابط تفعيل
+- سيتم إنشاء ملف شخصي في جدول `profiles` مع الدور المحدد (`admin`)
+- المستخدم سيتمكن من تسجيل الدخول فوراً بكلمة المرور المحددة
+
+## النتيجة المتوقعة
+
+بعد التنفيذ، سيكون لديك مستخدم جديد:
+- **البريد**: whab.alzwawy@tiryak.com
+- **كلمة المرور**: 12121212
+- **الاسم**: عبدالوهاب
+- **الصلاحيات**: مدير (admin) - نفس صلاحيات المدير بالضبط
 
