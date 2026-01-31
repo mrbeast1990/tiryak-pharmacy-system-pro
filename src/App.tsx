@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
+import ResetPassword from "./pages/ResetPassword";
 import AccountRequests from "./pages/Admin/AccountRequests";
 import CreateUser from "./pages/CreateUser";
 import AvailableMedicines from "./pages/AvailableMedicines";
@@ -19,6 +20,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/admin/requests" element={<AccountRequests />} />
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/available-medicines" element={<AvailableMedicines />} />
