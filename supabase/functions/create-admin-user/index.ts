@@ -18,15 +18,39 @@ serve(async (req: Request) => {
       },
     });
 
-    console.log('إنشاء المستخدم الجديد...');
+    // استقبال البيانات من الطلب
+    const { email, password, name, role } = await req.json();
+
+    // التحقق من وجود البيانات المطلوبة
+    if (!email || !password || !name || !role) {
+      return new Response(JSON.stringify({ 
+        error: 'جميع الحقول مطلوبة: email, password, name, role' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // التحقق من صحة الدور
+    const validRoles = ['admin', 'ahmad_rajili', 'morning_shift', 'evening_shift', 'night_shift', 'member'];
+    if (!validRoles.includes(role)) {
+      return new Response(JSON.stringify({ 
+        error: 'الدور غير صالح. الأدوار المتاحة: ' + validRoles.join(', ')
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log('إنشاء المستخدم الجديد:', email);
 
     // إنشاء المستخدم الجديد
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email: 'thepanaceapharmacy@gmail.com',
-      password: 'thepanaceapharmacy@gmail.com',
+      email: email,
+      password: password,
       email_confirm: true,
       user_metadata: {
-        full_name: 'أحمد الرجيلي'
+        full_name: name
       }
     });
 
@@ -40,18 +64,18 @@ serve(async (req: Request) => {
 
     console.log('تم إنشاء المستخدم بنجاح:', userData.user?.id);
 
-    // إنشاء الملف الشخصي
+    // تحديث الملف الشخصي (الـ trigger ينشئه تلقائياً) أو إنشاؤه إذا لم يوجد
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({ 
+      .upsert({ 
         id: userData.user!.id, 
-        name: 'أحمد الرجيلي', 
-        role: 'admin' 
-      });
+        name: name, 
+        role: role 
+      }, { onConflict: 'id' });
 
     if (profileError) {
-      console.error('خطأ في إنشاء الملف الشخصي:', profileError);
-      // حذف المستخدم إذا فشل إنشاء الملف الشخصي
+      console.error('خطأ في تحديث الملف الشخصي:', profileError);
+      // حذف المستخدم إذا فشل تحديث الملف الشخصي
       await supabaseAdmin.auth.admin.deleteUser(userData.user!.id);
       return new Response(JSON.stringify({ error: profileError.message }), {
         status: 400,
@@ -59,16 +83,15 @@ serve(async (req: Request) => {
       });
     }
 
-    console.log('تم إنشاء الملف الشخصي بنجاح');
+    console.log('تم تحديث الملف الشخصي بنجاح');
 
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'تم إنشاء المستخدم والملف الشخصي بنجاح',
       user: userData.user,
-      email: 'thepanaceapharmacy@gmail.com',
-      password: 'thepanaceapharmacy@gmail.com',
-      name: 'أحمد الرجيلي',
-      role: 'admin'
+      email: email,
+      name: name,
+      role: role
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

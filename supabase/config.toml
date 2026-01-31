@@ -4,7 +4,7 @@ project_id = "qoyawkfbyocgtyxlpgnp"
 verify_jwt = true
 
 [functions.create-admin-user]
-verify_jwt = true
+verify_jwt = false
 
 [functions.delete-old-notifications]
 verify_jwt = false
