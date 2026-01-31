@@ -44,30 +44,39 @@ const SignUpForm: React.FC = () => {
         
         setIsLoading(true);
         
-        const { error } = await supabase.from('account_requests').insert({
-            full_name: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-        });
-        
-        if (error) {
-            console.error('Error submitting account request:', error);
+        try {
+            const { error } = await supabase.from('account_requests').insert({
+                full_name: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+            });
+            
+            if (error) {
+                console.error('Error submitting account request:', error);
+                toast({
+                    title: language === 'ar' ? "خطأ في الإرسال" : "Submission Error",
+                    description: language === 'ar' ? "حدث خطأ أثناء إرسال طلبك. قد يكون البريد الإلكتروني مسجلاً بالفعل." : "An error occurred while submitting your request. The email might already be registered.",
+                    variant: "destructive",
+                });
+            } else {
+                toast({
+                    title: language === 'ar' ? "تم إرسال الطلب" : "Application Submitted",
+                    description: language === 'ar' 
+                        ? "تم إرسال طلب إنشاء الحساب بنجاح. سيتم مراجعته من قبل الإدارة." 
+                        : "Your account creation request has been submitted successfully. It will be reviewed by management.",
+                });
+                navigate('/');
+            }
+        } catch (err) {
+            console.error('Unexpected error submitting account request:', err);
             toast({
-                title: language === 'ar' ? "خطأ في الإرسال" : "Submission Error",
-                description: language === 'ar' ? "حدث خطأ أثناء إرسال طلبك. قد يكون البريد الإلكتروني مسجلاً بالفعل." : "An error occurred while submitting your request. The email might already be registered.",
+                title: language === 'ar' ? "خطأ غير متوقع" : "Unexpected Error",
+                description: language === 'ar' ? "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى." : "An unexpected error occurred. Please try again.",
                 variant: "destructive",
             });
-        } else {
-            toast({
-                title: language === 'ar' ? "تم إرسال الطلب" : "Application Submitted",
-                description: language === 'ar' 
-                    ? "تم إرسال طلب إنشاء الحساب بنجاح. سيتم مراجعته من قبل الإدارة." 
-                    : "Your account creation request has been submitted successfully. It will be reviewed by management.",
-            });
-            navigate('/');
+        } finally {
+            setIsLoading(false);
         }
-        
-        setIsLoading(false);
     };
 
     return (
