@@ -127,7 +127,14 @@ const PaymentCard: React.FC<PaymentCardProps> = ({ payment, onViewAttachment }) 
               <div className="flex items-start gap-1 text-xs text-muted-foreground bg-gray-50 rounded-lg p-2">
                 <FileText className="w-3 h-3 mt-0.5 flex-shrink-0" />
                 <span className="line-clamp-2">{payment.notes}</span>
-              </div>
+            </div>
+            )}
+
+            {/* معلومات التسجيل */}
+            {payment.created_by_name && (
+              <p className="text-xs text-muted-foreground">
+                📝 تم التسجيل بواسطة {payment.created_by_name}
+              </p>
             )}
 
             {/* معلومات الخصم */}
