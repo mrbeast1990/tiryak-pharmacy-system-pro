@@ -15,6 +15,7 @@ import ReportsPage from './ReportsPage';
 import NotificationSender from './NotificationSender';
 import TiryakGuide from './TiryakGuide';
 import PaymentsManager from './payments/PaymentsManager';
+import OrderBuilder from './order-builder/OrderBuilder';
 import DashboardHeader from './dashboard/DashboardHeader';
 import ActionCards from './dashboard/ActionCards';
 import AdminTools from './dashboard/AdminTools';
@@ -90,6 +91,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   if (currentPage === 'payments') {
     return <PaymentsManager onBack={handleBack} />;
+  }
+
+  if (currentPage === 'order-builder') {
+    return <OrderBuilder onBack={handleBack} />;
   }
 
   return (

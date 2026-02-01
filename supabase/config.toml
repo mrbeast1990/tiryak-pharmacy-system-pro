@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.delete-old-notifications]
 verify_jwt = false
 
+[functions.parse-supplier-quote]
+verify_jwt = false
+
 [functions.reject-request]
 verify_jwt = true
 
