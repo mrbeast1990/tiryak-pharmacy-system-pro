@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Pill, DollarSign, CheckCircle, Package, BookOpen, CreditCard } from 'lucide-react';
+import { Pill, DollarSign, CheckCircle, Package, BookOpen, CreditCard, ShoppingCart } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -68,6 +68,16 @@ const ActionCards: React.FC<ActionCardsProps> = ({ onNavigate, t }) => {
       iconColor: 'text-amber-600',
       show: user?.role === 'admin' || user?.role === 'ahmad_rajili',
       onClick: () => onNavigate('payments'),
+    },
+    {
+      id: 'order-builder',
+      title: 'إنشاء الطلبيات',
+      description: 'تحويل عروض الأسعار إلى طلبيات شراء',
+      icon: ShoppingCart,
+      iconBg: 'bg-indigo-100',
+      iconColor: 'text-indigo-600',
+      show: user?.role === 'admin' || user?.role === 'ahmad_rajili',
+      onClick: () => onNavigate('order-builder'),
     },
     {
       id: 'available',
