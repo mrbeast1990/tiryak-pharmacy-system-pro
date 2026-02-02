@@ -78,17 +78,18 @@ export const useOrderPDF = () => {
     yPos += 12;
 
     // === Products Table ===
-    const tableData = selectedProducts.map(p => [
-      (p.price * p.quantity).toFixed(2),
-      p.price.toFixed(2),
-      p.quantity.toString(),
+    const tableData = selectedProducts.map((p, index) => [
+      (index + 1).toString(),
       p.name,
+      p.expiryDate || '-',
+      p.price.toFixed(2),
+      (p.price * p.quantity).toFixed(2),
     ]);
 
     const totalAmount = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
     autoTable(doc, {
-      head: [['الإجمالي', 'السعر', 'الكمية', 'الصنف']],
+      head: [['NO', 'ITEM DESCRIPTION', 'EXP', 'PRICE', 'T.PRICE']],
       body: tableData,
       startY: yPos,
       margin: { left: margin, right: margin },
@@ -108,10 +109,11 @@ export const useOrderPDF = () => {
         fillColor: [240, 253, 244], // Light green
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 30 },
-        1: { halign: 'center', cellWidth: 25 },
-        2: { halign: 'center', cellWidth: 20 },
-        3: { halign: 'right', cellWidth: 'auto' },
+        0: { halign: 'center', cellWidth: 15 },
+        1: { halign: 'right', cellWidth: 'auto' },
+        2: { halign: 'center', cellWidth: 25 },
+        3: { halign: 'center', cellWidth: 25 },
+        4: { halign: 'center', cellWidth: 30 },
       },
     });
 
