@@ -10,6 +10,20 @@ interface UseOrderPDFOptions {
   products: OrderProduct[];
 }
 
+// Load letterhead image
+const loadLetterhead = async (): Promise<HTMLImageElement | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      console.warn('Could not load letterhead');
+      resolve(null);
+    };
+    img.src = '/images/letterhead-tiryaq.jpg';
+  });
+};
+
 export const useOrderPDF = () => {
   const generatePDF = useCallback(async ({ supplierName, products }: UseOrderPDFOptions) => {
     // Filter out zero-quantity products
@@ -31,41 +45,31 @@ export const useOrderPDF = () => {
     doc.setFont('Amiri');
 
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
-    let yPos = 20;
+    
+    // Letterhead margins
+    const headerMargin = 45; // Space for letterhead header
+    const footerMargin = 30; // Space for letterhead footer
 
-    // === Header Section ===
-    // Add pharmacy logo
-    try {
-      const logoImg = new Image();
-      logoImg.src = '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png';
-      await new Promise((resolve, reject) => {
-        logoImg.onload = resolve;
-        logoImg.onerror = reject;
-      });
-      const logoWidth = 25;
-      const logoHeight = 25;
-      doc.addImage(logoImg, 'PNG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight);
-      yPos += logoHeight + 5;
-    } catch (error) {
-      console.warn('Could not load logo:', error);
-      yPos += 10;
-    }
+    // Load and add letterhead background
+    const letterhead = await loadLetterhead();
+    
+    const addLetterheadBackground = () => {
+      if (letterhead) {
+        doc.addImage(letterhead, 'JPEG', 0, 0, pageWidth, pageHeight);
+      }
+    };
 
-    // Pharmacy name
-    doc.setFontSize(18);
-    doc.setTextColor(16, 185, 129); // Emerald green
-    doc.text('صيدلية الترياق الشافي', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 10;
+    // Add letterhead to first page
+    addLetterheadBackground();
 
-    // Document title
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text('طلب فاتورة شراء', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 15;
+    // Starting position after letterhead header
+    let yPos = headerMargin;
 
     // === Supplier & Date Section ===
     doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
     const today = new Date().toLocaleDateString('ar-LY', {
       year: 'numeric',
       month: 'long',
@@ -75,14 +79,13 @@ export const useOrderPDF = () => {
     doc.text(`الشركة الموردة: ${supplierName || 'غير محدد'}`, pageWidth - margin, yPos, { align: 'right' });
     yPos += 7;
     doc.text(`التاريخ: ${today}`, pageWidth - margin, yPos, { align: 'right' });
-    yPos += 12;
+    yPos += 10;
 
-    // === Products Table (LTR Layout with new column order) ===
-    // Order: NO | CODE | ITEM DESCRIPTION | EXP | PRICE | T.PRICE
+    // === Products Table (LTR Layout) ===
     const tableData = selectedProducts.map((p, index) => [
       (index + 1).toString(),
       p.code || '-',
-      p.name,
+      p.name, // Full name with text wrap
       p.expiryDate || '-',
       p.price.toFixed(2),
       (p.price * p.quantity).toFixed(2),
@@ -90,11 +93,14 @@ export const useOrderPDF = () => {
 
     const totalAmount = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
+    // Track page additions for letterhead
+    let currentPage = 1;
+    
     autoTable(doc, {
       head: [['NO', 'CODE', 'ITEM DESCRIPTION', 'EXP', 'PRICE', 'T.PRICE']],
       body: tableData,
       startY: yPos,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, bottom: footerMargin + 15 },
       styles: {
         font: 'Amiri',
         fontSize: 9,
@@ -114,16 +120,31 @@ export const useOrderPDF = () => {
       columnStyles: {
         0: { halign: 'center', cellWidth: 10 },   // NO (~5%)
         1: { halign: 'center', cellWidth: 18 },   // CODE (~10%)
-        2: { halign: 'left', cellWidth: 'auto' }, // ITEM DESCRIPTION (~55%)
+        2: { halign: 'left', cellWidth: 'auto' }, // ITEM DESCRIPTION - auto width with wrap
         3: { halign: 'center', cellWidth: 20 },   // EXP (~10%)
         4: { halign: 'center', cellWidth: 18 },   // PRICE (~10%)
         5: { halign: 'center', cellWidth: 20 },   // T.PRICE (~10%)
+      },
+      // Add letterhead to new pages
+      didDrawPage: (data) => {
+        const pageNumber = doc.getNumberOfPages();
+        if (pageNumber > currentPage) {
+          currentPage = pageNumber;
+          addLetterheadBackground();
+        }
       },
     });
 
     // Get the final Y position after the table
     const finalY = (doc as any).lastAutoTable?.finalY || yPos + 50;
-    yPos = finalY + 10;
+    yPos = finalY + 8;
+
+    // Check if we need a new page for the total section
+    if (yPos + 30 > pageHeight - footerMargin) {
+      doc.addPage();
+      addLetterheadBackground();
+      yPos = headerMargin;
+    }
 
     // === Total Section ===
     doc.setFillColor(16, 185, 129);
@@ -131,9 +152,9 @@ export const useOrderPDF = () => {
     doc.setFontSize(13);
     doc.setTextColor(255, 255, 255);
     doc.text(`الإجمالي الكلي: ${totalAmount.toFixed(2)} د.ل`, pageWidth / 2, yPos + 8, { align: 'center' });
-    yPos += 20;
+    yPos += 18;
 
-    // === WhatsApp Notice (Red, Bold, below total - not at page bottom) ===
+    // === WhatsApp Notice (Red, Bold, below total) ===
     doc.setFontSize(10);
     doc.setTextColor(220, 38, 38); // Red color (#DC2626)
     doc.setFont('Amiri', 'bold');

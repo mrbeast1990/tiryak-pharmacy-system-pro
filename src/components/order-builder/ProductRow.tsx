@@ -40,11 +40,8 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, rowNumber }) => {
         </span>
       </td>
 
-      {/* ITEM DESCRIPTION - Sticky Column */}
-      <td className={cn(
-        "py-3 px-3 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)] min-w-[200px]",
-        isSelected ? "bg-emerald-50 dark:bg-emerald-950/20" : "bg-card"
-      )}>
+      {/* ITEM DESCRIPTION - Scrollable with line-clamp-2 */}
+      <td className="py-3 px-3 min-w-[180px]">
         <p className="text-sm font-medium text-foreground line-clamp-2">
           {product.name}
         </p>
@@ -64,8 +61,11 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, rowNumber }) => {
         </span>
       </td>
 
-      {/* Quantity Controls */}
-      <td className="py-3 px-2">
+      {/* Quantity Controls - Sticky */}
+      <td className={cn(
+        "py-3 px-2 sticky right-[70px] z-10 shadow-[-2px_0_8px_rgba(0,0,0,0.1)]",
+        isSelected ? "bg-emerald-50 dark:bg-emerald-950/20" : "bg-card"
+      )}>
         <div className="flex items-center justify-center gap-1">
           <Button
             variant="outline"
@@ -97,8 +97,11 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, rowNumber }) => {
         </div>
       </td>
 
-      {/* T.PRICE */}
-      <td className="py-3 px-2 text-center">
+      {/* T.PRICE - Sticky */}
+      <td className={cn(
+        "py-3 px-2 text-center sticky right-0 z-10",
+        isSelected ? "bg-emerald-50 dark:bg-emerald-950/20" : "bg-card"
+      )}>
         <span className={cn(
           'text-sm font-medium',
           isSelected ? 'text-primary' : 'text-muted-foreground'

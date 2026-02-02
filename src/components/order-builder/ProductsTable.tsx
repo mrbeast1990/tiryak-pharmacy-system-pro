@@ -47,37 +47,43 @@ const ProductsTable: React.FC = () => {
       </CardHeader>
       
       <CardContent className="p-0">
-        {/* Scrollable Table Container */}
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]" dir="ltr">
-            {/* Table Header */}
-            <thead>
-              <tr className="bg-muted/50 border-y text-xs font-medium text-muted-foreground">
-                <th className="py-2 px-2 text-center w-10">NO</th>
-                <th className="py-2 px-2 text-center w-20">CODE</th>
-                <th className="py-2 px-3 text-left sticky left-0 bg-muted/50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)] min-w-[200px]">
-                  ITEM DESCRIPTION
-                </th>
-                <th className="py-2 px-2 text-center w-20">EXP</th>
-                <th className="py-2 px-2 text-center w-16">PRICE</th>
-                <th className="py-2 px-2 text-center w-24">الكمية</th>
-                <th className="py-2 px-2 text-center w-20">T.PRICE</th>
-              </tr>
-            </thead>
+        {/* Table Container with horizontal scroll */}
+        <div className="relative">
+          {/* Scrollable Table */}
+          <div className="overflow-x-auto" style={{ willChange: 'transform' }}>
+            <table className="w-full min-w-[600px]" dir="ltr">
+              {/* Table Header */}
+              <thead>
+                <tr className="bg-muted/50 border-y text-xs font-medium text-muted-foreground">
+                  <th className="py-2 px-2 text-center w-10">NO</th>
+                  <th className="py-2 px-2 text-center w-16">CODE</th>
+                  <th className="py-2 px-3 text-left min-w-[180px]">ITEM DESCRIPTION</th>
+                  <th className="py-2 px-2 text-center w-16">EXP</th>
+                  <th className="py-2 px-2 text-center w-14">PRICE</th>
+                  {/* Sticky columns header */}
+                  <th className="py-2 px-2 text-center w-24 sticky right-[70px] z-20 bg-muted/50 shadow-[-2px_0_8px_rgba(0,0,0,0.1)]">
+                    الكمية
+                  </th>
+                  <th className="py-2 px-2 text-center w-[70px] sticky right-0 z-20 bg-muted/50">
+                    T.PRICE
+                  </th>
+                </tr>
+              </thead>
 
-            {/* Products List */}
-            <tbody className="divide-y max-h-[400px] overflow-y-auto">
-              {filteredProducts.map((product, index) => (
-                <ProductRow key={product.id} product={product} rowNumber={index + 1} />
-              ))}
-            </tbody>
-          </table>
-          
-          {filteredProducts.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground">
-              لا توجد نتائج للبحث
-            </div>
-          )}
+              {/* Products List */}
+              <tbody className="divide-y">
+                {filteredProducts.map((product, index) => (
+                  <ProductRow key={product.id} product={product} rowNumber={index + 1} />
+                ))}
+              </tbody>
+            </table>
+            
+            {filteredProducts.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground">
+                لا توجد نتائج للبحث
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
