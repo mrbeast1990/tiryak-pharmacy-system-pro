@@ -28,19 +28,26 @@ const ProductRow: React.FC<ProductRowProps> = ({ product }) => {
       )}
     >
       {/* Product Name */}
-      <div className="col-span-5">
+      <div className="col-span-4">
         <p className="text-sm font-medium text-foreground truncate">
           {product.name}
         </p>
         {product.expiryDate && (
           <p className="text-xs text-muted-foreground">
-            الصلاحية: {product.expiryDate}
+            {product.expiryDate}
           </p>
         )}
       </div>
 
-      {/* Price */}
+      {/* Code */}
       <div className="col-span-2 text-center">
+        <span className="text-xs text-muted-foreground">
+          {product.code || '-'}
+        </span>
+      </div>
+
+      {/* Price */}
+      <div className="col-span-1 text-center">
         <span className="text-sm text-muted-foreground">
           {product.price.toFixed(2)}
         </span>

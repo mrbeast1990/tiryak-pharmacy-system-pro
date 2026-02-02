@@ -19,7 +19,7 @@ const PRICE_KEYWORDS = ['السعر', 'سعر الوحدة', 'unit_price', 'pric
 const EXPIRY_KEYWORDS = ['الصلاحية', 'تاريخ الصلاحية', 'انتهاء', 'expiry', 'expiry_date', 'exp'];
 
 interface PDFParseResult {
-  products: Array<{ name: string; price: number; expiryDate?: string }>;
+  products: Array<{ name: string; code?: string; price: number; expiryDate?: string }>;
   rawText?: string;
   totalPages?: number;
   extractedCount?: number;
@@ -236,6 +236,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
         const products = result.products.map((p, index) => ({
           id: `pdf-${index}`,
           name: p.name || '',
+          code: p.code || undefined,
           price: parseFloat(String(p.price)) || 0,
           expiryDate: p.expiryDate || undefined,
         }));

@@ -49,8 +49,9 @@ const ProductsTable: React.FC = () => {
       <CardContent className="p-0">
         {/* Table Header */}
         <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-y">
-          <div className="col-span-5 text-right">الصنف</div>
-          <div className="col-span-2 text-center">السعر</div>
+          <div className="col-span-4 text-right">الصنف</div>
+          <div className="col-span-2 text-center">الكود</div>
+          <div className="col-span-1 text-center">السعر</div>
           <div className="col-span-3 text-center">الكمية</div>
           <div className="col-span-2 text-center">الإجمالي</div>
         </div>
