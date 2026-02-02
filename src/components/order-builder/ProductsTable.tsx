@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useOrderBuilderStore } from '@/store/orderBuilderStore';
 import ProductRow from './ProductRow';
 
@@ -14,7 +13,8 @@ const ProductsTable: React.FC = () => {
     
     const query = searchQuery.toLowerCase();
     return products.filter(p => 
-      p.name.toLowerCase().includes(query)
+      p.name.toLowerCase().includes(query) ||
+      (p.code && p.code.toLowerCase().includes(query))
     );
   }, [products, searchQuery]);
 
@@ -47,29 +47,38 @@ const ProductsTable: React.FC = () => {
       </CardHeader>
       
       <CardContent className="p-0">
-        {/* Table Header */}
-        <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-y">
-          <div className="col-span-4 text-right">الصنف</div>
-          <div className="col-span-2 text-center">الكود</div>
-          <div className="col-span-1 text-center">السعر</div>
-          <div className="col-span-3 text-center">الكمية</div>
-          <div className="col-span-2 text-center">الإجمالي</div>
-        </div>
+        {/* Scrollable Table Container */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]" dir="ltr">
+            {/* Table Header */}
+            <thead>
+              <tr className="bg-muted/50 border-y text-xs font-medium text-muted-foreground">
+                <th className="py-2 px-2 text-center w-10">NO</th>
+                <th className="py-2 px-2 text-center w-20">CODE</th>
+                <th className="py-2 px-3 text-left sticky left-0 bg-muted/50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)] min-w-[200px]">
+                  ITEM DESCRIPTION
+                </th>
+                <th className="py-2 px-2 text-center w-20">EXP</th>
+                <th className="py-2 px-2 text-center w-16">PRICE</th>
+                <th className="py-2 px-2 text-center w-24">الكمية</th>
+                <th className="py-2 px-2 text-center w-20">T.PRICE</th>
+              </tr>
+            </thead>
 
-        {/* Products List */}
-        <ScrollArea className="h-[400px]">
-          <div className="divide-y">
-            {filteredProducts.map((product) => (
-              <ProductRow key={product.id} product={product} />
-            ))}
-          </div>
+            {/* Products List */}
+            <tbody className="divide-y max-h-[400px] overflow-y-auto">
+              {filteredProducts.map((product, index) => (
+                <ProductRow key={product.id} product={product} rowNumber={index + 1} />
+              ))}
+            </tbody>
+          </table>
           
           {filteredProducts.length === 0 && (
             <div className="p-8 text-center text-muted-foreground">
               لا توجد نتائج للبحث
             </div>
           )}
-        </ScrollArea>
+        </div>
       </CardContent>
     </Card>
   );
