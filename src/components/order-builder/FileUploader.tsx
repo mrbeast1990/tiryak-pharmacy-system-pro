@@ -1,23 +1,52 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, FileText, Loader2, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useOrderBuilderStore, OrderProduct } from '@/store/orderBuilderStore';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import ColumnMappingDialog, { ColumnMapping } from './ColumnMappingDialog';
+import RawTextDialog from './RawTextDialog';
 
 interface FileUploaderProps {
   onFileProcessed: (products: Omit<OrderProduct, 'quantity'>[]) => void;
 }
 
 // Keywords for column detection
-const NAME_KEYWORDS = ['اسم الصنف', 'الاسم', 'الصنف', 'المنتج', 'trade_name', 'name', 'product'];
-const PRICE_KEYWORDS = ['السعر', 'سعر الوحدة', 'unit_price', 'price', 'سعر'];
+const NAME_KEYWORDS = ['اسم الصنف', 'الاسم', 'الصنف', 'المنتج', 'trade_name', 'name', 'product', 'البند', 'الدواء'];
+const PRICE_KEYWORDS = ['السعر', 'سعر الوحدة', 'unit_price', 'price', 'سعر', 'القيمة'];
 const EXPIRY_KEYWORDS = ['الصلاحية', 'تاريخ الصلاحية', 'انتهاء', 'expiry', 'expiry_date', 'exp'];
+
+interface PDFParseResult {
+  products: Array<{ name: string; price: number; expiryDate?: string }>;
+  rawText?: string;
+  totalPages?: number;
+  extractedCount?: number;
+  confidence?: string;
+}
 
 const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
   const { setIsLoading, isLoading } = useOrderBuilderStore();
   const [dragActive, setDragActive] = useState(false);
+  
+  // Column mapping state for Excel fallback
+  const [showColumnMapping, setShowColumnMapping] = useState(false);
+  const [excelColumns, setExcelColumns] = useState<string[]>([]);
+  const [excelSampleRows, setExcelSampleRows] = useState<string[][]>([]);
+  const [excelAllRows, setExcelAllRows] = useState<any[][]>([]);
+  
+  // Raw text state for PDF
+  const [showRawText, setShowRawText] = useState(false);
+  const [rawTextData, setRawTextData] = useState<{
+    rawText: string;
+    totalPages?: number;
+    extractedCount?: number;
+    confidence?: string;
+  }>({ rawText: '' });
+  
+  // Store last PDF result for retry with column mapping
+  const [lastPDFResult, setLastPDFResult] = useState<PDFParseResult | null>(null);
 
   const findColumnIndex = (headers: string[], keywords: string[]): number => {
     for (let i = 0; i < headers.length; i++) {
@@ -48,7 +77,37 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
     return { headerRowIndex: 0, headers: data[0]?.map(c => String(c || '')) || [] };
   };
 
-  const processExcelFile = async (file: File): Promise<Omit<OrderProduct, 'quantity'>[]> => {
+  const processExcelWithMapping = (
+    allRows: any[][],
+    mapping: ColumnMapping
+  ): Omit<OrderProduct, 'quantity'>[] => {
+    const products: Omit<OrderProduct, 'quantity'>[] = [];
+    
+    // Skip first row (assumed to be header)
+    for (let i = 1; i < allRows.length; i++) {
+      const row = allRows[i];
+      if (!row || !row[mapping.nameColumn]) continue;
+
+      const name = String(row[mapping.nameColumn]).trim();
+      if (!name) continue;
+
+      const price = parseFloat(row[mapping.priceColumn]) || 0;
+      const expiryDate = mapping.expiryColumn !== null 
+        ? String(row[mapping.expiryColumn] || '') 
+        : undefined;
+
+      products.push({
+        id: `excel-mapped-${i}`,
+        name,
+        price,
+        expiryDate: expiryDate || undefined,
+      });
+    }
+
+    return products;
+  };
+
+  const processExcelFile = async (file: File): Promise<Omit<OrderProduct, 'quantity'>[] | 'needs-mapping'> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -68,8 +127,15 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
           const priceIndex = findColumnIndex(headers, PRICE_KEYWORDS);
           const expiryIndex = findColumnIndex(headers, EXPIRY_KEYWORDS);
 
+          // If can't find name column, trigger manual mapping
           if (nameIndex === -1) {
-            throw new Error('لم يتم العثور على عمود اسم الصنف');
+            setExcelColumns(headers);
+            setExcelSampleRows(jsonData.slice(headerRowIndex, headerRowIndex + 4).map(row => 
+              row.map((cell: any) => String(cell || ''))
+            ));
+            setExcelAllRows(jsonData.slice(headerRowIndex));
+            resolve('needs-mapping');
+            return;
           }
 
           // Extract products from rows after header
@@ -104,7 +170,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
     });
   };
 
-  const processPDFFile = async (file: File): Promise<Omit<OrderProduct, 'quantity'>[]> => {
+  const processPDFFile = async (file: File): Promise<PDFParseResult> => {
     // Convert file to base64
     const base64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -129,16 +195,13 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
       throw new Error(error.message || 'فشل في معالجة ملف PDF');
     }
 
-    if (!data?.products || !Array.isArray(data.products)) {
-      throw new Error('لم يتم استخراج أي منتجات من الملف');
-    }
-
-    return data.products.map((p: any, index: number) => ({
-      id: `pdf-${index}`,
-      name: p.name || '',
-      price: parseFloat(p.price) || 0,
-      expiryDate: p.expiryDate || undefined,
-    }));
+    return {
+      products: data?.products || [],
+      rawText: data?.rawText || '',
+      totalPages: data?.totalPages,
+      extractedCount: data?.extractedCount,
+      confidence: data?.confidence,
+    };
   };
 
   const handleFile = useCallback(async (file: File) => {
@@ -152,21 +215,49 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
     setIsLoading(true);
     
     try {
-      let products: Omit<OrderProduct, 'quantity'>[];
-      
       if (fileExt === 'pdf') {
-        products = await processPDFFile(file);
+        const result = await processPDFFile(file);
+        setLastPDFResult(result);
+        
+        // Store raw text for viewing
+        setRawTextData({
+          rawText: result.rawText || '',
+          totalPages: result.totalPages,
+          extractedCount: result.extractedCount,
+          confidence: result.confidence,
+        });
+
+        if (!result.products || result.products.length === 0) {
+          toast.error('لم يتم العثور على منتجات. يمكنك مشاهدة النص الخام للتحقق.');
+          setShowRawText(true);
+          return;
+        }
+
+        const products = result.products.map((p, index) => ({
+          id: `pdf-${index}`,
+          name: p.name || '',
+          price: parseFloat(String(p.price)) || 0,
+          expiryDate: p.expiryDate || undefined,
+        }));
+
+        toast.success(`تم استخراج ${products.length} صنف من ${result.totalPages || 1} صفحة`);
+        onFileProcessed(products);
       } else {
-        products = await processExcelFile(file);
-      }
+        const result = await processExcelFile(file);
+        
+        if (result === 'needs-mapping') {
+          setShowColumnMapping(true);
+          return;
+        }
 
-      if (products.length === 0) {
-        toast.error('لم يتم العثور على منتجات في الملف');
-        return;
-      }
+        if (result.length === 0) {
+          toast.error('لم يتم العثور على منتجات في الملف');
+          return;
+        }
 
-      toast.success(`تم استخراج ${products.length} صنف`);
-      onFileProcessed(products);
+        toast.success(`تم استخراج ${result.length} صنف`);
+        onFileProcessed(result);
+      }
     } catch (error) {
       console.error('File processing error:', error);
       toast.error(error instanceof Error ? error.message : 'فشل في معالجة الملف');
@@ -174,6 +265,20 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
       setIsLoading(false);
     }
   }, [onFileProcessed, setIsLoading]);
+
+  const handleColumnMappingConfirm = (mapping: ColumnMapping) => {
+    setShowColumnMapping(false);
+    
+    const products = processExcelWithMapping(excelAllRows, mapping);
+    
+    if (products.length === 0) {
+      toast.error('لم يتم العثور على منتجات بناءً على التحديد');
+      return;
+    }
+
+    toast.success(`تم استخراج ${products.length} صنف`);
+    onFileProcessed(products);
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -202,51 +307,85 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
   }, [handleFile]);
 
   return (
-    <Card className={`transition-all ${dragActive ? 'ring-2 ring-primary border-primary' : ''}`}>
-      <CardContent className="p-4">
-        <label
-          className="block cursor-pointer"
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <input
-            type="file"
-            accept=".pdf,.xlsx,.xls,.csv"
-            onChange={handleFileInput}
-            className="hidden"
-            disabled={isLoading}
-          />
-          
-          <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-            {isLoading ? (
-              <>
-                <Loader2 className="h-10 w-10 text-primary mx-auto mb-3 animate-spin" />
-                <p className="text-sm font-medium text-foreground">جاري معالجة الملف...</p>
-              </>
-            ) : (
-              <>
-                <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm font-medium text-foreground mb-2">
-                  اضغط لرفع ملف أو اسحبه هنا
-                </p>
-                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    PDF
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <FileSpreadsheet className="h-4 w-4" />
-                    Excel
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </label>
-      </CardContent>
-    </Card>
+    <>
+      <Card className={`transition-all ${dragActive ? 'ring-2 ring-primary border-primary' : ''}`}>
+        <CardContent className="p-4">
+          <label
+            className="block cursor-pointer"
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              accept=".pdf,.xlsx,.xls,.csv"
+              onChange={handleFileInput}
+              className="hidden"
+              disabled={isLoading}
+            />
+            
+            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-10 w-10 text-primary mx-auto mb-3 animate-spin" />
+                  <p className="text-sm font-medium text-foreground">جاري معالجة الملف...</p>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground mb-2">
+                    اضغط لرفع ملف أو اسحبه هنا
+                  </p>
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <FileText className="h-4 w-4" />
+                      PDF
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Excel
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </label>
+
+          {/* Show Raw Text Button for PDF */}
+          {rawTextData.rawText && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full"
+              onClick={() => setShowRawText(true)}
+            >
+              <Eye className="h-4 w-4 ml-2" />
+              عرض النص الخام
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Column Mapping Dialog for Excel */}
+      <ColumnMappingDialog
+        open={showColumnMapping}
+        onOpenChange={setShowColumnMapping}
+        columns={excelColumns}
+        sampleRows={excelSampleRows}
+        onConfirm={handleColumnMappingConfirm}
+      />
+
+      {/* Raw Text Dialog for PDF */}
+      <RawTextDialog
+        open={showRawText}
+        onOpenChange={setShowRawText}
+        rawText={rawTextData.rawText}
+        totalPages={rawTextData.totalPages}
+        extractedCount={rawTextData.extractedCount}
+        confidence={rawTextData.confidence}
+      />
+    </>
   );
 };
 
