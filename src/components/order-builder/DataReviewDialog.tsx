@@ -43,6 +43,12 @@ const DataReviewDialog: React.FC<DataReviewDialogProps> = ({
     setEditableProducts(updated);
   };
 
+  const handleCodeChange = (index: number, value: string) => {
+    const updated = [...editableProducts];
+    updated[index] = { ...updated[index], code: value || undefined };
+    setEditableProducts(updated);
+  };
+
   const handleDelete = (index: number) => {
     const updated = editableProducts.filter((_, i) => i !== index);
     setEditableProducts(updated);
@@ -92,6 +98,16 @@ const DataReviewDialog: React.FC<DataReviewDialogProps> = ({
                 
                 <div className="flex gap-2 mr-8">
                   <div className="flex-1">
+                    <label className="text-xs text-muted-foreground">الكود</label>
+                    <Input
+                      value={product.code || ''}
+                      onChange={(e) => handleCodeChange(index, e.target.value)}
+                      placeholder="CODE"
+                      className="text-left"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div className="flex-1">
                     <label className="text-xs text-muted-foreground">السعر</label>
                     <Input
                       type="number"
@@ -108,8 +124,9 @@ const DataReviewDialog: React.FC<DataReviewDialogProps> = ({
                     <Input
                       value={product.expiryDate || ''}
                       onChange={(e) => handleExpiryChange(index, e.target.value)}
-                      placeholder="تاريخ الصلاحية"
-                      className="text-right"
+                      placeholder="EXP"
+                      className="text-left"
+                      dir="ltr"
                     />
                   </div>
                 </div>

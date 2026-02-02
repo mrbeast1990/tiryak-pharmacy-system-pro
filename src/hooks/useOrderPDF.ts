@@ -77,10 +77,11 @@ export const useOrderPDF = () => {
     doc.text(`التاريخ: ${today}`, pageWidth - margin, yPos, { align: 'right' });
     yPos += 12;
 
-    // === Products Table ===
+    // === Products Table (LTR Layout) ===
     const tableData = selectedProducts.map((p, index) => [
       (index + 1).toString(),
       p.name,
+      p.code || '-',
       p.expiryDate || '-',
       p.price.toFixed(2),
       (p.price * p.quantity).toFixed(2),
@@ -89,31 +90,33 @@ export const useOrderPDF = () => {
     const totalAmount = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
     autoTable(doc, {
-      head: [['NO', 'ITEM DESCRIPTION', 'EXP', 'PRICE', 'T.PRICE']],
+      head: [['NO', 'ITEM DESCRIPTION', 'CODE', 'EXP', 'PRICE', 'T.PRICE']],
       body: tableData,
       startY: yPos,
       margin: { left: margin, right: margin },
       styles: {
         font: 'Amiri',
-        fontSize: 10,
+        fontSize: 9,
         halign: 'center',
         valign: 'middle',
-        cellPadding: 4,
+        cellPadding: 3,
       },
       headStyles: {
         fillColor: [16, 185, 129], // Emerald green
         textColor: [255, 255, 255],
         fontStyle: 'bold',
+        halign: 'center',
       },
       alternateRowStyles: {
         fillColor: [240, 253, 244], // Light green
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 15 },
-        1: { halign: 'right', cellWidth: 'auto' },
-        2: { halign: 'center', cellWidth: 25 },
-        3: { halign: 'center', cellWidth: 25 },
-        4: { halign: 'center', cellWidth: 30 },
+        0: { halign: 'left', cellWidth: 12 },      // NO
+        1: { halign: 'left', cellWidth: 'auto' },  // ITEM DESCRIPTION
+        2: { halign: 'center', cellWidth: 20 },    // CODE
+        3: { halign: 'center', cellWidth: 22 },    // EXP
+        4: { halign: 'center', cellWidth: 22 },    // PRICE
+        5: { halign: 'center', cellWidth: 25 },    // T.PRICE
       },
     });
 
@@ -129,16 +132,24 @@ export const useOrderPDF = () => {
     doc.text(`الإجمالي الكلي: ${totalAmount.toFixed(2)} د.ل`, pageWidth / 2, yPos + 8, { align: 'center' });
     yPos += 20;
 
-    // === Footer / WhatsApp Notice ===
-    doc.setFontSize(10);
-    doc.setTextColor(220, 38, 38); // Red color
-    doc.text('⚠️ الرجاء ارسال نسخة PDF من الفاتورة عند صدورها', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 6;
-    doc.text('مباشراً عبر واتس اب 0915938155', pageWidth / 2, yPos, { align: 'center' });
-    yPos += 10;
-
-    doc.setTextColor(37, 211, 102); // WhatsApp green
-    doc.text('📱 0915938155', pageWidth / 2, yPos, { align: 'center' });
+    // === Footer / WhatsApp Notice (LTR, Red, Bold) ===
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const footerY = pageHeight - 25;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(220, 38, 38); // Red color (#DC2626)
+    doc.setFont('Amiri', 'bold');
+    
+    // WhatsApp icon + number (left aligned)
+    doc.text('0915938155', margin, footerY, { align: 'left' });
+    
+    // Arabic text (right-aligned for proper RTL display)
+    doc.text(
+      'الرجاء ارسال نسخه PDF من الفاتورة عند صدورها مباشراً عبر واتس اب',
+      pageWidth - margin, 
+      footerY, 
+      { align: 'right' }
+    );
 
     // Generate filename
     const filename = `طلبية-${supplierName || 'شراء'}-${new Date().toISOString().split('T')[0]}.pdf`;

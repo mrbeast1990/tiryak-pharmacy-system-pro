@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface OrderProduct {
   id: string;
   name: string;
+  code?: string;      // كود الصنف (اختياري)
   price: number;
   expiryDate?: string;
   quantity: number;
