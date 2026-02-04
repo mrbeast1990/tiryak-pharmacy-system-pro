@@ -195,6 +195,7 @@ export type Database = {
           name: string
           notes: string | null
           repeat_count: number | null
+          scientific_name: string | null
           status: string
           updated_by_id: string | null
           updated_by_name: string | null
@@ -207,6 +208,7 @@ export type Database = {
           name: string
           notes?: string | null
           repeat_count?: number | null
+          scientific_name?: string | null
           status: string
           updated_by_id?: string | null
           updated_by_name?: string | null
@@ -219,6 +221,7 @@ export type Database = {
           name?: string
           notes?: string | null
           repeat_count?: number | null
+          scientific_name?: string | null
           status?: string
           updated_by_id?: string | null
           updated_by_name?: string | null
