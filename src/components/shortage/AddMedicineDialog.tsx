@@ -28,6 +28,7 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
   const { toast } = useToast();
   
   const [medicineName, setMedicineName] = useState('');
+  const [scientificName, setScientificName] = useState('');
   const [priority, setPriority] = useState<'1' | '2' | '3'>('1');
   const [showMedicineSuggestions, setShowMedicineSuggestions] = useState(false);
 
@@ -56,6 +57,7 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
 
     addMedicine({
       name: medicineName.trim(),
+      scientific_name: scientificName.trim() || null,
       status: 'shortage',
       notes: null,
       repeat_count: parseInt(priority),
@@ -73,6 +75,7 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
     });
 
     setMedicineName('');
+    setScientificName('');
     setPriority('1');
     onOpenChange(false);
   };
@@ -148,6 +151,19 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Scientific Name Field (Optional) */}
+          <div className="space-y-2">
+            <Label className="text-right block">
+              {language === 'ar' ? 'الاسم العلمي (اختياري)' : 'Scientific Name (Optional)'}
+            </Label>
+            <Input
+              value={scientificName}
+              onChange={(e) => setScientificName(e.target.value)}
+              placeholder={language === 'ar' ? 'أدخل الاسم العلمي' : 'Enter scientific name'}
+              className="text-right"
+            />
           </div>
 
           {/* Priority Selection */}
