@@ -7,7 +7,6 @@ import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
 import { useSuggestionsStore } from '@/store/suggestionsStore';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -24,8 +23,15 @@ interface AddMedicineDialogProps {
 const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChange }) => {
   const { language, t } = useLanguageStore();
   const { medicines, addMedicine } = usePharmacyStore();
-  const { getFilteredSuggestions, getScientificNameSuggestions, deleteSuggestion } = useSuggestionsStore();
+  const { getFilteredSuggestions, getScientificNameSuggestions, deleteSuggestion, fetchPharmacyGuide } = useSuggestionsStore();
   const { toast } = useToast();
+
+  // جلب بيانات pharmacy_guide عند فتح الحوار
+  useEffect(() => {
+    if (open) {
+      fetchPharmacyGuide();
+    }
+  }, [open, fetchPharmacyGuide]);
   
   const [medicineName, setMedicineName] = useState('');
   const [scientificName, setScientificName] = useState('');

@@ -87,14 +87,16 @@ export const usePharmacyStore = create<PharmacyState>()(
       set({ revenues, revenuesLoading: false });
     },
     
-    addMedicine: async (medicine) => {
+addMedicine: async (medicine) => {
       const user = useAuthStore.getState().user;
       if (!user) {
         console.error("❌ User not authenticated");
         return;
       }
       
-      console.log('🔵 إضافة دواء:', medicine.name, 'بحالة:', medicine.status);
+      // استخراج الاسم العلمي إذا تم تمريره
+      const scientificName = (medicine as any).scientific_name || null;
+      console.log('🔵 إضافة دواء:', medicine.name, 'بحالة:', medicine.status, 'الاسم العلمي:', scientificName);
 
       // التحقق من وجود الدواء بأي حالة
       const { data: existingMedicine } = await supabase
@@ -115,7 +117,8 @@ export const usePharmacyStore = create<PharmacyState>()(
               last_updated: new Date().toISOString(),
               updated_by_id: user.id,
               updated_by_name: user.name,
-              notes: medicine.notes 
+              notes: medicine.notes,
+              scientific_name: scientificName
             })
             .eq('id', existingMedicine.id);
           
@@ -135,7 +138,8 @@ export const usePharmacyStore = create<PharmacyState>()(
               last_updated: new Date().toISOString(),
               updated_by_id: user.id,
               updated_by_name: user.name,
-              notes: medicine.notes 
+              notes: medicine.notes,
+              scientific_name: scientificName
             })
             .eq('id', existingMedicine.id);
           
@@ -154,7 +158,8 @@ export const usePharmacyStore = create<PharmacyState>()(
               last_updated: new Date().toISOString(),
               updated_by_id: user.id,
               updated_by_name: user.name,
-              notes: medicine.notes 
+              notes: medicine.notes,
+              scientific_name: scientificName
             })
             .eq('id', existingMedicine.id);
           
@@ -166,11 +171,12 @@ export const usePharmacyStore = create<PharmacyState>()(
         }
       } else {
         console.log('🆕 إضافة سجل جديد');
-        // إضافة سجل جديد
+        // إضافة سجل جديد مع الاسم العلمي
         const { error } = await supabase.from('medicines').insert({
           name: medicine.name,
           status: medicine.status,
           notes: medicine.notes,
+          scientific_name: scientificName,
           updated_by_id: user.id,
           updated_by_name: user.name,
           repeat_count: 1

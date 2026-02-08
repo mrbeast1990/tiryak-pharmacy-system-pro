@@ -16,6 +16,7 @@ import {
   Send, 
   Loader2,
   Bot,
+  ArrowRight,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -190,11 +191,21 @@ const AdminAIAssistant: React.FC = () => {
       >
         {/* Header */}
         <SheetHeader className="px-4 py-3 bg-gradient-to-l from-emerald-600 to-teal-600 text-white">
-          <SheetTitle className="flex items-center gap-2 text-white">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-              <Bot className="w-5 h-5" />
+          <SheetTitle className="flex items-center justify-between text-white">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <Bot className="w-5 h-5" />
+              </div>
+              مساعد الترياق التحليلي
             </div>
-            مساعد الترياق التحليلي
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(false)}
+              className="text-white hover:bg-white/20 h-8 w-8"
+            >
+              <ArrowRight className="h-5 w-5" />
+            </Button>
           </SheetTitle>
         </SheetHeader>
 
