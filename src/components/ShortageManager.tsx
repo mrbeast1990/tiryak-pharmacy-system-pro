@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Medicine } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, FileText } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, FileText, FileSpreadsheet } from 'lucide-react';
+import { useShortagesExcel } from '@/hooks/useShortagesExcel';
 import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
   const { medicines, updateMedicine, deleteMedicine, loadMedicines } = usePharmacyStore();
   const { toast } = useToast();
   const { exportPDF } = usePDFExport();
+  const { exportMedicinesExcel } = useShortagesExcel();
 
   useEffect(() => {
     loadMedicines();
@@ -138,16 +140,19 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       
       let yPosition = 60;
       
+      // Header with 4 columns: No. | Drug Name | Description | Quantity
       doc.setFillColor(65, 105, 225);
-      doc.rect(30, yPosition - 6, 20, 10, 'F');
-      doc.rect(50, yPosition - 6, 80, 10, 'F');
-      doc.rect(130, yPosition - 6, 40, 10, 'F');
+      doc.rect(15, yPosition - 6, 15, 10, 'F');  // No.
+      doc.rect(30, yPosition - 6, 55, 10, 'F');  // Drug Name
+      doc.rect(85, yPosition - 6, 55, 10, 'F');  // Description
+      doc.rect(140, yPosition - 6, 55, 10, 'F'); // Quantity
       
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.text('No.', 40, yPosition, { align: 'center' });
-      doc.text('Drug Name', 90, yPosition, { align: 'center' });
-      doc.text('Quantity', 150, yPosition, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text('No.', 22.5, yPosition, { align: 'center' });
+      doc.text('Drug Name', 57.5, yPosition, { align: 'center' });
+      doc.text('Description', 112.5, yPosition, { align: 'center' });
+      doc.text('Quantity', 167.5, yPosition, { align: 'center' });
       
       doc.setTextColor(0, 0, 0);
       yPosition += 15;
@@ -163,16 +168,26 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
       uniqueShortages.forEach((medicine, index) => {
         doc.setDrawColor(220, 220, 220);
         doc.setLineWidth(0.1);
-        doc.line(30, yPosition - 8, 170, yPosition - 8);
-        doc.line(30, yPosition + 2, 170, yPosition + 2);
-        doc.line(30, yPosition - 8, 30, yPosition + 2);
-        doc.line(50, yPosition - 8, 50, yPosition + 2);
-        doc.line(130, yPosition - 8, 130, yPosition + 2);
-        doc.line(170, yPosition - 8, 170, yPosition + 2);
+        // Draw table grid for 4 columns
+        doc.line(15, yPosition - 8, 195, yPosition - 8);  // top
+        doc.line(15, yPosition + 2, 195, yPosition + 2);  // bottom
+        doc.line(15, yPosition - 8, 15, yPosition + 2);   // left border
+        doc.line(30, yPosition - 8, 30, yPosition + 2);   // after No.
+        doc.line(85, yPosition - 8, 85, yPosition + 2);   // after Drug Name
+        doc.line(140, yPosition - 8, 140, yPosition + 2); // after Description
+        doc.line(195, yPosition - 8, 195, yPosition + 2); // right border
         
-        doc.setFontSize(10);
-        doc.text((index + 1).toString(), 40, yPosition - 2, { align: 'center' });
-        doc.text(medicine.name, 55, yPosition - 2, { align: 'left' });
+        doc.setFontSize(9);
+        doc.text((index + 1).toString(), 22.5, yPosition - 2, { align: 'center' });
+        
+        // Truncate drug name if too long
+        const drugName = medicine.name.length > 25 ? medicine.name.substring(0, 22) + '...' : medicine.name;
+        doc.text(drugName, 32, yPosition - 2, { align: 'left' });
+        
+        // Add scientific name (Description column)
+        const description = medicine.scientific_name || '-';
+        const truncatedDesc = description.length > 25 ? description.substring(0, 22) + '...' : description;
+        doc.text(truncatedDesc, 87, yPosition - 2, { align: 'left' });
         
         yPosition += 10;
         
@@ -263,10 +278,16 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                 <option value="repeat">{language === 'ar' ? 'التكرار' : 'Repeat'}</option>
               </select>
               {checkPermission('export_shortages_pdf') && (
-                <Button onClick={exportShortagesPDF} size="sm" variant="outline" className="text-xs rounded-lg">
-                  <FileText className="w-3 h-3 ml-1" />
-                  PDF
-                </Button>
+                <>
+                  <Button onClick={exportShortagesPDF} size="sm" variant="outline" className="text-xs rounded-lg">
+                    <FileText className="w-3 h-3 ml-1" />
+                    PDF
+                  </Button>
+                  <Button onClick={() => exportMedicinesExcel(shortages)} size="sm" variant="outline" className="text-xs rounded-lg">
+                    <FileSpreadsheet className="w-3 h-3 ml-1" />
+                    Excel
+                  </Button>
+                </>
               )}
             </div>
           </div>

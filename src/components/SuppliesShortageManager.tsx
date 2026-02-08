@@ -5,7 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore, Supply } from '@/store/pharmacyStore';
-import { ArrowRight, Plus, Search, AlertCircle, FileText } from 'lucide-react';
+import { ArrowRight, Plus, Search, AlertCircle, FileText, FileSpreadsheet } from 'lucide-react';
+import { useShortagesExcel } from '@/hooks/useShortagesExcel';
 import { useToast } from '@/hooks/use-toast';
 import { usePDFExport } from '@/hooks/usePDFExport';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,7 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
   const { supplies, updateSupply, deleteSupply, loadSupplies } = usePharmacyStore();
   const { toast } = useToast();
   const { exportPDF } = usePDFExport();
+  const { exportSuppliesExcel } = useShortagesExcel();
 
   useEffect(() => {
     loadSupplies();
@@ -248,10 +250,16 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
                 <option value="repeat">{language === 'ar' ? 'التكرار' : 'Repeat'}</option>
               </select>
               {checkPermission('export_shortages_pdf') && (
-                <Button onClick={exportShortagesPDF} size="sm" variant="outline" className="text-xs rounded-lg">
-                  <FileText className="w-3 h-3 ml-1" />
-                  PDF
-                </Button>
+                <>
+                  <Button onClick={exportShortagesPDF} size="sm" variant="outline" className="text-xs rounded-lg">
+                    <FileText className="w-3 h-3 ml-1" />
+                    PDF
+                  </Button>
+                  <Button onClick={() => exportSuppliesExcel(shortages)} size="sm" variant="outline" className="text-xs rounded-lg">
+                    <FileSpreadsheet className="w-3 h-3 ml-1" />
+                    Excel
+                  </Button>
+                </>
               )}
             </div>
           </div>
