@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,13 +13,9 @@ import {
 } from '@/components/ui/sheet';
 import { 
   BarChart3, 
-  TrendingUp, 
-  AlertTriangle, 
-  RefreshCw, 
   Send, 
   Loader2,
   Bot,
-  X
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -29,13 +26,6 @@ interface Message {
 }
 
 const ANALYTICS_URL = `https://qoyawkfbyocgtyxlpgnp.supabase.co/functions/v1/tiryak-analytics-ai`;
-
-const suggestedQuestions = [
-  { icon: TrendingUp, text: 'ما صافي الربح لهذا الشهر؟', color: 'text-emerald-600' },
-  { icon: AlertTriangle, text: 'هل يوجد خلل في المصاريف؟', color: 'text-orange-500' },
-  { icon: RefreshCw, text: 'ما الأصناف المتكررة في النواقص؟', color: 'text-blue-500' },
-  { icon: BarChart3, text: 'أعطني ملخصاً مالياً شاملاً', color: 'text-purple-500' },
-];
 
 const AdminAIAssistant: React.FC = () => {
   const { user } = useAuthStore();
@@ -67,6 +57,17 @@ const AdminAIAssistant: React.FC = () => {
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
 
+    // الحصول على جلسة المستخدم
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'يرجى تسجيل الدخول أولاً',
+      }]);
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -82,7 +83,7 @@ const AdminAIAssistant: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFveWF3a2ZieW9jZ3R5eGxwZ25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTgyNTcsImV4cCI6MjA2NTQ5NDI1N30.8neVXjoVGgh-bcyL5f5FUZnRkJ4eVfaTvwvItpwmEKI`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           messages: [...messages, userMessage].map(m => ({
@@ -169,10 +170,6 @@ const AdminAIAssistant: React.FC = () => {
     sendMessage(input);
   };
 
-  const handleSuggestedQuestion = (text: string) => {
-    sendMessage(text);
-  };
-
   // لا يظهر المكون إلا للمسؤولين
   if (!isAdmin) return null;
 
@@ -204,46 +201,14 @@ const AdminAIAssistant: React.FC = () => {
         {/* Messages Area */}
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
           {messages.length === 0 ? (
-            <div className="space-y-4">
-              {/* Welcome Message */}
-              <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
-                    <Bot className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm text-emerald-800 font-medium">
-                      مرحباً! أنا مساعدك التحليلي لصيدلية الترياق الشافي. 
-                    </p>
-                    <p className="text-sm text-emerald-700">
-                      يمكنني مساعدتك في:
-                    </p>
-                    <ul className="text-sm text-emerald-700 list-disc list-inside space-y-1">
-                      <li>تحليل الأرباح والخسائر</li>
-                      <li>كشف الخلل المالي</li>
-                      <li>تحليل أنماط النواقص المتكررة</li>
-                    </ul>
-                  </div>
+            <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center shrink-0">
+                  <Bot className="w-5 h-5 text-white" />
                 </div>
-              </div>
-
-              {/* Suggested Questions */}
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground font-medium">اقتراحات سريعة:</p>
-                <div className="grid gap-2">
-                  {suggestedQuestions.map((q, idx) => (
-                    <Button
-                      key={idx}
-                      variant="outline"
-                      className="justify-start h-auto py-3 px-4 text-right"
-                      onClick={() => handleSuggestedQuestion(q.text)}
-                      disabled={isLoading}
-                    >
-                      <q.icon className={`w-5 h-5 ml-3 shrink-0 ${q.color}`} />
-                      <span className="text-sm">{q.text}</span>
-                    </Button>
-                  ))}
-                </div>
+                <p className="text-sm text-emerald-800 font-medium">
+                  مرحباً! أنا مساعدك التحليلي لصيدلية الترياق.
+                </p>
               </div>
             </div>
           ) : (
