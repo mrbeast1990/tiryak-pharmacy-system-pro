@@ -171,19 +171,26 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
               <>
                 {/* Top row: Medicine name + Edit button + Priority Badge */}
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <h3 className="font-bold text-[15px] text-foreground truncate">
-                      {medicine.name}
-                    </h3>
-                    {canEdit && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-5 w-5 text-muted-foreground hover:text-foreground shrink-0" 
-                        onClick={() => setIsEditing(true)}
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-bold text-[15px] text-foreground truncate">
+                        {medicine.name}
+                      </h3>
+                      {canEdit && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-5 w-5 text-muted-foreground hover:text-foreground shrink-0" 
+                          onClick={() => setIsEditing(true)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    {medicine.scientific_name && (
+                      <p className="text-xs text-muted-foreground/60 italic truncate mt-0.5">
+                        {medicine.scientific_name}
+                      </p>
                     )}
                   </div>
                   
