@@ -1,7 +1,7 @@
 project_id = "qoyawkfbyocgtyxlpgnp"
 
 [functions.approve-request]
-verify_jwt = true
+verify_jwt = false
 
 [functions.create-admin-user]
 verify_jwt = false
@@ -13,10 +13,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.reject-request]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-notification]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-periodic-notification]
 verify_jwt = false
@@ -25,4 +25,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.tiryak-ai]
-verify_jwt = true
+verify_jwt = false
+
+[functions.tiryak-analytics-ai]
+verify_jwt = false
