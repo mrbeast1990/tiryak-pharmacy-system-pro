@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SuggestionsState {
   customSuggestions: string[];
   deletedSuggestions: Set<string>;
+  pharmacyGuideNames: string[];
+  pharmacyGuideScientificNames: string[];
   addCustomSuggestion: (suggestion: string) => void;
   deleteSuggestion: (suggestion: string) => void;
+  fetchPharmacyGuide: () => Promise<void>;
   getFilteredSuggestions: (medicines: any[], query: string) => string[];
   getScientificNameSuggestions: (medicines: any[], query: string) => string[];
 }
@@ -15,6 +19,8 @@ export const useSuggestionsStore = create<SuggestionsState>()(
     (set, get) => ({
       customSuggestions: [],
       deletedSuggestions: new Set(),
+      pharmacyGuideNames: [],
+      pharmacyGuideScientificNames: [],
 
       addCustomSuggestion: (suggestion: string) => {
         const trimmed = suggestion.trim();
@@ -35,10 +41,29 @@ export const useSuggestionsStore = create<SuggestionsState>()(
         }));
       },
 
+      fetchPharmacyGuide: async () => {
+        const { data, error } = await supabase
+          .from('pharmacy_guide')
+          .select('trade_name, scientific_name');
+        
+        if (error) {
+          console.error('Error fetching pharmacy guide:', error);
+          return;
+        }
+        
+        const names = data?.map(item => item.trade_name) || [];
+        const scientificNames = data
+          ?.filter(item => item.scientific_name)
+          .map(item => item.scientific_name!)
+          .filter((name, index, self) => self.indexOf(name) === index) || [];
+        
+        set({ pharmacyGuideNames: names, pharmacyGuideScientificNames: scientificNames });
+      },
+
       getFilteredSuggestions: (medicines: any[], query: string) => {
         if (query.length < 2) return [];
         
-        const { customSuggestions, deletedSuggestions } = get();
+        const { customSuggestions, deletedSuggestions, pharmacyGuideNames } = get();
         const lowerQuery = query.toLowerCase();
 
         // Get medicine suggestions from database (including previously available items)
@@ -49,6 +74,13 @@ export const useSuggestionsStore = create<SuggestionsState>()(
           )
           .map(medicine => medicine.name);
 
+        // Get suggestions from pharmacy_guide
+        const guideMatches = pharmacyGuideNames
+          .filter(name => 
+            name.toLowerCase().includes(lowerQuery) &&
+            !deletedSuggestions.has(name)
+          );
+
         // Get custom suggestions
         const filteredCustom = customSuggestions
           .filter(suggestion => 
@@ -57,7 +89,7 @@ export const useSuggestionsStore = create<SuggestionsState>()(
           );
 
         // Combine and deduplicate
-        const allSuggestions = [...new Set([...medicineSuggestions, ...filteredCustom])];
+        const allSuggestions = [...new Set([...medicineSuggestions, ...guideMatches, ...filteredCustom])];
         
         return allSuggestions.slice(0, 8);
       },
@@ -65,20 +97,29 @@ export const useSuggestionsStore = create<SuggestionsState>()(
       getScientificNameSuggestions: (medicines: any[], query: string) => {
         if (query.length < 2) return [];
         
-        const { deletedSuggestions } = get();
+        const { deletedSuggestions, pharmacyGuideScientificNames } = get();
         const lowerQuery = query.toLowerCase();
 
         // Get unique scientific names from medicines
-        const scientificNames = medicines
+        const medicineScientificNames = medicines
           .filter(m => 
             m.scientific_name && 
             m.scientific_name.toLowerCase().includes(lowerQuery) &&
             !deletedSuggestions.has(m.scientific_name)
           )
-          .map(m => m.scientific_name)
-          .filter((name, index, self) => self.indexOf(name) === index);
+          .map(m => m.scientific_name);
 
-        return scientificNames.slice(0, 8);
+        // Get scientific names from pharmacy_guide
+        const guideScientificNames = pharmacyGuideScientificNames
+          .filter(name => 
+            name.toLowerCase().includes(lowerQuery) &&
+            !deletedSuggestions.has(name)
+          );
+
+        // Combine and deduplicate
+        const allNames = [...new Set([...medicineScientificNames, ...guideScientificNames])];
+
+        return allNames.slice(0, 8);
       }
     }),
     {
