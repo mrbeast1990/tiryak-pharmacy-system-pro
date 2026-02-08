@@ -21,6 +21,7 @@ import ActionCards from './dashboard/ActionCards';
 import AdminTools from './dashboard/AdminTools';
 import DashboardFooter from './dashboard/DashboardFooter';
 import OfflineIndicator from './OfflineIndicator';
+import AdminAIAssistant from './AdminAIAssistant';
 
 interface DashboardProps {
   user: any;
@@ -121,6 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         )}
         
         <OfflineIndicator />
+        <AdminAIAssistant />
       </div>
     </SafeWrapper>
   );
