@@ -7,6 +7,7 @@ interface SuggestionsState {
   addCustomSuggestion: (suggestion: string) => void;
   deleteSuggestion: (suggestion: string) => void;
   getFilteredSuggestions: (medicines: any[], query: string) => string[];
+  getScientificNameSuggestions: (medicines: any[], query: string) => string[];
 }
 
 export const useSuggestionsStore = create<SuggestionsState>()(
@@ -59,6 +60,25 @@ export const useSuggestionsStore = create<SuggestionsState>()(
         const allSuggestions = [...new Set([...medicineSuggestions, ...filteredCustom])];
         
         return allSuggestions.slice(0, 8);
+      },
+
+      getScientificNameSuggestions: (medicines: any[], query: string) => {
+        if (query.length < 2) return [];
+        
+        const { deletedSuggestions } = get();
+        const lowerQuery = query.toLowerCase();
+
+        // Get unique scientific names from medicines
+        const scientificNames = medicines
+          .filter(m => 
+            m.scientific_name && 
+            m.scientific_name.toLowerCase().includes(lowerQuery) &&
+            !deletedSuggestions.has(m.scientific_name)
+          )
+          .map(m => m.scientific_name)
+          .filter((name, index, self) => self.indexOf(name) === index);
+
+        return scientificNames.slice(0, 8);
       }
     }),
     {

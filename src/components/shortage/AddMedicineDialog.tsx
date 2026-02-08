@@ -24,15 +24,17 @@ interface AddMedicineDialogProps {
 const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChange }) => {
   const { language, t } = useLanguageStore();
   const { medicines, addMedicine } = usePharmacyStore();
-  const { getFilteredSuggestions, deleteSuggestion } = useSuggestionsStore();
+  const { getFilteredSuggestions, getScientificNameSuggestions, deleteSuggestion } = useSuggestionsStore();
   const { toast } = useToast();
   
   const [medicineName, setMedicineName] = useState('');
   const [scientificName, setScientificName] = useState('');
   const [priority, setPriority] = useState<'1' | '2' | '3'>('1');
   const [showMedicineSuggestions, setShowMedicineSuggestions] = useState(false);
+  const [showScientificSuggestions, setShowScientificSuggestions] = useState(false);
 
   const medicineSuggestions = getFilteredSuggestions(medicines, medicineName);
+  const scientificSuggestions = getScientificNameSuggestions(medicines, scientificName);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,12 +160,51 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
             <Label className="text-right block">
               {language === 'ar' ? 'الاسم العلمي (اختياري)' : 'Scientific Name (Optional)'}
             </Label>
-            <Input
-              value={scientificName}
-              onChange={(e) => setScientificName(e.target.value)}
-              placeholder={language === 'ar' ? 'أدخل الاسم العلمي' : 'Enter scientific name'}
-              className="text-right"
-            />
+            <div className="relative">
+              <Input
+                value={scientificName}
+                onChange={(e) => {
+                  setScientificName(e.target.value);
+                  setShowScientificSuggestions(e.target.value.length >= 2);
+                }}
+                onFocus={() => setShowScientificSuggestions(scientificName.length >= 2)}
+                onBlur={() => setTimeout(() => setShowScientificSuggestions(false), 200)}
+                placeholder={language === 'ar' ? 'أدخل الاسم العلمي' : 'Enter scientific name'}
+                className="text-right"
+              />
+              {showScientificSuggestions && scientificSuggestions.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {scientificSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className="px-3 py-2 hover:bg-accent cursor-pointer text-right text-sm flex items-center justify-between"
+                    >
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 hover:bg-destructive/10 hover:text-destructive shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSuggestion(suggestion);
+                        }}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      <span
+                        onClick={() => {
+                          setScientificName(suggestion);
+                          setShowScientificSuggestions(false);
+                        }}
+                        className="flex-1 text-right"
+                      >
+                        {suggestion}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Priority Selection */}
