@@ -92,11 +92,15 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     });
   };
 
-  const handleUpdateName = (id: string, name: string) => {
-    updateMedicine(id, { name });
+  const handleUpdateName = (id: string, name: string, scientificName?: string) => {
+    const updates: any = { name };
+    if (scientificName !== undefined) {
+      updates.scientific_name = scientificName || null;
+    }
+    updateMedicine(id, updates);
     toast({
       title: "تم التحديث",
-      description: "تم تحديث اسم الدواء بنجاح",
+      description: "تم تحديث بيانات الدواء بنجاح",
     });
   };
 
