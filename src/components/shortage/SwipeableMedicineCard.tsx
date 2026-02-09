@@ -25,7 +25,7 @@ interface SwipeableMedicineCardProps {
   medicine: Medicine;
   onMarkAvailable: (medicine: Medicine) => void;
   onDelete: (medicine: Medicine) => void;
-  onUpdateName: (id: string, name: string) => void;
+  onUpdateName: (id: string, name: string, scientificName?: string) => void;
   onUpdatePriority?: (id: string, priority: number) => void;
   canEdit: boolean;
   canDelete: boolean;
@@ -43,13 +43,14 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
   const { language } = useLanguageStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(medicine.name);
+  const [editedScientificName, setEditedScientificName] = useState(medicine.scientific_name || '');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAvailableDialog, setShowAvailableDialog] = useState(false);
   const [showPriorityPopover, setShowPriorityPopover] = useState(false);
 
   const handleSave = () => {
     if (editedName.trim() && !/^\s/.test(editedName)) {
-      onUpdateName(medicine.id, editedName);
+      onUpdateName(medicine.id, editedName, editedScientificName.trim() || undefined);
       setIsEditing(false);
     }
   };
@@ -145,27 +146,39 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
           {/* Content */}
           <div className="flex-1 p-2 py-2.5">
             {isEditing ? (
-              <div className="flex items-center gap-2">
-                <Input 
-                  value={editedName} 
-                  onChange={(e) => setEditedName(e.target.value)} 
-                  className="h-7 text-sm"
-                  autoFocus
-                />
-                <Button size="icon" className="h-7 w-7 shrink-0 bg-emerald-600 hover:bg-emerald-700" onClick={handleSave}>
-                  <Save className="h-3 w-3" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="h-7 w-7 shrink-0" 
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditedName(medicine.name);
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Input 
+                    value={editedName} 
+                    onChange={(e) => setEditedName(e.target.value)} 
+                    className="h-7 text-sm"
+                    placeholder={language === 'ar' ? 'اسم الدواء' : 'Drug name'}
+                    autoFocus
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    value={editedScientificName} 
+                    onChange={(e) => setEditedScientificName(e.target.value)} 
+                    className="h-7 text-sm text-muted-foreground"
+                    placeholder={language === 'ar' ? 'الاسم العلمي (اختياري)' : 'Scientific name (optional)'}
+                  />
+                  <Button size="icon" className="h-7 w-7 shrink-0 bg-emerald-600 hover:bg-emerald-700" onClick={handleSave}>
+                    <Save className="h-3 w-3" />
+                  </Button>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-7 w-7 shrink-0" 
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditedName(medicine.name);
+                      setEditedScientificName(medicine.scientific_name || '');
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             ) : (
               <>
