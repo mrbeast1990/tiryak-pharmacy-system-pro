@@ -1,16 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePaymentsStore } from '@/store/paymentsStore';
 import PaymentCard from './PaymentCard';
-import { Wallet, SearchX } from 'lucide-react';
+import { Wallet, SearchX, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+const PAGE_SIZE = 50;
 
 interface PaymentsListProps {
   onViewAttachment?: (url: string) => void;
 }
 
 const PaymentsList: React.FC<PaymentsListProps> = ({ onViewAttachment }) => {
-  const { getFilteredPayments, loading } = usePaymentsStore();
-  
+  const { getFilteredPayments, loading, filters } = usePaymentsStore();
+  const [currentPage, setCurrentPage] = useState(1);
+
   const payments = getFilteredPayments();
+  const totalPages = Math.ceil(payments.length / PAGE_SIZE);
+  const paginatedPayments = payments.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.company, filters.showUndeductedOnly, filters.dateFilter, filters.selectedMonth, filters.selectedYear]);
 
   if (loading) {
     return (
@@ -38,10 +49,13 @@ const PaymentsList: React.FC<PaymentsListProps> = ({ onViewAttachment }) => {
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Wallet className="w-4 h-4" />
         <span>السدادات ({payments.length})</span>
+        {totalPages > 1 && (
+          <span className="text-xs">- صفحة {currentPage} من {totalPages}</span>
+        )}
       </div>
       
       <div className="space-y-2">
-        {payments.map((payment) => (
+        {paginatedPayments.map((payment) => (
           <PaymentCard
             key={payment.id}
             payment={payment}
@@ -49,6 +63,57 @@ const PaymentsList: React.FC<PaymentsListProps> = ({ onViewAttachment }) => {
           />
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => p - 1)}
+            className="h-8 text-xs"
+          >
+            <ChevronRight className="w-4 h-4 ml-1" />
+            السابق
+          </Button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className="h-8 w-8 text-xs p-0"
+                >
+                  {pageNum}
+                </Button>
+              );
+            })}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => p + 1)}
+            className="h-8 text-xs"
+          >
+            التالي
+            <ChevronLeft className="w-4 h-4 mr-1" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

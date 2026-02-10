@@ -2,22 +2,29 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { usePaymentsStore, Company } from '@/store/paymentsStore';
-import { Plus, Building2, User, Phone, CreditCard, Pencil } from 'lucide-react';
+import { Plus, Building2, User, Phone, CreditCard, Pencil, ChevronsUpDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import EditCompanyDialog from './EditCompanyDialog';
 
 interface CompanySelectorProps {
@@ -27,6 +34,7 @@ interface CompanySelectorProps {
 
 const CompanySelector: React.FC<CompanySelectorProps> = ({ value, onChange }) => {
   const { companies, addCompany } = usePaymentsStore();
+  const [open, setOpen] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedCompanyForEdit, setSelectedCompanyForEdit] = useState<Company | null>(null);
@@ -39,12 +47,7 @@ const CompanySelector: React.FC<CompanySelectorProps> = ({ value, onChange }) =>
   });
 
   const resetForm = () => {
-    setNewCompanyData({
-      name: '',
-      representative_name: '',
-      phone: '',
-      account_number: '',
-    });
+    setNewCompanyData({ name: '', representative_name: '', phone: '', account_number: '' });
   };
 
   const handleAddCompany = async () => {
@@ -52,8 +55,6 @@ const CompanySelector: React.FC<CompanySelectorProps> = ({ value, onChange }) =>
       toast.error('يرجى إدخال اسم الشركة');
       return;
     }
-
-    // Check if company already exists
     if (companies.some(c => c.name.toLowerCase() === newCompanyData.name.trim().toLowerCase())) {
       toast.error('هذه الشركة موجودة بالفعل');
       return;
@@ -93,31 +94,50 @@ const CompanySelector: React.FC<CompanySelectorProps> = ({ value, onChange }) =>
       </label>
       
       <div className="flex gap-2">
-        <Select value={value} onValueChange={onChange}>
-          <SelectTrigger className="flex-1 bg-background">
-            <SelectValue placeholder="اختر الشركة..." />
-          </SelectTrigger>
-          <SelectContent className="bg-background z-50">
-            {companies.length === 0 ? (
-              <div className="py-4 text-center text-sm text-muted-foreground">
-                لا توجد شركات. أضف شركة جديدة.
-              </div>
-            ) : (
-              companies.map((company) => (
-                <SelectItem key={company.id} value={company.name}>
-                  <div className="flex items-center gap-2">
-                    <span>{company.name}</span>
-                    {company.representative_name && (
-                      <span className="text-xs text-muted-foreground">
-                        ({company.representative_name})
-                      </span>
-                    )}
-                  </div>
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="flex-1 justify-between bg-background font-normal"
+            >
+              {value ? value : 'اختر الشركة...'}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50" align="start">
+            <Command>
+              <CommandInput placeholder="ابحث عن شركة..." className="text-right" />
+              <CommandList>
+                <CommandEmpty>لا توجد شركة بهذا الاسم</CommandEmpty>
+                <CommandGroup>
+                  {companies.map((company) => (
+                    <CommandItem
+                      key={company.id}
+                      value={`${company.name} ${company.representative_name || ''}`}
+                      onSelect={() => {
+                        onChange(company.name);
+                        setOpen(false);
+                      }}
+                      className="text-right"
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", value === company.name ? "opacity-100" : "opacity-0")} />
+                      <div className="flex-1 text-right">
+                        <span>{company.name}</span>
+                        {company.representative_name && (
+                          <span className="text-xs text-muted-foreground mr-2">
+                            ({company.representative_name})
+                          </span>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
 
         {selectedCompany && (
           <Button
@@ -169,10 +189,7 @@ const CompanySelector: React.FC<CompanySelectorProps> = ({ value, onChange }) =>
       )}
 
       {/* Dialog لإضافة شركة جديدة */}
-      <Dialog open={showAddDialog} onOpenChange={(open) => {
-        setShowAddDialog(open);
-        if (!open) resetForm();
-      }}>
+      <Dialog open={showAddDialog} onOpenChange={(o) => { setShowAddDialog(o); if (!o) resetForm(); }}>
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -180,99 +197,50 @@ const CompanySelector: React.FC<CompanySelectorProps> = ({ value, onChange }) =>
               إضافة شركة جديدة
             </DialogTitle>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
-            {/* اسم الشركة */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-muted-foreground" />
                 اسم الشركة <span className="text-destructive">*</span>
               </label>
-              <Input
-                value={newCompanyData.name}
-                onChange={(e) => setNewCompanyData({ ...newCompanyData, name: e.target.value })}
-                placeholder="اسم الشركة..."
-                className="text-right"
-                autoFocus
-              />
+              <Input value={newCompanyData.name} onChange={(e) => setNewCompanyData({ ...newCompanyData, name: e.target.value })} placeholder="اسم الشركة..." className="text-right" autoFocus />
             </div>
-
-            {/* اسم المندوب */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
                 <User className="w-4 h-4 text-muted-foreground" />
                 اسم المندوب
               </label>
-              <Input
-                value={newCompanyData.representative_name}
-                onChange={(e) => setNewCompanyData({ ...newCompanyData, representative_name: e.target.value })}
-                placeholder="اسم مندوب الشركة..."
-                className="text-right"
-              />
+              <Input value={newCompanyData.representative_name} onChange={(e) => setNewCompanyData({ ...newCompanyData, representative_name: e.target.value })} placeholder="اسم مندوب الشركة..." className="text-right" />
             </div>
-
-            {/* رقم الهاتف */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
                 <Phone className="w-4 h-4 text-muted-foreground" />
                 رقم الهاتف
               </label>
-              <Input
-                value={newCompanyData.phone}
-                onChange={(e) => setNewCompanyData({ ...newCompanyData, phone: e.target.value })}
-                placeholder="رقم هاتف المندوب..."
-                className="text-right"
-                dir="ltr"
-                type="tel"
-              />
+              <Input value={newCompanyData.phone} onChange={(e) => setNewCompanyData({ ...newCompanyData, phone: e.target.value })} placeholder="رقم هاتف المندوب..." className="text-right" dir="ltr" type="tel" />
             </div>
-
-            {/* رقم الحساب */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-muted-foreground" />
                 رقم الحساب البنكي
               </label>
-              <Input
-                value={newCompanyData.account_number}
-                onChange={(e) => setNewCompanyData({ ...newCompanyData, account_number: e.target.value })}
-                placeholder="رقم الحساب البنكي..."
-                className="text-right"
-                dir="ltr"
-              />
+              <Input value={newCompanyData.account_number} onChange={(e) => setNewCompanyData({ ...newCompanyData, account_number: e.target.value })} placeholder="رقم الحساب البنكي..." className="text-right" dir="ltr" />
             </div>
           </div>
-
           <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAddDialog(false);
-                resetForm();
-              }}
-            >
-              إلغاء
-            </Button>
-            <Button
-              onClick={handleAddCompany}
-              disabled={isAdding || !newCompanyData.name.trim()}
-              className="bg-primary hover:bg-primary/90"
-            >
+            <Button variant="outline" onClick={() => { setShowAddDialog(false); resetForm(); }}>إلغاء</Button>
+            <Button onClick={handleAddCompany} disabled={isAdding || !newCompanyData.name.trim()} className="bg-primary hover:bg-primary/90">
               {isAdding ? 'جاري الإضافة...' : 'إضافة الشركة'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog لتعديل الشركة */}
       {selectedCompanyForEdit && (
         <EditCompanyDialog
           company={selectedCompanyForEdit}
           open={showEditDialog}
-          onOpenChange={(open) => {
-            setShowEditDialog(open);
-            if (!open) setSelectedCompanyForEdit(null);
-          }}
+          onOpenChange={(o) => { setShowEditDialog(o); if (!o) setSelectedCompanyForEdit(null); }}
         />
       )}
     </div>

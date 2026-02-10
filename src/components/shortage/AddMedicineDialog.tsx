@@ -54,6 +54,15 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
       return;
     }
 
+    if (!scientificName.trim()) {
+      toast({
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' ? "يرجى إدخال الاسم العلمي" : "Please enter scientific name",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (/^\s/.test(medicineName)) {
       toast({
         title: language === 'ar' ? "خطأ" : "Error",
@@ -161,10 +170,10 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
             </div>
           </div>
 
-          {/* Scientific Name Field (Optional) */}
+          {/* Scientific Name Field (Required) */}
           <div className="space-y-2">
             <Label className="text-right block">
-              {language === 'ar' ? 'الاسم العلمي (اختياري)' : 'Scientific Name (Optional)'}
+              {language === 'ar' ? 'الاسم العلمي' : 'Scientific Name'} <span className="text-destructive">*</span>
             </Label>
             <div className="relative">
               <Input

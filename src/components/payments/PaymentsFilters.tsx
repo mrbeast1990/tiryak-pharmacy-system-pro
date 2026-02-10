@@ -7,9 +7,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePaymentsStore } from '@/store/paymentsStore';
 import { Filter, X } from 'lucide-react';
+
+const MONTHS = [
+  { value: 1, label: 'يناير' },
+  { value: 2, label: 'فبراير' },
+  { value: 3, label: 'مارس' },
+  { value: 4, label: 'أبريل' },
+  { value: 5, label: 'مايو' },
+  { value: 6, label: 'يونيو' },
+  { value: 7, label: 'يوليو' },
+  { value: 8, label: 'أغسطس' },
+  { value: 9, label: 'سبتمبر' },
+  { value: 10, label: 'أكتوبر' },
+  { value: 11, label: 'نوفمبر' },
+  { value: 12, label: 'ديسمبر' },
+];
 
 const PaymentsFilters: React.FC = () => {
   const { companies, filters, setFilters } = usePaymentsStore();
@@ -17,12 +31,18 @@ const PaymentsFilters: React.FC = () => {
   const hasActiveFilters = filters.company || filters.showUndeductedOnly || filters.dateFilter !== 'all';
 
   const clearFilters = () => {
+    const now = new Date();
     setFilters({
       company: null,
       showUndeductedOnly: false,
       dateFilter: 'all',
+      selectedMonth: now.getMonth() + 1,
+      selectedYear: now.getFullYear(),
     });
   };
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   return (
     <div className="space-y-3 bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-border/50">
@@ -78,26 +98,56 @@ const PaymentsFilters: React.FC = () => {
         </Button>
       </div>
 
-      {/* فلتر التاريخ */}
-      <ToggleGroup
-        type="single"
-        value={filters.dateFilter}
-        onValueChange={(value) => value && setFilters({ dateFilter: value as 'all' | 'today' | 'week' | 'month' })}
-        className="justify-start"
-      >
-        <ToggleGroupItem value="today" size="sm" className="h-7 text-xs px-3">
-          اليوم
-        </ToggleGroupItem>
-        <ToggleGroupItem value="week" size="sm" className="h-7 text-xs px-3">
-          الأسبوع
-        </ToggleGroupItem>
-        <ToggleGroupItem value="month" size="sm" className="h-7 text-xs px-3">
-          الشهر
-        </ToggleGroupItem>
-        <ToggleGroupItem value="all" size="sm" className="h-7 text-xs px-3">
+      {/* فلتر التاريخ - شهر محدد */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant={filters.dateFilter === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilters({ dateFilter: 'all' })}
+          className="h-7 text-xs px-3"
+        >
           الكل
-        </ToggleGroupItem>
-      </ToggleGroup>
+        </Button>
+        <Button
+          variant={filters.dateFilter === 'month' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilters({ dateFilter: 'month' })}
+          className="h-7 text-xs px-3"
+        >
+          شهر محدد
+        </Button>
+
+        {filters.dateFilter === 'month' && (
+          <div className="flex gap-1.5">
+            <Select
+              value={String(filters.selectedMonth)}
+              onValueChange={(v) => setFilters({ selectedMonth: Number(v) })}
+            >
+              <SelectTrigger className="w-[100px] h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((m) => (
+                  <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={String(filters.selectedYear)}
+              onValueChange={(v) => setFilters({ selectedYear: Number(v) })}
+            >
+              <SelectTrigger className="w-[80px] h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
