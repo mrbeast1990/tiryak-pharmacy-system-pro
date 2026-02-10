@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfDay, startOfWeek, startOfMonth, isAfter, parseISO } from 'date-fns';
 
 export interface Payment {
   id: string;
@@ -31,7 +30,9 @@ export interface Company {
 interface PaymentsFilters {
   company: string | null;
   showUndeductedOnly: boolean;
-  dateFilter: 'all' | 'today' | 'week' | 'month';
+  dateFilter: 'all' | 'month';
+  selectedMonth: number; // 1-12
+  selectedYear: number;
 }
 
 interface PaymentsState {
@@ -40,7 +41,6 @@ interface PaymentsState {
   loading: boolean;
   filters: PaymentsFilters;
   
-  // Actions
   fetchPayments: () => Promise<void>;
   fetchCompanies: () => Promise<void>;
   addPayment: (payment: Omit<Payment, 'id' | 'created_at'>) => Promise<boolean>;
@@ -52,12 +52,13 @@ interface PaymentsState {
   deleteCompany: (id: string) => Promise<boolean>;
   setFilters: (filters: Partial<PaymentsFilters>) => void;
   
-  // Computed
   getFilteredPayments: () => Payment[];
   getTotalAmount: () => number;
   getUndeductedTotal: () => number;
   getUndeductedCount: () => number;
 }
+
+const now = new Date();
 
 export const usePaymentsStore = create<PaymentsState>((set, get) => ({
   payments: [],
@@ -67,6 +68,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     company: null,
     showUndeductedOnly: false,
     dateFilter: 'all',
+    selectedMonth: now.getMonth() + 1,
+    selectedYear: now.getFullYear(),
   },
 
   fetchPayments: async () => {
@@ -77,9 +80,7 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
         .select('*')
         .order('payment_date', { ascending: false })
         .order('created_at', { ascending: false });
-
       if (error) throw error;
-      
       set({ payments: (data || []) as Payment[] });
     } catch (error) {
       console.error('Error fetching payments:', error);
@@ -94,9 +95,7 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
         .from('companies')
         .select('*')
         .order('name');
-
       if (error) throw error;
-      
       set({ companies: (data || []) as Company[] });
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -105,12 +104,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
 
   addPayment: async (payment) => {
     try {
-      const { error } = await supabase
-        .from('payments')
-        .insert([payment]);
-
+      const { error } = await supabase.from('payments').insert([payment]);
       if (error) throw error;
-      
       await get().fetchPayments();
       return true;
     } catch (error) {
@@ -121,13 +116,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
 
   updatePayment: async (id, updates) => {
     try {
-      const { error } = await supabase
-        .from('payments')
-        .update(updates)
-        .eq('id', id);
-
+      const { error } = await supabase.from('payments').update(updates).eq('id', id);
       if (error) throw error;
-      
       await get().fetchPayments();
       return true;
     } catch (error) {
@@ -138,13 +128,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
 
   deletePayment: async (id) => {
     try {
-      const { error } = await supabase
-        .from('payments')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('payments').delete().eq('id', id);
       if (error) throw error;
-      
       await get().fetchPayments();
       return true;
     } catch (error) {
@@ -156,9 +141,7 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
   toggleDeducted: async (id, userId, userName) => {
     const payment = get().payments.find(p => p.id === id);
     if (!payment) return false;
-
     const newDeducted = !payment.is_deducted;
-    
     try {
       const { error } = await supabase
         .from('payments')
@@ -169,9 +152,7 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
           deducted_by_name: newDeducted ? userName : null,
         })
         .eq('id', id);
-
       if (error) throw error;
-      
       await get().fetchPayments();
       return true;
     } catch (error) {
@@ -182,12 +163,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
 
   addCompany: async (company) => {
     try {
-      const { error } = await supabase
-        .from('companies')
-        .insert([company]);
-
+      const { error } = await supabase.from('companies').insert([company]);
       if (error) throw error;
-      
       await get().fetchCompanies();
       return true;
     } catch (error) {
@@ -198,13 +175,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
 
   updateCompany: async (id, updates) => {
     try {
-      const { error } = await supabase
-        .from('companies')
-        .update(updates)
-        .eq('id', id);
-
+      const { error } = await supabase.from('companies').update(updates).eq('id', id);
       if (error) throw error;
-      
       await get().fetchCompanies();
       return true;
     } catch (error) {
@@ -215,13 +187,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
 
   deleteCompany: async (id) => {
     try {
-      const { error } = await supabase
-        .from('companies')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('companies').delete().eq('id', id);
       if (error) throw error;
-      
       await get().fetchCompanies();
       return true;
     } catch (error) {
@@ -240,38 +207,18 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     const { payments, filters } = get();
     let filtered = [...payments];
 
-    // Filter by company
     if (filters.company) {
       filtered = filtered.filter(p => p.company_name === filters.company);
     }
 
-    // Filter by deduction status
     if (filters.showUndeductedOnly) {
       filtered = filtered.filter(p => !p.is_deducted);
     }
 
-    // Filter by date
-    if (filters.dateFilter !== 'all') {
-      const today = new Date();
-      let startDate: Date;
-
-      switch (filters.dateFilter) {
-        case 'today':
-          startDate = startOfDay(today);
-          break;
-        case 'week':
-          startDate = startOfWeek(today, { weekStartsOn: 6 }); // Saturday
-          break;
-        case 'month':
-          startDate = startOfMonth(today);
-          break;
-        default:
-          startDate = new Date(0);
-      }
-
+    if (filters.dateFilter === 'month') {
       filtered = filtered.filter(p => {
-        const paymentDate = parseISO(p.payment_date);
-        return isAfter(paymentDate, startDate) || paymentDate.getTime() === startDate.getTime();
+        const d = new Date(p.payment_date);
+        return (d.getMonth() + 1) === filters.selectedMonth && d.getFullYear() === filters.selectedYear;
       });
     }
 
