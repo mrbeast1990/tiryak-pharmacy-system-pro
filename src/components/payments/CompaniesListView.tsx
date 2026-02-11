@@ -20,10 +20,12 @@ const CompaniesListView: React.FC<CompaniesListViewProps> = ({ onBack, onSelectC
   const fmt = (n: number) =>
     new Intl.NumberFormat('ar-LY', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
 
-  const filtered = companies.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    (c.representative_name && c.representative_name.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filtered = companies
+    .filter(c =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.representative_name && c.representative_name.toLowerCase().includes(search.toLowerCase()))
+    )
+    .sort((a, b) => getCompanyTotal(b.name) - getCompanyTotal(a.name));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100" dir="rtl">

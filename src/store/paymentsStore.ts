@@ -30,9 +30,11 @@ export interface Company {
 interface PaymentsFilters {
   company: string | null;
   showUndeductedOnly: boolean;
-  dateFilter: 'all' | 'month';
+  dateFilter: 'all' | 'month' | 'range';
   selectedMonth: number; // 1-12
   selectedYear: number;
+  dateFrom: string | null;
+  dateTo: string | null;
 }
 
 interface PaymentsState {
@@ -70,6 +72,8 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
     dateFilter: 'all',
     selectedMonth: now.getMonth() + 1,
     selectedYear: now.getFullYear(),
+    dateFrom: null,
+    dateTo: null,
   },
 
   fetchPayments: async () => {
@@ -219,6 +223,15 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
       filtered = filtered.filter(p => {
         const d = new Date(p.payment_date);
         return (d.getMonth() + 1) === filters.selectedMonth && d.getFullYear() === filters.selectedYear;
+      });
+    }
+
+    if (filters.dateFilter === 'range' && (filters.dateFrom || filters.dateTo)) {
+      filtered = filtered.filter(p => {
+        const d = p.payment_date;
+        if (filters.dateFrom && d < filters.dateFrom) return false;
+        if (filters.dateTo && d > filters.dateTo) return false;
+        return true;
       });
     }
 
