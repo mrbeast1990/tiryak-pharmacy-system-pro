@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -8,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { usePaymentsStore } from '@/store/paymentsStore';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, CalendarRange } from 'lucide-react';
 
 const MONTHS = [
   { value: 1, label: 'يناير' },
@@ -38,6 +39,8 @@ const PaymentsFilters: React.FC = () => {
       dateFilter: 'all',
       selectedMonth: now.getMonth() + 1,
       selectedYear: now.getFullYear(),
+      dateFrom: null,
+      dateTo: null,
     });
   };
 
@@ -116,6 +119,15 @@ const PaymentsFilters: React.FC = () => {
         >
           شهر محدد
         </Button>
+        <Button
+          variant={filters.dateFilter === 'range' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setFilters({ dateFilter: 'range' })}
+          className="h-7 text-xs px-3"
+        >
+          <CalendarRange className="w-3 h-3 ml-1" />
+          نطاق تاريخ
+        </Button>
 
         {filters.dateFilter === 'month' && (
           <div className="flex gap-1.5">
@@ -145,6 +157,29 @@ const PaymentsFilters: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        )}
+
+        {filters.dateFilter === 'range' && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">من:</span>
+              <Input
+                type="date"
+                value={filters.dateFrom || ''}
+                onChange={(e) => setFilters({ dateFrom: e.target.value || null })}
+                className="h-7 text-xs w-[130px]"
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">إلى:</span>
+              <Input
+                type="date"
+                value={filters.dateTo || ''}
+                onChange={(e) => setFilters({ dateTo: e.target.value || null })}
+                className="h-7 text-xs w-[130px]"
+              />
+            </div>
           </div>
         )}
       </div>
