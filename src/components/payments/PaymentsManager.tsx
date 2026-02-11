@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, CreditCard, Receipt, Building2 } from 'lucide-react';
+import { ArrowRight, CreditCard, Receipt, Building2, ChevronLeft } from 'lucide-react';
 import { usePaymentsStore, Company } from '@/store/paymentsStore';
 import PaymentsSummary from './PaymentsSummary';
 import PaymentForm from './PaymentForm';
@@ -9,6 +10,7 @@ import PaymentsFilters from './PaymentsFilters';
 import PaymentsList from './PaymentsList';
 import PaymentExporter from './PaymentExporter';
 import CompanyDetailsView from './CompanyDetailsView';
+import CompaniesListView from './CompaniesListView';
 import ExpensesManager from '../expenses/ExpensesManager';
 import {
   Dialog,
@@ -26,11 +28,22 @@ const PaymentsManager: React.FC<PaymentsManagerProps> = ({ onBack }) => {
   const [viewingAttachment, setViewingAttachment] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('payments');
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [viewingCompanies, setViewingCompanies] = useState(false);
 
   useEffect(() => {
     fetchPayments();
     fetchCompanies();
   }, [fetchPayments, fetchCompanies]);
+
+  // If viewing companies list
+  if (viewingCompanies && !selectedCompany) {
+    return (
+      <CompaniesListView
+        onBack={() => setViewingCompanies(false)}
+        onSelectCompany={(c) => setSelectedCompany(c)}
+      />
+    );
+  }
 
   // If viewing a company detail
   if (selectedCompany) {
@@ -121,29 +134,24 @@ const PaymentsManager: React.FC<PaymentsManagerProps> = ({ onBack }) => {
           <TabsContent value="payments" className="space-y-4 pb-20 mt-0">
             <PaymentsSummary />
             
-            {/* Company Cards */}
-            {companies.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Building2 className="w-4 h-4" />
-                  الشركات ({companies.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {companies.map(c => (
-                    <Button
-                      key={c.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedCompany(c)}
-                      className="h-8 text-xs bg-white hover:bg-emerald-50 hover:border-emerald-300"
-                    >
-                      <Building2 className="w-3 h-3 ml-1" />
-                      {c.name}
-                    </Button>
-                  ))}
+            {/* Companies Card */}
+            <Card
+              className="p-4 bg-white hover:bg-blue-50/50 cursor-pointer transition-colors border border-border/50 active:scale-[0.99]"
+              onClick={() => setViewingCompanies(true)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-foreground">الشركات</p>
+                    <p className="text-xs text-muted-foreground">{companies.length} شركة مسجلة</p>
+                  </div>
                 </div>
+                <ChevronLeft className="w-5 h-5 text-muted-foreground" />
               </div>
-            )}
+            </Card>
 
             <PaymentForm />
             <PaymentsFilters />
