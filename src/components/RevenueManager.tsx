@@ -113,7 +113,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       />
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-border/50 sticky top-0 z-20">
+      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-border/50 sticky top-0 z-20 safe-area-top">
         <div className="max-w-md mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <Button

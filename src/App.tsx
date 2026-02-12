@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthStore } from "@/store/authStore";
+import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
 import ResetPassword from "./pages/ResetPassword";
@@ -24,6 +26,15 @@ const AppContent = () => {
         <Route path="/admin/requests" element={<AccountRequests />} />
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/available-medicines" element={<AvailableMedicines />} />
+        {/* Dashboard sub-routes */}
+        <Route path="/shortages" element={<Index />} />
+        <Route path="/supplies-shortages" element={<Index />} />
+        <Route path="/revenue" element={<Index />} />
+        <Route path="/reports" element={<Index />} />
+        <Route path="/notifications" element={<Index />} />
+        <Route path="/tiryak-guide" element={<Index />} />
+        <Route path="/payments" element={<Index />} />
+        <Route path="/order-builder" element={<Index />} />
         {/* Redirect any unknown routes to home */}
         <Route path="*" element={<Index />} />
       </Routes>
@@ -39,12 +50,28 @@ const App = () => {
       console.log('[Auth Event]', event, !!session);
       
       if (event === 'SIGNED_OUT' || !session) {
-        // مسح الحالة المحلية فقط - بدون signOut أو reload
         useAuthStore.getState().clearAuthState();
       }
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Capacitor back button handler
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const listener = CapApp.addListener('backButton', ({ canGoBack }) => {
+        if (canGoBack) {
+          window.history.back();
+        } else {
+          CapApp.exitApp();
+        }
+      });
+
+      return () => {
+        listener.then(l => l.remove());
+      };
+    }
   }, []);
 
   return (
