@@ -19,7 +19,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onOpenProfile }) => {
   };
 
   return (
-    <header className="bg-card shadow-sm border-b border-border sticky top-0 z-20">
+    <header className="bg-card shadow-sm border-b border-border sticky top-0 z-20 safe-area-top">
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           {/* Logo and Title */}

@@ -196,7 +196,7 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
         />
 
         {/* Header */}
-        <header className="bg-card shadow-sm border-b border-border sticky top-0 z-20">
+        <header className="bg-card shadow-sm border-b border-border sticky top-0 z-20 safe-area-top">
           <div className="max-w-3xl mx-auto px-4">
             <div className="flex items-center justify-between h-14">
               <h1 className="text-base font-bold text-foreground">

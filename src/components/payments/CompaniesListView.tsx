@@ -29,7 +29,7 @@ const CompaniesListView: React.FC<CompaniesListViewProps> = ({ onBack, onSelectC
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100" dir="rtl">
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border/50 shadow-sm">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border/50 shadow-sm safe-area-top">
         <div className="max-w-lg mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground hover:text-foreground -mr-2">

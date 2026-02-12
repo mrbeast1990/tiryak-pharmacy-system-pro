@@ -228,8 +228,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         />
 
         {/* Header - Fixed with safe area */}
-        <header className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-emerald-200 sticky top-0 z-20">
-          <div className="pt-[env(safe-area-inset-top)]">
+        <header className="bg-white/95 backdrop-blur-sm shadow-lg border-b border-emerald-200 sticky top-0 z-20 safe-area-top">
+          <div>
             <div className="max-w-3xl mx-auto px-4">
               <div className="flex items-center justify-between h-16">
                 <h1 className="text-lg font-bold text-emerald-800">{t('shortages.title')}</h1>

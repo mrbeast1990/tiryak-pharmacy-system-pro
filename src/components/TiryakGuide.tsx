@@ -19,7 +19,7 @@ const TiryakGuide: React.FC<TiryakGuideProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100" dir="rtl">
       {/* Compact Header */}
-      <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md">
+      <header className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md safe-area-top">
         <div className="w-full px-3 py-1.5">
           <div className="flex items-center justify-between">
             <button

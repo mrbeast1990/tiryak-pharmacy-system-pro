@@ -60,7 +60,7 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background" dir="rtl">
       {/* Header - Teal Gradient */}
-      <header className="bg-gradient-to-l from-primary to-primary/90 shadow-md sticky top-0 z-20">
+      <header className="bg-gradient-to-l from-primary to-primary/90 shadow-md sticky top-0 z-20 safe-area-top">
         <div className="max-w-lg mx-auto px-4 py-3">
           {/* Top row - Title and actions */}
           <div className="flex items-center justify-between mb-3">

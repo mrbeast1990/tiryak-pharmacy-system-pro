@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
@@ -27,9 +28,21 @@ interface DashboardProps {
   user: any;
 }
 
+const pageRouteMap: Record<string, string> = {
+  '/shortages': 'shortages',
+  '/supplies-shortages': 'supplies-shortages',
+  '/revenue': 'revenue',
+  '/reports': 'reports',
+  '/notifications': 'notifications',
+  '/tiryak-guide': 'tiryak-guide',
+  '/payments': 'payments',
+  '/order-builder': 'order-builder',
+};
+
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
-  const [currentPage, setCurrentPage] = useState('dashboard');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const { logout } = useAuthStore();
   const { language, toggleLanguage, t } = useLanguageStore();
@@ -37,6 +50,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { loadMedicines, fetchRevenues } = usePharmacyStore();
   
   usePushNotifications();
+
+  const currentPage = pageRouteMap[location.pathname] || 'dashboard';
 
   useEffect(() => {
     loadMedicines();
@@ -54,16 +69,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     };
   }, [syncOfflineData]);
 
-  const handleLogout = () => {
-    logout();
-  };
-
   const handleNavigate = (page: string) => {
-    setCurrentPage(page);
+    navigate(`/${page}`);
   };
 
   const handleBack = () => {
-    setCurrentPage('dashboard');
+    navigate('/');
   };
 
   if (currentPage === 'shortages') {
