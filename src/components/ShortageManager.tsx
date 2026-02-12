@@ -248,7 +248,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         </header>
 
         {/* Sticky Search and Controls */}
-        <div className="sticky top-14 z-10 bg-gradient-to-br from-emerald-50 to-teal-100 pt-3 pb-2 px-4">
+        <div className="sticky z-10 bg-gradient-to-br from-emerald-50 to-teal-100 pt-3 pb-2 px-4" style={{ top: 'calc(4rem + max(24px, env(safe-area-inset-top)))' }}>
           <div className="max-w-3xl mx-auto space-y-3">
             {/* Shortages Count */}
             <div className="flex items-center gap-2">
