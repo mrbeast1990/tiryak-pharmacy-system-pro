@@ -154,13 +154,12 @@ const CompanySelector: React.FC<CompanySelectorProps> = ({ value, onChange }) =>
 
         <Button
           type="button"
-          variant="outline"
           size="icon"
           onClick={() => setShowAddDialog(true)}
-          className="flex-shrink-0"
+          className="flex-shrink-0 h-10 w-10 bg-primary hover:bg-primary/90 text-primary-foreground relative z-10"
           title="إضافة شركة جديدة"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
         </Button>
       </div>
 
