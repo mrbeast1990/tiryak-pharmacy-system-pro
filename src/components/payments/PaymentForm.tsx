@@ -149,24 +149,23 @@ const PaymentForm: React.FC = () => {
         <CollapsibleContent>
           <CardContent className="pt-0 pb-4">
             <form onSubmit={handleSubmit} className="space-y-3">
-              {/* صف 1: الشركة + المبلغ */}
-              <div className="grid grid-cols-5 gap-2">
-                <div className="col-span-3">
-                  <CompanySelector value={companyName} onChange={setCompanyName} />
-                </div>
-                <div className="col-span-2">
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">المبلغ (د.ل)</label>
-                  <Input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    className="text-base font-semibold h-10"
-                    dir="ltr"
-                  />
-                </div>
+              {/* الشركة */}
+              <CompanySelector value={companyName} onChange={setCompanyName} />
+
+              {/* المبلغ */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">المبلغ (د.ل)</label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  className="text-base font-semibold h-10"
+                  dir="ltr"
+                />
               </div>
 
               {/* صف 2: التاريخ + نوع السداد */}
