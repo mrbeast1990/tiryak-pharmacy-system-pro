@@ -1,151 +1,83 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Plus, X } from 'lucide-react';
-import CustomNumpad from './CustomNumpad';
+import { Card, CardContent } from '@/components/ui/card';
+import { Building2, Smartphone, CreditCard, ArrowRightLeft, Wallet, Send } from 'lucide-react';
 
-export interface BankingServiceItem {
-  id: string;
-  type: string;
-  typeName: string;
-  amount: number;
+export interface BankingServiceValues {
+  mobi_cash: string;
+  yser_pay: string;
+  mobi_nab: string;
+  bank_transfer: string;
+  pay_for_me: string;
 }
 
 interface BankingServiceInputProps {
-  items: BankingServiceItem[];
-  onItemsChange: (items: BankingServiceItem[]) => void;
+  values: BankingServiceValues;
+  onValuesChange: (values: BankingServiceValues) => void;
   totalAmount: number;
 }
 
-const SERVICE_TYPES = [
-  { value: 'mobi_cash', label: 'موبي كاش' },
-  { value: 'cards', label: 'بطاقات' },
-  { value: 'transfer', label: 'تحويل' },
-  { value: 'trading', label: 'تداول' },
+const SERVICES = [
+  { key: 'mobi_cash' as const, label: 'موبي كاش', icon: Smartphone, color: 'text-orange-600', bg: 'bg-orange-50' },
+  { key: 'yser_pay' as const, label: 'يسر باي', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
+  { key: 'mobi_nab' as const, label: 'موبي ناب', icon: Wallet, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+  { key: 'bank_transfer' as const, label: 'تحويل مصرفي', icon: ArrowRightLeft, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  { key: 'pay_for_me' as const, label: 'ادفع لي', icon: Send, color: 'text-rose-600', bg: 'bg-rose-50' },
 ];
 
 const BankingServiceInput: React.FC<BankingServiceInputProps> = ({
-  items,
-  onItemsChange,
+  values,
+  onValuesChange,
   totalAmount,
 }) => {
-  const [selectedType, setSelectedType] = useState<string>('mobi_cash');
-  const [currentAmount, setCurrentAmount] = useState<string>('');
-  const [showNumpad, setShowNumpad] = useState<boolean>(false);
-
-  const handleAddItem = () => {
-    const amount = parseFloat(currentAmount);
-    if (!amount || amount <= 0) return;
-
-    const typeInfo = SERVICE_TYPES.find(t => t.value === selectedType);
-    if (!typeInfo) return;
-
-    const newItem: BankingServiceItem = {
-      id: crypto.randomUUID(),
-      type: selectedType,
-      typeName: typeInfo.label,
-      amount: amount,
-    };
-
-    onItemsChange([...items, newItem]);
-    setCurrentAmount('');
-    setShowNumpad(false);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    onItemsChange(items.filter(item => item.id !== id));
+  const handleChange = (key: keyof BankingServiceValues, val: string) => {
+    // Only allow numbers and decimal point
+    if (val && !/^\d*\.?\d*$/.test(val)) return;
+    onValuesChange({ ...values, [key]: val });
   };
 
   return (
-    <div className="space-y-3">
-      {/* Header with total */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-blue-600" />
-          </div>
-          <span className="text-xs font-semibold text-muted-foreground">خدمات مصرفية</span>
-        </div>
-        {totalAmount > 0 && (
-          <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">
-            {totalAmount.toFixed(2)} د
-          </div>
-        )}
-      </div>
-
-      {/* Input Row */}
-      <div className="flex gap-2 items-stretch">
-        {/* Type Select */}
-        <Select value={selectedType} onValueChange={setSelectedType}>
-          <SelectTrigger className="w-28 text-xs h-11 border-blue-200 focus:border-blue-500 bg-blue-50/50 rounded-lg">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-white z-50">
-            {SERVICE_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value} className="text-sm">
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {/* Amount Input */}
-        <div 
-          className="flex-1 relative cursor-pointer"
-          onClick={() => setShowNumpad(!showNumpad)}
-        >
-          <Input
-            type="text"
-            value={currentAmount}
-            readOnly
-            placeholder="المبلغ"
-            className="text-sm text-right h-11 border-blue-200 focus:border-blue-500 bg-blue-50/50 rounded-lg cursor-pointer"
-          />
-        </div>
-
-        {/* Add Button */}
-        <Button
-          type="button"
-          onClick={handleAddItem}
-          disabled={!currentAmount || parseFloat(currentAmount) <= 0}
-          className="h-11 w-11 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shrink-0"
-        >
-          <Plus className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Numpad */}
-      {showNumpad && (
-        <CustomNumpad
-          value={currentAmount}
-          onChange={setCurrentAmount}
-          onClose={() => setShowNumpad(false)}
-        />
-      )}
-
-      {/* Added Items (Chips) */}
-      {items.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-2">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-medium border border-blue-200 transition-all hover:bg-blue-200"
-            >
-              <span className="text-blue-600 font-semibold">{item.typeName}:</span>
-              <span className="font-bold">{item.amount.toFixed(2)} د</span>
-              <button
-                type="button"
-                onClick={() => handleRemoveItem(item.id)}
-                className="w-5 h-5 rounded-full bg-blue-300/50 hover:bg-destructive/80 hover:text-white flex items-center justify-center transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
+    <Card className="border-0 shadow-sm bg-blue-50/30 rounded-xl overflow-hidden">
+      <div className="flex">
+        <div className="w-1.5 bg-blue-500" />
+        <CardContent className="p-4 flex-1 space-y-3">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-blue-600" />
+              </div>
+              <span className="text-sm font-bold text-foreground">الخدمات المصرفية</span>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+            {totalAmount > 0 && (
+              <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">
+                {totalAmount.toFixed(2)} د
+              </div>
+            )}
+          </div>
+
+          {/* Service Fields */}
+          <div className="space-y-2">
+            {SERVICES.map(({ key, label, icon: Icon, color, bg }) => (
+              <div key={key} className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
+                  <Icon className={`w-4 h-4 ${color}`} />
+                </div>
+                <span className="text-xs font-medium text-muted-foreground w-20 text-right shrink-0">{label}</span>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={values[key]}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  placeholder="0"
+                  className="text-sm text-right h-9 border-blue-200/50 focus:border-blue-400 bg-white rounded-lg flex-1"
+                />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </div>
+    </Card>
   );
 };
 

@@ -9,6 +9,7 @@ import DailyRevenueDetails from './revenue/DailyRevenueDetails';
 import PeriodRevenueDetails from './revenue/PeriodRevenueDetails';
 import RevenueForm from './revenue/RevenueForm';
 import RevenueDisplay from './revenue/RevenueDisplay';
+import AdminRevenueDisplay from './revenue/AdminRevenueDisplay';
 import RevenueReportExporter from './revenue/RevenueReportExporter';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
 
@@ -17,42 +18,9 @@ interface RevenueManagerProps {
 }
 
 const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
-  const {
-    bankingServices, setBankingServices,
-    income, setIncome,
-    period, setPeriod,
-    notes, setNotes,
-    selectedDate, setSelectedDate,
-    reportStartDate, setReportStartDate,
-    reportEndDate, setReportEndDate,
-    showDailyDetails, setShowDailyDetails,
-    showPeriodDetails, setShowPeriodDetails,
-    periodStartDate, setPeriodStartDate,
-    periodEndDate, setPeriodEndDate,
-    formSubmitting,
-    viewMode, setViewMode,
-    language,
-    revenuesLoading,
-    checkPermission,
-    handleSubmit,
-    navigateDate,
-    canNavigateDate,
-    dailyRevenue,
-    dailyBankingServices,
-    dailyRevenues,
-    getPeriodRevenue,
-    getPeriodBankingServices,
-    getPeriodRevenues,
-    showPeriodRevenue,
-    showPeriodBanking,
-    generatePeriodReport,
-    canSelectPeriod,
-    periodDisplayName,
-    updateRevenue,
-    deleteRevenue,
-  } = useRevenueManager();
+  const manager = useRevenueManager();
 
-  if (revenuesLoading && !showDailyDetails && !showPeriodDetails) {
+  if (manager.revenuesLoading && !manager.showDailyDetails && !manager.showPeriodDetails) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
         <div className="flex flex-col items-center gap-4">
@@ -65,41 +33,41 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     );
   }
 
-  if (showPeriodDetails) {
-    const periodRevenues = getPeriodRevenues(viewMode === 'income' ? 'income' : 'banking_services');
-    const periodRevenue = viewMode === 'income' ? getPeriodRevenue() : getPeriodBankingServices();
+  if (manager.showPeriodDetails) {
+    const periodRevenues = manager.getPeriodRevenues(manager.viewMode === 'income' ? 'income' : 'banking_services');
+    const periodRevenue = manager.viewMode === 'income' ? manager.getPeriodRevenue() : manager.getPeriodBankingServices();
     return (
       <PeriodRevenueDetails
-        onBack={() => setShowPeriodDetails(false)}
-        periodStartDate={periodStartDate}
-        periodEndDate={periodEndDate}
+        onBack={() => manager.setShowPeriodDetails(false)}
+        periodStartDate={manager.periodStartDate}
+        periodEndDate={manager.periodEndDate}
         periodRevenue={periodRevenue}
         periodRevenues={periodRevenues}
-        language={language}
-        updateRevenue={updateRevenue}
-        deleteRevenue={deleteRevenue}
-        checkPermission={checkPermission}
+        language={manager.language}
+        updateRevenue={manager.updateRevenue}
+        deleteRevenue={manager.deleteRevenue}
+        checkPermission={manager.checkPermission}
       />
     );
   }
 
-  if (showDailyDetails) {
+  if (manager.showDailyDetails) {
     return (
       <DailyRevenueDetails
-        onBack={() => setShowDailyDetails(false)}
-        selectedDate={selectedDate}
-        dailyRevenue={dailyRevenue}
-        dailyRevenues={dailyRevenues}
-        language={language}
-        updateRevenue={updateRevenue}
-        deleteRevenue={deleteRevenue}
-        checkPermission={checkPermission}
+        onBack={() => manager.setShowDailyDetails(false)}
+        selectedDate={manager.selectedDate}
+        dailyRevenue={manager.dailyRevenue}
+        dailyRevenues={manager.dailyRevenues}
+        language={manager.language}
+        updateRevenue={manager.updateRevenue}
+        deleteRevenue={manager.deleteRevenue}
+        checkPermission={manager.checkPermission}
       />
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 relative" dir={language === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 relative" dir={manager.language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Background Logo */}
       <div 
         className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -113,7 +81,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       />
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-border/50 sticky top-0 z-20 safe-area-top">
+      <header className="bg-card/80 backdrop-blur-sm shadow-sm border-b border-border/50 sticky top-0 z-20 safe-area-top">
         <div className="max-w-md mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <Button
@@ -137,50 +105,62 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
 
       <main className="max-w-md mx-auto px-4 py-5 relative z-10 space-y-4">
         <RevenueForm
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          period={period}
-          setPeriod={setPeriod}
-          canSelectPeriod={canSelectPeriod}
-          periodDisplayName={periodDisplayName}
-          bankingServices={bankingServices}
-          setBankingServices={setBankingServices}
-          income={income}
-          setIncome={setIncome}
-          notes={notes}
-          setNotes={setNotes}
-          handleSubmit={handleSubmit}
-          formSubmitting={formSubmitting}
+          selectedDate={manager.selectedDate}
+          setSelectedDate={manager.setSelectedDate}
+          period={manager.period}
+          setPeriod={manager.setPeriod}
+          canSelectPeriod={manager.canSelectPeriod}
+          periodDisplayName={manager.periodDisplayName}
+          income={manager.income}
+          setIncome={manager.setIncome}
+          notes={manager.notes}
+          setNotes={manager.setNotes}
+          handleSubmit={manager.handleSubmit}
+          formSubmitting={manager.formSubmitting}
+          bankingValues={manager.bankingValues}
+          onBankingValuesChange={manager.setBankingValues}
+          bankingTotal={manager.bankingTotal}
         />
 
+        {/* Admin sees full period breakdown, cashier sees summary */}
+        {manager.isAdmin ? (
+          <AdminRevenueDisplay
+            dailyRevenues={manager.dailyRevenues}
+            selectedDate={manager.selectedDate}
+            updateRevenue={manager.updateRevenue}
+            deleteRevenue={manager.deleteRevenue}
+          />
+        ) : null}
+
         <RevenueDisplay
-          dailyRevenue={dailyRevenue}
-          dailyBankingServices={dailyBankingServices}
-          selectedDate={selectedDate}
-          navigateDate={navigateDate}
-          setShowDailyDetails={setShowDailyDetails}
-          periodStartDate={periodStartDate}
-          setPeriodStartDate={setPeriodStartDate}
-          periodEndDate={periodEndDate}
-          setPeriodEndDate={setPeriodEndDate}
+          dailyRevenue={manager.dailyRevenue}
+          dailyBankingServices={manager.dailyBankingServices}
+          selectedDate={manager.selectedDate}
+          navigateDate={manager.navigateDate}
+          setShowDailyDetails={manager.setShowDailyDetails}
+          periodStartDate={manager.periodStartDate}
+          setPeriodStartDate={manager.setPeriodStartDate}
+          periodEndDate={manager.periodEndDate}
+          setPeriodEndDate={manager.setPeriodEndDate}
           showPeriodRevenue={() => {
-            setViewMode('income');
-            showPeriodRevenue();
+            manager.setViewMode('income');
+            manager.showPeriodRevenue();
           }}
           showPeriodBanking={() => {
-            setViewMode('banking');
-            showPeriodBanking();
+            manager.setViewMode('banking');
+            manager.showPeriodBanking();
           }}
-          canNavigateDate={canNavigateDate}
+          canNavigateDate={manager.canNavigateDate}
+          isAdmin={manager.isAdmin}
         />
         
-        {checkPermission('export_revenue_pdf') && (
+        {manager.checkPermission('export_revenue_pdf') && (
           <RevenueReportExporter
-            reportStartDate={reportStartDate}
-            setReportStartDate={setReportStartDate}
-            reportEndDate={reportEndDate}
-            setReportEndDate={setReportEndDate}
-            generatePeriodReport={generatePeriodReport}
+            reportStartDate={manager.reportStartDate}
+            setReportStartDate={manager.setReportStartDate}
+            reportEndDate={manager.reportEndDate}
+            setReportEndDate={manager.setReportEndDate}
+            generatePeriodReport={manager.generatePeriodReport}
           />
         )}
       </main>

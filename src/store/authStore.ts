@@ -32,6 +32,7 @@ const permissionsByRole: Record<UserRole, string[]> = {
   morning_shift: ['manage_shortages', 'register_revenue_morning', 'view_own'],
   evening_shift: ['manage_shortages', 'register_revenue_evening', 'view_own'],
   night_shift: ['manage_shortages', 'register_revenue_night', 'view_own'],
+  abdulwahab: ['manage_shortages', 'register_revenue_abdulwahab', 'view_own'],
   member: [],
 };
 

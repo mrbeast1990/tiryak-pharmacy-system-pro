@@ -97,7 +97,8 @@ const DailyRevenueDetails: React.FC<DailyRevenueDetailsProps> = ({
                       <h3 className="font-medium text-gray-900">
                         {revenue.period === 'morning' ? 'صباحية' : 
                          revenue.period === 'evening' ? 'مسائية' : 
-                         revenue.period === 'night' ? 'ليلية' : 'احمد الرجيلي'}
+                         revenue.period === 'night' ? 'ليلية' : 
+                         revenue.period === 'abdulwahab' ? 'عبدالوهاب' : 'احمد الرجيلي'}
                       </h3>
                       <p className="text-sm text-gray-600">
                         المبلغ: {revenue.amount} دينار

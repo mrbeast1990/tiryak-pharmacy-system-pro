@@ -1,11 +1,19 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { BankingServiceValues } from '@/components/revenue/BankingServiceInput';
 
-export type Period = 'morning' | 'evening' | 'night' | 'ahmad_rajili';
+export type Period = 'morning' | 'evening' | 'night' | 'ahmad_rajili' | 'abdulwahab';
+
+const EMPTY_BANKING: BankingServiceValues = {
+  mobi_cash: '',
+  yser_pay: '',
+  mobi_nab: '',
+  bank_transfer: '',
+  pay_for_me: '',
+};
 
 export const useRevenueState = () => {
-  const [bankingServices, setBankingServices] = useState('');
   const [income, setIncome] = useState('');
   const [period, setPeriod] = useState<Period>('morning');
   const [notes, setNotes] = useState('');
@@ -21,8 +29,13 @@ export const useRevenueState = () => {
   const [periodEndDate, setPeriodEndDate] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'income' | 'banking'>('income');
+  const [bankingValues, setBankingValues] = useState<BankingServiceValues>({ ...EMPTY_BANKING });
   
   const { user } = useAuthStore();
+
+  const bankingTotal = Object.values(bankingValues).reduce((sum, v) => sum + (Number(v) || 0), 0);
+
+  const resetBankingValues = () => setBankingValues({ ...EMPTY_BANKING });
 
   useEffect(() => {
     if (user) {
@@ -39,6 +52,9 @@ export const useRevenueState = () => {
         case 'ahmad_rajili':
           setPeriod('ahmad_rajili');
           break;
+        case 'abdulwahab':
+          setPeriod('abdulwahab');
+          break;
         default:
           setPeriod('morning');
           break;
@@ -47,7 +63,6 @@ export const useRevenueState = () => {
   }, [user]);
 
   return {
-    bankingServices, setBankingServices,
     income, setIncome,
     period, setPeriod,
     notes, setNotes,
@@ -60,6 +75,8 @@ export const useRevenueState = () => {
     periodEndDate, setPeriodEndDate,
     formSubmitting, setFormSubmitting,
     viewMode, setViewMode,
+    bankingValues, setBankingValues,
+    bankingTotal,
+    resetBankingValues,
   };
 };
-
