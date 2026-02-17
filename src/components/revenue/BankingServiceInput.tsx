@@ -1,39 +1,61 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Building2, Smartphone, CreditCard, ArrowRightLeft, Wallet, Send } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Building2, Plus, X } from 'lucide-react';
 
-export interface BankingServiceValues {
-  mobi_cash: string;
-  yser_pay: string;
-  mobi_nab: string;
-  bank_transfer: string;
-  pay_for_me: string;
+export interface BankingServiceEntry {
+  id: string;
+  service: string;
+  amount: number;
 }
 
+const SERVICE_OPTIONS = [
+  { key: 'mobi_cash', label: 'موبي كاش' },
+  { key: 'yser_pay', label: 'يسر باي' },
+  { key: 'mobi_nab', label: 'موبي ناب' },
+  { key: 'bank_transfer', label: 'تحويل مصرفي' },
+  { key: 'pay_for_me', label: 'ادفع لي' },
+];
+
+const SERVICE_LABELS: Record<string, string> = Object.fromEntries(
+  SERVICE_OPTIONS.map(s => [s.key, s.label])
+);
+
 interface BankingServiceInputProps {
-  values: BankingServiceValues;
-  onValuesChange: (values: BankingServiceValues) => void;
+  entries: BankingServiceEntry[];
+  onEntriesChange: (entries: BankingServiceEntry[]) => void;
   totalAmount: number;
 }
 
-const SERVICES = [
-  { key: 'mobi_cash' as const, label: 'موبي كاش', icon: Smartphone, color: 'text-orange-600', bg: 'bg-orange-50' },
-  { key: 'yser_pay' as const, label: 'يسر باي', icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
-  { key: 'mobi_nab' as const, label: 'موبي ناب', icon: Wallet, color: 'text-cyan-600', bg: 'bg-cyan-50' },
-  { key: 'bank_transfer' as const, label: 'تحويل مصرفي', icon: ArrowRightLeft, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-  { key: 'pay_for_me' as const, label: 'ادفع لي', icon: Send, color: 'text-rose-600', bg: 'bg-rose-50' },
-];
-
 const BankingServiceInput: React.FC<BankingServiceInputProps> = ({
-  values,
-  onValuesChange,
+  entries,
+  onEntriesChange,
   totalAmount,
 }) => {
-  const handleChange = (key: keyof BankingServiceValues, val: string) => {
-    // Only allow numbers and decimal point
+  const [selectedService, setSelectedService] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const handleAdd = () => {
+    const num = parseFloat(amount);
+    if (!selectedService || !num || num <= 0) return;
+    const newEntry: BankingServiceEntry = {
+      id: crypto.randomUUID(),
+      service: selectedService,
+      amount: num,
+    };
+    onEntriesChange([...entries, newEntry]);
+    setAmount('');
+  };
+
+  const handleRemove = (id: string) => {
+    onEntriesChange(entries.filter(e => e.id !== id));
+  };
+
+  const handleAmountChange = (val: string) => {
     if (val && !/^\d*\.?\d*$/.test(val)) return;
-    onValuesChange({ ...values, [key]: val });
+    setAmount(val);
   };
 
   return (
@@ -56,25 +78,59 @@ const BankingServiceInput: React.FC<BankingServiceInputProps> = ({
             )}
           </div>
 
-          {/* Service Fields */}
-          <div className="space-y-2">
-            {SERVICES.map(({ key, label, icon: Icon, color, bg }) => (
-              <div key={key} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
-                  <Icon className={`w-4 h-4 ${color}`} />
-                </div>
-                <span className="text-xs font-medium text-muted-foreground w-20 text-right shrink-0">{label}</span>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={values[key]}
-                  onChange={(e) => handleChange(key, e.target.value)}
-                  placeholder="0"
-                  className="text-sm text-right h-9 border-blue-200/50 focus:border-blue-400 bg-white rounded-lg flex-1"
-                />
-              </div>
-            ))}
+          {/* Input Row: Select + Amount + Add Button */}
+          <div className="flex items-center gap-2">
+            <Select value={selectedService} onValueChange={setSelectedService}>
+              <SelectTrigger className="text-xs text-right h-9 border-blue-200/50 bg-white rounded-lg flex-1 min-w-0">
+                <SelectValue placeholder="اختر الخدمة" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                {SERVICE_OPTIONS.map(s => (
+                  <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              placeholder="المبلغ"
+              className="text-sm text-right h-9 border-blue-200/50 focus:border-blue-400 bg-white rounded-lg w-24"
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
+            />
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="h-9 w-9 shrink-0 border-blue-300 text-blue-600 hover:bg-blue-100"
+              onClick={handleAdd}
+              disabled={!selectedService || !amount || parseFloat(amount) <= 0}
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
+
+          {/* Chips */}
+          {entries.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {entries.map(entry => (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-1.5 bg-blue-100/80 text-blue-800 rounded-full px-3 py-1.5 text-xs font-medium"
+                >
+                  <span>{SERVICE_LABELS[entry.service] || entry.service}: {entry.amount}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(entry.id)}
+                    className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </div>
     </Card>

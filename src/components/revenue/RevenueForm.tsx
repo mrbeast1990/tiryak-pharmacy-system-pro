@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, DollarSign, FileText, Loader2, Save, Calculator } from 'lucide-react';
 import { Period } from '@/hooks/revenue/useRevenueState';
-import BankingServiceInput, { BankingServiceValues } from './BankingServiceInput';
+import BankingServiceInput, { BankingServiceEntry } from './BankingServiceInput';
 
 interface RevenueFormProps {
   selectedDate: string;
@@ -21,8 +21,8 @@ interface RevenueFormProps {
   setNotes: (value: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
   formSubmitting: boolean;
-  bankingValues: BankingServiceValues;
-  onBankingValuesChange: (values: BankingServiceValues) => void;
+  bankingValues: BankingServiceEntry[];
+  onBankingValuesChange: (entries: BankingServiceEntry[]) => void;
   bankingTotal: number;
 }
 
@@ -131,8 +131,8 @@ const RevenueForm: React.FC<RevenueFormProps> = ({
 
               {/* Banking Services Card */}
               <BankingServiceInput
-                values={bankingValues}
-                onValuesChange={onBankingValuesChange}
+                entries={bankingValues}
+                onEntriesChange={onBankingValuesChange}
                 totalAmount={bankingTotal}
               />
 
@@ -150,7 +150,7 @@ const RevenueForm: React.FC<RevenueFormProps> = ({
                   </div>
                   <div className="flex justify-end gap-4 mt-2 text-xs text-muted-foreground">
                     <span>كاش: {parseFloat(income) || 0} د</span>
-                    <span>شبكة: {bankingTotal.toFixed(2)} د</span>
+                    <span>خدمات: {bankingTotal.toFixed(2)} د</span>
                   </div>
                 </div>
               )}
