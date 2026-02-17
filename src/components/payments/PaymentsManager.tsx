@@ -70,6 +70,12 @@ const PaymentsManager: React.FC<PaymentsManagerProps> = ({ onBack }) => {
             company={selectedCompany}
             onBack={() => setSelectedCompany(null)}
             onViewAttachment={setViewingAttachment}
+            onCompanyUpdated={() => {
+              fetchCompanies().then(() => {
+                const updated = usePaymentsStore.getState().companies.find(c => c.id === selectedCompany.id);
+                if (updated) setSelectedCompany(updated);
+              });
+            }}
           />
         </div>
         {/* Attachment Viewer */}
