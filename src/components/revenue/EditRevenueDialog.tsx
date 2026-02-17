@@ -18,7 +18,7 @@ interface EditRevenueDialogProps {
 const EditRevenueDialog: React.FC<EditRevenueDialogProps> = ({ revenue, isOpen, onClose, onSave }) => {
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [period, setPeriod] = useState<'morning' | 'evening' | 'night' | 'ahmad_rajili'>('morning');
+  const [period, setPeriod] = useState<'morning' | 'evening' | 'night' | 'ahmad_rajili' | 'abdulwahab'>('morning');
   const [type, setType] = useState<'income' | 'expense'>('income');
   const { language } = useLanguageStore();
 
@@ -82,6 +82,7 @@ const EditRevenueDialog: React.FC<EditRevenueDialogProps> = ({ revenue, isOpen, 
                 <SelectItem value="evening">مسائية</SelectItem>
                 <SelectItem value="night">ليلية</SelectItem>
                 <SelectItem value="ahmad_rajili">احمد الرجيلي</SelectItem>
+                <SelectItem value="abdulwahab">عبدالوهاب</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -5,10 +5,9 @@ import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
 import { useToast } from '@/hooks/use-toast';
 import { Period } from './useRevenueState';
+import { BankingServiceValues } from '@/components/revenue/BankingServiceInput';
 
 interface UseRevenueFormProps {
-  bankingServices: string;
-  setBankingServices: (val: string) => void;
   income: string;
   setIncome: (val: string) => void;
   notes: string;
@@ -17,14 +16,16 @@ interface UseRevenueFormProps {
   selectedDate: string;
   formSubmitting: boolean;
   setFormSubmitting: (submitting: boolean) => void;
+  bankingValues: BankingServiceValues;
+  resetBankingValues: () => void;
 }
 
 export const useRevenueForm = ({
-  bankingServices, setBankingServices,
   income, setIncome,
   notes, setNotes,
   period, selectedDate,
-  formSubmitting, setFormSubmitting
+  formSubmitting, setFormSubmitting,
+  bankingValues, resetBankingValues,
 }: UseRevenueFormProps) => {
   const { user, checkPermission } = useAuthStore();
   const { language } = useLanguageStore();
@@ -35,10 +36,15 @@ export const useRevenueForm = ({
     e.preventDefault();
     setFormSubmitting(true);
     
-    const bankingAmount = Number(bankingServices) || 0;
     const incomeAmount = Number(income) || 0;
+    
+    // Calculate banking total
+    const bankingEntries = Object.entries(bankingValues)
+      .map(([key, val]) => ({ key, amount: Number(val) || 0 }))
+      .filter(e => e.amount > 0);
+    const bankingTotal = bankingEntries.reduce((s, e) => s + e.amount, 0);
 
-    if (bankingAmount === 0 && incomeAmount === 0) {
+    if (incomeAmount === 0 && bankingTotal === 0) {
       toast({
         title: language === 'ar' ? "خطأ" : "Error",
         description: language === 'ar' ? "يرجى إدخال الإيراد النقدي أو الخدمات المصرفية" : "Please enter cash income or banking services amount",
@@ -57,7 +63,8 @@ export const useRevenueForm = ({
     if (!canRegisterForPeriod) {
       const periodText = period === 'morning' ? 'الصباح' : 
                         period === 'evening' ? 'المساء' : 
-                        period === 'night' ? 'الليل' : 'احمد الرجيلي';
+                        period === 'night' ? 'الليل' : 
+                        period === 'abdulwahab' ? 'عبدالوهاب' : 'احمد الرجيلي';
       toast({
         title: language === 'ar' ? "غير مصرح" : "Unauthorized",
         description: language === 'ar' ? `لا يمكنك تسجيل إيرادات فترة ${periodText}` : `Cannot register ${period} period revenues`,
@@ -67,6 +74,7 @@ export const useRevenueForm = ({
       return;
     }
 
+    // Save cash income as one record
     if (incomeAmount > 0) {
       await addRevenue({
         amount: incomeAmount,
@@ -74,16 +82,19 @@ export const useRevenueForm = ({
         period,
         notes: notes,
         date: selectedDate,
+        service_name: null,
       });
     }
 
-    if (bankingAmount > 0) {
+    // Save each banking service as a separate record
+    for (const entry of bankingEntries) {
       await addRevenue({
-        amount: bankingAmount,
+        amount: entry.amount,
         type: 'banking_services',
         period,
         notes: notes,
         date: selectedDate,
+        service_name: entry.key,
       });
     }
     
@@ -92,9 +103,9 @@ export const useRevenueForm = ({
       description: language === 'ar' ? `تم تسجيل العملية بنجاح` : `Transaction registered successfully`,
     });
 
-    setBankingServices('');
     setIncome('');
     setNotes('');
+    resetBankingValues();
     setFormSubmitting(false);
   };
 

@@ -15,18 +15,22 @@ export const useRevenueManager = () => {
 
   const state = useRevenueState();
 
+  const isAdmin = useMemo(() => {
+    return user?.role === 'admin' || user?.role === 'ahmad_rajili';
+  }, [user]);
+
   const data = useRevenueData({
     periodStartDate: state.periodStartDate,
     periodEndDate: state.periodEndDate,
     selectedDate: state.selectedDate,
     setShowPeriodDetails: state.setShowPeriodDetails,
+    userPeriod: state.period,
+    isAdmin,
   });
 
   const { generatePeriodReport: generateReport } = useRevenuePDF();
 
   const form = useRevenueForm({
-    bankingServices: state.bankingServices,
-    setBankingServices: state.setBankingServices,
     income: state.income,
     setIncome: state.setIncome,
     notes: state.notes,
@@ -35,6 +39,8 @@ export const useRevenueManager = () => {
     selectedDate: state.selectedDate,
     formSubmitting: state.formSubmitting,
     setFormSubmitting: state.setFormSubmitting,
+    bankingValues: state.bankingValues,
+    resetBankingValues: state.resetBankingValues,
   });
 
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -66,6 +72,7 @@ export const useRevenueManager = () => {
       case 'evening': return 'مسائية';
       case 'night': return 'ليلية';
       case 'ahmad_rajili': return 'احمد الرجيلي';
+      case 'abdulwahab': return 'عبدالوهاب';
       default: return '';
     }
   }, [state.period]);
@@ -74,6 +81,7 @@ export const useRevenueManager = () => {
     ...state,
     ...data,
     language,
+    isAdmin,
     checkPermission,
     handleSubmit: form.handleSubmit,
     navigateDate,

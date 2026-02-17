@@ -7,7 +7,7 @@ import { Tables } from '@/integrations/supabase/types';
 // Map Supabase types to our app interfaces.
 export type Medicine = Omit<Tables<'medicines'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
 export type Supply = Omit<Tables<'supplies'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
-export type Revenue = Omit<Tables<'revenues'>, 'created_by_id' | 'created_by_name' | 'amount'> & { createdBy: string; amount: number };
+export type Revenue = Omit<Tables<'revenues'>, 'created_by_id' | 'created_by_name' | 'amount'> & { createdBy: string; amount: number; service_name?: string | null };
 
 interface PharmacyState {
   medicines: Medicine[];
@@ -83,7 +83,7 @@ export const usePharmacyStore = create<PharmacyState>()(
         set({ revenues: [], revenuesLoading: false });
         return;
       }
-      const revenues: Revenue[] = data.map(r => ({ ...r, createdBy: r.created_by_name, amount: Number(r.amount) }));
+      const revenues: Revenue[] = data.map(r => ({ ...r, createdBy: r.created_by_name, amount: Number(r.amount), service_name: r.service_name }));
       set({ revenues, revenuesLoading: false });
     },
     
@@ -300,7 +300,12 @@ addMedicine: async (medicine) => {
       if (!user) return console.error("User not authenticated");
 
       const { error } = await supabase.from('revenues').insert({
-        ...revenue,
+        amount: revenue.amount,
+        type: revenue.type,
+        period: revenue.period,
+        notes: revenue.notes,
+        date: revenue.date,
+        service_name: revenue.service_name || null,
         created_by_id: user.id,
         created_by_name: user.name,
       });

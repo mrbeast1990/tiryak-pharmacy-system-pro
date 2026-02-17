@@ -1,16 +1,19 @@
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePharmacyStore } from '@/store/pharmacyStore';
 import { useToast } from '@/hooks/use-toast';
+import { Period } from './useRevenueState';
 
 interface UseRevenueDataProps {
   periodStartDate: string;
   periodEndDate: string;
   selectedDate: string;
   setShowPeriodDetails: (show: boolean) => void;
+  userPeriod: Period;
+  isAdmin: boolean;
 }
 
-export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, setShowPeriodDetails }: UseRevenueDataProps) => {
+export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, setShowPeriodDetails, userPeriod, isAdmin }: UseRevenueDataProps) => {
   const { revenues, getTotalDailyRevenue, fetchRevenues, revenuesLoading } = usePharmacyStore();
   const { toast } = useToast();
 
@@ -18,16 +21,31 @@ export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, s
     fetchRevenues();
   }, [fetchRevenues]);
 
-  const dailyRevenue = getTotalDailyRevenue(selectedDate);
-  const dailyRevenues = revenues.filter(revenue => revenue.date === selectedDate);
+  // Filter revenues based on role
+  const filteredRevenues = useMemo(() => {
+    if (isAdmin) return revenues;
+    return revenues.filter(r => r.period === userPeriod);
+  }, [revenues, isAdmin, userPeriod]);
+
+  const dailyRevenues = useMemo(() => {
+    return filteredRevenues.filter(revenue => revenue.date === selectedDate);
+  }, [filteredRevenues, selectedDate]);
+
+  const dailyRevenue = useMemo(() => {
+    return dailyRevenues
+      .filter(r => r.type === 'income')
+      .reduce((total, r) => total + r.amount, 0);
+  }, [dailyRevenues]);
   
-  const dailyBankingServices = revenues
-    .filter(revenue => revenue.date === selectedDate && revenue.type === 'banking_services')
-    .reduce((total, revenue) => total + revenue.amount, 0);
+  const dailyBankingServices = useMemo(() => {
+    return dailyRevenues
+      .filter(r => r.type === 'banking_services')
+      .reduce((total, r) => total + r.amount, 0);
+  }, [dailyRevenues]);
 
   const getPeriodRevenue = () => {
     if (!periodStartDate || !periodEndDate) return 0;
-    return revenues
+    return filteredRevenues
       .filter(revenue => 
         revenue.date >= periodStartDate && 
         revenue.date <= periodEndDate && 
@@ -38,7 +56,7 @@ export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, s
 
   const getPeriodBankingServices = () => {
     if (!periodStartDate || !periodEndDate) return 0;
-    return revenues
+    return filteredRevenues
       .filter(revenue => 
         revenue.date >= periodStartDate && 
         revenue.date <= periodEndDate && 
@@ -49,7 +67,7 @@ export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, s
 
   const getPeriodRevenues = (type: 'income' | 'banking_services') => {
     if (!periodStartDate || !periodEndDate) return [];
-    return revenues.filter(revenue => 
+    return filteredRevenues.filter(revenue => 
       revenue.date >= periodStartDate && 
       revenue.date <= periodEndDate &&
       revenue.type === type
@@ -81,7 +99,7 @@ export const useRevenueData = ({ periodStartDate, periodEndDate, selectedDate, s
   };
 
   return {
-    revenues,
+    revenues: filteredRevenues,
     revenuesLoading,
     dailyRevenue,
     dailyBankingServices,
