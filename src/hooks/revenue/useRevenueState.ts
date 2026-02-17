@@ -1,17 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { BankingServiceValues } from '@/components/revenue/BankingServiceInput';
+import { BankingServiceEntry } from '@/components/revenue/BankingServiceInput';
 
 export type Period = 'morning' | 'evening' | 'night' | 'ahmad_rajili' | 'abdulwahab';
-
-const EMPTY_BANKING: BankingServiceValues = {
-  mobi_cash: '',
-  yser_pay: '',
-  mobi_nab: '',
-  bank_transfer: '',
-  pay_for_me: '',
-};
 
 export const useRevenueState = () => {
   const [income, setIncome] = useState('');
@@ -29,35 +21,23 @@ export const useRevenueState = () => {
   const [periodEndDate, setPeriodEndDate] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'income' | 'banking'>('income');
-  const [bankingValues, setBankingValues] = useState<BankingServiceValues>({ ...EMPTY_BANKING });
+  const [bankingValues, setBankingValues] = useState<BankingServiceEntry[]>([]);
   
   const { user } = useAuthStore();
 
-  const bankingTotal = Object.values(bankingValues).reduce((sum, v) => sum + (Number(v) || 0), 0);
+  const bankingTotal = bankingValues.reduce((sum, e) => sum + e.amount, 0);
 
-  const resetBankingValues = () => setBankingValues({ ...EMPTY_BANKING });
+  const resetBankingValues = () => setBankingValues([]);
 
   useEffect(() => {
     if (user) {
       switch (user.role) {
-        case 'morning_shift':
-          setPeriod('morning');
-          break;
-        case 'evening_shift':
-          setPeriod('evening');
-          break;
-        case 'night_shift':
-          setPeriod('night');
-          break;
-        case 'ahmad_rajili':
-          setPeriod('ahmad_rajili');
-          break;
-        case 'abdulwahab':
-          setPeriod('abdulwahab');
-          break;
-        default:
-          setPeriod('morning');
-          break;
+        case 'morning_shift': setPeriod('morning'); break;
+        case 'evening_shift': setPeriod('evening'); break;
+        case 'night_shift': setPeriod('night'); break;
+        case 'ahmad_rajili': setPeriod('ahmad_rajili'); break;
+        case 'abdulwahab': setPeriod('abdulwahab'); break;
+        default: setPeriod('morning'); break;
       }
     }
   }, [user]);

@@ -5,7 +5,7 @@ import { useLanguageStore } from '@/store/languageStore';
 import { usePharmacyStore } from '@/store/pharmacyStore';
 import { useToast } from '@/hooks/use-toast';
 import { Period } from './useRevenueState';
-import { BankingServiceValues } from '@/components/revenue/BankingServiceInput';
+import { BankingServiceEntry } from '@/components/revenue/BankingServiceInput';
 
 interface UseRevenueFormProps {
   income: string;
@@ -16,7 +16,7 @@ interface UseRevenueFormProps {
   selectedDate: string;
   formSubmitting: boolean;
   setFormSubmitting: (submitting: boolean) => void;
-  bankingValues: BankingServiceValues;
+  bankingValues: BankingServiceEntry[];
   resetBankingValues: () => void;
 }
 
@@ -37,12 +37,7 @@ export const useRevenueForm = ({
     setFormSubmitting(true);
     
     const incomeAmount = Number(income) || 0;
-    
-    // Calculate banking total
-    const bankingEntries = Object.entries(bankingValues)
-      .map(([key, val]) => ({ key, amount: Number(val) || 0 }))
-      .filter(e => e.amount > 0);
-    const bankingTotal = bankingEntries.reduce((s, e) => s + e.amount, 0);
+    const bankingTotal = bankingValues.reduce((s, e) => s + e.amount, 0);
 
     if (incomeAmount === 0 && bankingTotal === 0) {
       toast({
@@ -86,15 +81,15 @@ export const useRevenueForm = ({
       });
     }
 
-    // Save each banking service as a separate record
-    for (const entry of bankingEntries) {
+    // Save each banking entry as a separate record
+    for (const entry of bankingValues) {
       await addRevenue({
         amount: entry.amount,
         type: 'banking_services',
         period,
         notes: notes,
         date: selectedDate,
-        service_name: entry.key,
+        service_name: entry.service,
       });
     }
     

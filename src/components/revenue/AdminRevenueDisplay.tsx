@@ -94,7 +94,7 @@ const AdminRevenueDisplay: React.FC<AdminRevenueDisplayProps> = ({
             </span>
             <span className="flex items-center gap-1">
               <Building2 className="w-3 h-3 text-blue-600" />
-              شبكة: {dayTotal.banking.toFixed(0)} د
+              خدمات: {dayTotal.banking.toFixed(0)} د
             </span>
           </div>
         </CardContent>
@@ -131,7 +131,7 @@ const AdminRevenueDisplay: React.FC<AdminRevenueDisplayProps> = ({
               {/* Summary Row */}
               <div className="px-4 pb-3 flex justify-end gap-4 text-xs text-muted-foreground">
                 <span>كاش: {cash.toFixed(0)} د</span>
-                <span>شبكة: {banking.toFixed(0)} د</span>
+                <span>خدمات: {banking.toFixed(0)} د</span>
               </div>
 
               {/* Expanded Details */}
