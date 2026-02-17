@@ -1,66 +1,67 @@
 
-# إصلاح تداخل العناصر في نموذج السدادات
+# خطة التعديلات الثلاثة
 
-## المشكلة
-في `PaymentForm.tsx`، الصف الأول يستخدم `grid grid-cols-5 gap-2` حيث:
-- `CompanySelector` يأخذ `col-span-3` ويحتوي داخلياً على: dropdown + زر تعديل + زر إضافة (+)
-- حقل المبلغ يأخذ `col-span-2`
+## 1. إضافة زر تعديل بيانات الشركة في صفحة تفاصيل الشركة
 
-على الموبايل، المساحة ضيقة جداً فتتداخل الأزرار مع حقل المبلغ ويختفي زر (+).
+### المشكلة
+عند اختيار شركة معينة تظهر بياناتها (الاسم، المندوب، الهاتف، رقم الحساب) لكن لا يوجد زر تعديل مباشر.
 
-## الحل
+### الحل
+- إضافة زر تعديل (أيقونة قلم) بجانب اسم الشركة في `CompanyDetailsView.tsx`
+- عند الضغط عليه يفتح `EditCompanyDialog` الموجود بالفعل
+- عند حفظ التعديلات يتم تحديث بيانات الشركة المعروضة مباشرة
 
-### 1. إعادة تنظيم التخطيط (`PaymentForm.tsx`)
-- تغيير الصف الأول من `grid grid-cols-5` إلى صفين منفصلين:
-  - صف أول: `CompanySelector` بعرض كامل (100%)
-  - صف ثاني: حقل المبلغ بعرض كامل
-- هذا يمنح كل عنصر مساحته الكاملة
+### الملف: `src/components/payments/CompanyDetailsView.tsx`
+- استيراد `EditCompanyDialog` و أيقونة `Pencil`
+- إضافة state لفتح/إغلاق dialog التعديل
+- إضافة زر `Pencil` بجانب عنوان الشركة في الـ header
+- إضافة `EditCompanyDialog` في نهاية الـ component
+- تحديث بيانات الشركة بعد التعديل عبر `fetchCompanies`
 
-### 2. تحسين `CompanySelector.tsx`
-- إبقاء أزرار التعديل والإضافة بجانب الـ dropdown
-- تكبير زر الإضافة (+) ليكون بحجم مناسب للمس (44x44px)
-- تلوين زر الإضافة بالأخضر (`bg-primary text-white`) مع z-index عالي
+### الملف: `src/components/payments/PaymentsManager.tsx`
+- تحديث `selectedCompany` من الـ store بعد التعديل لضمان عرض البيانات المحدثة
 
-### 3. حقل المبلغ
-- إضافة `inputMode="decimal"` لفتح لوحة أرقام تلقائياً على الموبايل
-- الحفاظ على `type="number"` مع `dir="ltr"`
+---
 
-## التفاصيل التقنية
+## 2. جعل إجمالي السدادات يعرض الشهر الحالي افتراضيا
 
-### الملفات المتأثرة:
+### المشكلة
+`PaymentsSummary` يعرض إجمالي كل السدادات بدون تصفية. المطلوب أن يكون الافتراضي هو الشهر الحالي فقط.
+
+### الحل
+- تغيير القيمة الافتراضية لـ `dateFilter` في `paymentsStore.ts` من `'all'` إلى `'month'`
+- هذا سيجعل `getFilteredPayments()` و `getTotalAmount()` و `getUndeductedTotal()` تحسب للشهر الحالي فقط تلقائيا
+- عند بداية شهر جديد، `selectedMonth` يتم حسابه من `new Date()` فسيتغير تلقائيا
+
+### الملف: `src/store/paymentsStore.ts`
+- تغيير سطر واحد: `dateFilter: 'all'` -> `dateFilter: 'month'`
+
+---
+
+## 3. إعادة تصميم صفحة التقارير بشكل احترافي
+
+### المشكلة
+صفحة التقارير الحالية بسيطة جدا وتحتاج تصميم أكثر احترافية.
+
+### الحل - إعادة تصميم كامل لـ `ReportsPage.tsx`:
+- **Header جديد**: بنفس تصميم باقي الصفحات (backdrop-blur، gradient icon)
+- **بطاقات ملخص علوية**: 4 بطاقات ملونة بتدرجات (إجمالي الموظفين، إجمالي النواقص، متوسط الأداء، أفضل موظف)
+- **جدول أداء محسّن**: تصميم أنيق مع أيقونات وألوان تقييم واضحة، صفوف متناوبة الألوان
+- **قسم تصدير PDF محسّن**: تواريخ في سطر واحد مع زر التصدير، تصميم أنظف
+- **الرسوم البيانية**: نفس البيانات لكن بألوان متناسقة مع هوية التطبيق (أخضر/تيل)
+- **تصميم متجاوب**: يعمل بشكل ممتاز على الموبايل والديسكتوب
+- **إزالة الـ background logo**: لتنظيف المظهر
+
+### الملف: `src/components/ReportsPage.tsx`
+- إعادة كتابة كاملة للواجهة مع الحفاظ على نفس المنطق والبيانات
+
+---
+
+## ملخص الملفات المتأثرة
 
 | الملف | التعديل |
 |-------|---------|
-| `src/components/payments/PaymentForm.tsx` | تغيير layout الصف الأول من grid-cols-5 إلى صفين منفصلين |
-| `src/components/payments/CompanySelector.tsx` | تحسين زر الإضافة (لون أخضر، حجم أكبر، z-index) |
-
-### تعديل PaymentForm.tsx (صف الشركة والمبلغ):
-```typescript
-// قبل: grid واحد ضيق
-<div className="grid grid-cols-5 gap-2">
-  <div className="col-span-3"><CompanySelector /></div>
-  <div className="col-span-2">المبلغ</div>
-</div>
-
-// بعد: صفين منفصلين
-<div className="space-y-3">
-  <CompanySelector value={companyName} onChange={setCompanyName} />
-  <div>
-    <label>المبلغ (د.ل)</label>
-    <Input type="number" inputMode="decimal" ... />
-  </div>
-</div>
-```
-
-### تعديل CompanySelector.tsx (زر الإضافة):
-```typescript
-// تحسين زر الإضافة
-<Button
-  type="button"
-  size="icon"
-  onClick={() => setShowAddDialog(true)}
-  className="flex-shrink-0 h-10 w-10 bg-primary hover:bg-primary/90 text-white relative z-10"
->
-  <Plus className="w-5 h-5" />
-</Button>
-```
+| `src/components/payments/CompanyDetailsView.tsx` | إضافة زر تعديل + EditCompanyDialog |
+| `src/components/payments/PaymentsManager.tsx` | تحديث selectedCompany بعد التعديل |
+| `src/store/paymentsStore.ts` | تغيير dateFilter الافتراضي إلى 'month' |
+| `src/components/ReportsPage.tsx` | إعادة تصميم كامل احترافي |
