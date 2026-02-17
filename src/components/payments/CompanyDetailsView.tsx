@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Company, Payment, usePaymentsStore } from '@/store/paymentsStore';
-import { ArrowRight, Building2, User, Phone, CreditCard, Wallet, AlertCircle } from 'lucide-react';
+import { ArrowRight, Building2, User, Phone, CreditCard, Wallet, AlertCircle, Pencil } from 'lucide-react';
 import PaymentCard from './PaymentCard';
+import EditCompanyDialog from './EditCompanyDialog';
 
 const PAGE_SIZE = 50;
 
@@ -11,11 +12,13 @@ interface CompanyDetailsViewProps {
   company: Company;
   onBack: () => void;
   onViewAttachment?: (url: string) => void;
+  onCompanyUpdated?: () => void;
 }
 
-const CompanyDetailsView: React.FC<CompanyDetailsViewProps> = ({ company, onBack, onViewAttachment }) => {
+const CompanyDetailsView: React.FC<CompanyDetailsViewProps> = ({ company, onBack, onViewAttachment, onCompanyUpdated }) => {
   const { payments } = usePaymentsStore();
   const [currentPage, setCurrentPage] = useState(1);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const companyPayments = payments
     .filter(p => p.company_name === company.name)
@@ -48,6 +51,14 @@ const CompanyDetailsView: React.FC<CompanyDetailsViewProps> = ({ company, onBack
               <p className="text-xs text-muted-foreground">{company.representative_name}</p>
             )}
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowEditDialog(true)}
+            className="h-9 w-9 text-muted-foreground hover:text-primary"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -100,6 +111,15 @@ const CompanyDetailsView: React.FC<CompanyDetailsViewProps> = ({ company, onBack
           <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="h-8 text-xs">التالي</Button>
         </div>
       )}
+
+      <EditCompanyDialog
+        company={company}
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          setShowEditDialog(open);
+          if (!open) onCompanyUpdated?.();
+        }}
+      />
     </div>
   );
 };

@@ -69,7 +69,7 @@ export const usePaymentsStore = create<PaymentsState>((set, get) => ({
   filters: {
     company: null,
     showUndeductedOnly: false,
-    dateFilter: 'all',
+    dateFilter: 'month',
     selectedMonth: now.getMonth() + 1,
     selectedYear: now.getFullYear(),
     dateFrom: null,
