@@ -486,6 +486,7 @@ export type Database = {
           id: string
           notes: string | null
           period: string
+          service_name: string | null
           type: string
         }
         Insert: {
@@ -497,6 +498,7 @@ export type Database = {
           id?: string
           notes?: string | null
           period: string
+          service_name?: string | null
           type: string
         }
         Update: {
@@ -508,6 +510,7 @@ export type Database = {
           id?: string
           notes?: string | null
           period?: string
+          service_name?: string | null
           type?: string
         }
         Relationships: []
@@ -575,6 +578,7 @@ export type Database = {
         | "evening_shift"
         | "night_shift"
         | "member"
+        | "abdulwahab"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -709,6 +713,7 @@ export const Constants = {
         "evening_shift",
         "night_shift",
         "member",
+        "abdulwahab",
       ],
     },
   },
