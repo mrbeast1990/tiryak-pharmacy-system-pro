@@ -23,7 +23,7 @@ interface AddMedicineDialogProps {
 const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChange }) => {
   const { language, t } = useLanguageStore();
   const { medicines, addMedicine } = usePharmacyStore();
-  const { getFilteredSuggestions, getScientificNameSuggestions, deleteSuggestion, fetchPharmacyGuide } = useSuggestionsStore();
+  const { getFilteredSuggestions, getScientificNameSuggestions, getScientificNameForTrade, deleteSuggestion, fetchPharmacyGuide } = useSuggestionsStore();
   const { toast } = useToast();
 
   // جلب بيانات pharmacy_guide عند فتح الحوار
@@ -157,6 +157,8 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
                       <span
                         onClick={() => {
                           setMedicineName(suggestion);
+                          const scientificMatch = getScientificNameForTrade(medicines, suggestion);
+                          if (scientificMatch) setScientificName(scientificMatch);
                           setShowMedicineSuggestions(false);
                         }}
                         className="flex-1 text-right"

@@ -7,11 +7,13 @@ interface SuggestionsState {
   deletedSuggestions: Set<string>;
   pharmacyGuideNames: string[];
   pharmacyGuideScientificNames: string[];
+  pharmacyGuideMap: Map<string, string>;
   addCustomSuggestion: (suggestion: string) => void;
   deleteSuggestion: (suggestion: string) => void;
   fetchPharmacyGuide: () => Promise<void>;
   getFilteredSuggestions: (medicines: any[], query: string) => string[];
   getScientificNameSuggestions: (medicines: any[], query: string) => string[];
+  getScientificNameForTrade: (medicines: any[], tradeName: string) => string | null;
 }
 
 export const useSuggestionsStore = create<SuggestionsState>()(
@@ -21,6 +23,7 @@ export const useSuggestionsStore = create<SuggestionsState>()(
       deletedSuggestions: new Set(),
       pharmacyGuideNames: [],
       pharmacyGuideScientificNames: [],
+      pharmacyGuideMap: new Map(),
 
       addCustomSuggestion: (suggestion: string) => {
         const trimmed = suggestion.trim();
@@ -57,7 +60,14 @@ export const useSuggestionsStore = create<SuggestionsState>()(
           .map(item => item.scientific_name!)
           .filter((name, index, self) => self.indexOf(name) === index) || [];
         
-        set({ pharmacyGuideNames: names, pharmacyGuideScientificNames: scientificNames });
+        const guideMap = new Map<string, string>();
+        data?.forEach(item => {
+          if (item.scientific_name) {
+            guideMap.set(item.trade_name.toLowerCase(), item.scientific_name);
+          }
+        });
+        
+        set({ pharmacyGuideNames: names, pharmacyGuideScientificNames: scientificNames, pharmacyGuideMap: guideMap });
       },
 
       getFilteredSuggestions: (medicines: any[], query: string) => {
@@ -120,6 +130,18 @@ export const useSuggestionsStore = create<SuggestionsState>()(
         const allNames = [...new Set([...medicineScientificNames, ...guideScientificNames])];
 
         return allNames.slice(0, 8);
+      },
+
+      getScientificNameForTrade: (medicines: any[], tradeName: string) => {
+        const lowerName = tradeName.toLowerCase();
+        
+        // Search in existing medicines first
+        const match = medicines.find(m => m.name.toLowerCase() === lowerName && m.scientific_name);
+        if (match) return match.scientific_name;
+        
+        // Search in pharmacy guide map
+        const { pharmacyGuideMap } = get();
+        return pharmacyGuideMap.get(lowerName) || null;
       }
     }),
     {
