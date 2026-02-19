@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2, Wallet } from 'lucide-react';
+import { ArrowRight, Loader2, Wallet, BarChart3 } from 'lucide-react';
 
 import { useRevenueManager } from '@/hooks/useRevenueManager';
 
@@ -10,6 +10,7 @@ import PeriodRevenueDetails from './revenue/PeriodRevenueDetails';
 import RevenueForm from './revenue/RevenueForm';
 import RevenueDisplay from './revenue/RevenueDisplay';
 import AdminRevenueDisplay from './revenue/AdminRevenueDisplay';
+import RevenueReportSheet from './revenue/RevenueReportSheet';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
 
 interface RevenueManagerProps {
@@ -141,6 +142,18 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           isAdmin={manager.isAdmin}
         />
       </main>
+
+      {/* FAB for Reports - Admin only */}
+      {manager.isAdmin && (
+        <RevenueReportSheet revenues={manager.revenues}>
+          <button
+            className="fixed bottom-6 left-6 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center hover:scale-105 active:scale-95"
+            aria-label="التقارير"
+          >
+            <BarChart3 className="w-6 h-6" />
+          </button>
+        </RevenueReportSheet>
+      )}
     </div>
   );
 };
