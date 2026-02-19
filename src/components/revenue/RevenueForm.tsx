@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, DollarSign, FileText, Loader2, Save, Calculator } from 'lucide-react';
+import { Calendar, DollarSign, Loader2, Save, Calculator } from 'lucide-react';
 import { Period } from '@/hooks/revenue/useRevenueState';
 import BankingServiceInput, { BankingServiceEntry } from './BankingServiceInput';
 
@@ -157,16 +157,14 @@ const RevenueForm: React.FC<RevenueFormProps> = ({
 
               {/* Notes */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground text-right block flex items-center justify-end gap-1.5">
-                  <span>ملاحظات (اختياري)</span>
-                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                <label className="text-xs font-semibold text-muted-foreground text-right block">
+                  ملاحظات (اختياري)
                 </label>
-                <Textarea
+                <Input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="ملاحظات..."
-                  className="text-sm text-right resize-none border-border/50 focus:border-primary bg-muted/30 rounded-lg"
-                  rows={2}
+                  className="text-sm text-right h-9 border-border/50 focus:border-primary bg-muted/30 rounded-lg"
                 />
               </div>
               

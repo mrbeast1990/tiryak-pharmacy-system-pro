@@ -81,21 +81,23 @@ const AdminRevenueDisplay: React.FC<AdminRevenueDisplayProps> = ({
   return (
     <div className="space-y-3">
       {/* Day Total Card */}
-      <Card className="bg-gradient-to-l from-primary/10 to-primary/5 border-0 shadow-md rounded-xl overflow-hidden">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-bold text-foreground">إجمالي اليوم</span>
-            <span className="text-xl font-bold text-primary">{dayTotal.total.toFixed(0)} د</span>
+      <Card className="bg-gradient-to-l from-primary/10 to-primary/5 border-0 shadow-lg rounded-2xl overflow-hidden">
+        <CardContent className="p-5">
+          <div className="text-center mb-3">
+            <p className="text-xs text-muted-foreground mb-1">إجمالي اليوم</p>
+            <p className="text-3xl font-bold text-primary">{dayTotal.total.toFixed(0)} <span className="text-lg">د</span></p>
           </div>
-          <div className="flex justify-end gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <DollarSign className="w-3 h-3 text-green-600" />
-              كاش: {dayTotal.cash.toFixed(0)} د
-            </span>
-            <span className="flex items-center gap-1">
-              <Building2 className="w-3 h-3 text-blue-600" />
-              خدمات: {dayTotal.banking.toFixed(0)} د
-            </span>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-2.5 text-center border border-green-200/50">
+              <DollarSign className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
+              <p className="text-[10px] text-muted-foreground">كاش</p>
+              <p className="text-sm font-bold text-green-600">{dayTotal.cash.toFixed(0)} د</p>
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-2.5 text-center border border-blue-200/50">
+              <Building2 className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
+              <p className="text-[10px] text-muted-foreground">خدمات</p>
+              <p className="text-sm font-bold text-blue-600">{dayTotal.banking.toFixed(0)} د</p>
+            </div>
           </div>
         </CardContent>
       </Card>
