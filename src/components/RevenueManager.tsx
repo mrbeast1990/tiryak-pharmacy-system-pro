@@ -10,7 +10,6 @@ import PeriodRevenueDetails from './revenue/PeriodRevenueDetails';
 import RevenueForm from './revenue/RevenueForm';
 import RevenueDisplay from './revenue/RevenueDisplay';
 import AdminRevenueDisplay from './revenue/AdminRevenueDisplay';
-import RevenueReportExporter from './revenue/RevenueReportExporter';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
 
 interface RevenueManagerProps {
@@ -138,31 +137,9 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           selectedDate={manager.selectedDate}
           navigateDate={manager.navigateDate}
           setShowDailyDetails={manager.setShowDailyDetails}
-          periodStartDate={manager.periodStartDate}
-          setPeriodStartDate={manager.setPeriodStartDate}
-          periodEndDate={manager.periodEndDate}
-          setPeriodEndDate={manager.setPeriodEndDate}
-          showPeriodRevenue={() => {
-            manager.setViewMode('income');
-            manager.showPeriodRevenue();
-          }}
-          showPeriodBanking={() => {
-            manager.setViewMode('banking');
-            manager.showPeriodBanking();
-          }}
           canNavigateDate={manager.canNavigateDate}
           isAdmin={manager.isAdmin}
         />
-        
-        {manager.checkPermission('export_revenue_pdf') && (
-          <RevenueReportExporter
-            reportStartDate={manager.reportStartDate}
-            setReportStartDate={manager.setReportStartDate}
-            reportEndDate={manager.reportEndDate}
-            setReportEndDate={manager.setReportEndDate}
-            generatePeriodReport={manager.generatePeriodReport}
-          />
-        )}
       </main>
     </div>
   );
