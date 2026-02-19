@@ -1,57 +1,51 @@
 
-# تحسين واجهة صفحة الإيرادات - تصميم مدمج واحترافي
 
-## المشاكل الحالية
-1. **كروت إيراد اليوم (كاش/خدمات/إجمالي)**: 3 كروت تحت بعض تأخذ مساحة عمودية كبيرة
-2. **التنقل بالأيام**: كارت منفصل في الأسفل بتصميم بسيط
-3. **الملاحظات**: حقل Textarea بـ rows=2 يأخذ مساحة كبيرة
-4. **الداشبورد العام**: يحتاج تحسين بصري
+# الملء التلقائي للاسم العلمي عند اختيار اسم الدواء من الاقتراحات
 
-## التعديلات المطلوبة
+## الفكرة
+عند اختيار اسم دواء من قائمة الاقتراحات، يتم تعبئة حقل "الاسم العلمي" تلقائيا بالاسم العلمي المسجل مسبقا لهذا الصنف (من جدول medicines أو pharmacy_guide)، بدلا من إعادة كتابته يدويا في كل مرة.
 
-### 1. كروت إيراد اليوم - جنب بعض (RevenueDisplay.tsx)
-- تحويل الـ 3 كروت (كاش / خدمات مصرفية / إجمالي) لتكون في **صف واحد أفقي** (`grid grid-cols-3`)
-- تصغير حجم كل كارت مع الحفاظ على الأيقونة والقيمة
-- تصميم مدمج: أيقونة صغيرة + اسم + قيمة في سطر واحد لكل كارت
+## التعديلات
 
-### 2. تحسين التنقل بالأيام (RevenueDisplay.tsx)
-- دمج أزرار التنقل (السهم يمين/يسار) مع **كارت الإجمالي** بدلا من كارت منفصل
-- التصميم الجديد: كارت واحد يحتوي على التاريخ في المنتصف + الإجمالي تحته + أسهم التنقل على الجانبين
-- إزالة كارت التنقل المنفصل القديم
+### 1. إضافة دالة بحث عن الاسم العلمي في suggestionsStore
+- إضافة دالة `getScientificNameForTrade` في `suggestionsStore.ts`
+- تبحث أولا في جدول `medicines` (الأدوية المسجلة سابقا) عن أي صنف بنفس الاسم التجاري وتعيد اسمه العلمي
+- إذا لم تجد، تبحث في بيانات `pharmacy_guide` المحملة مسبقا
+- تعديل `fetchPharmacyGuide` لتخزين البيانات كاملة (trade_name + scientific_name) كـ Map للبحث السريع
 
-### 3. تصغير الملاحظات (RevenueForm.tsx)
-- تحويل الملاحظات من `Textarea` بـ rows=2 إلى **Input عادي** بسطر واحد
-- تصغير المسمى وإزالة الأيقونة الزائدة
-- جعله أكثر اندماجا مع باقي الحقول
-
-### 4. تحسين شكل الداشبورد العام
-- تعديل كارت "إجمالي اليوم" في `AdminRevenueDisplay` ليكون أكثر بروزا مع أرقام أكبر
-- تحسين الهوامش والمسافات بين العناصر
+### 2. تعديل AddMedicineDialog لاستخدام الملء التلقائي
+- عند النقر على اقتراح في قائمة الاسم التجاري:
+  - يتم تعبئة `medicineName` كالمعتاد
+  - يتم استدعاء `getScientificNameForTrade` للحصول على الاسم العلمي
+  - إذا وُجد اسم علمي مطابق، يتم تعبئة `scientificName` تلقائيا
+  - إذا لم يوجد، يبقى الحقل فارغا ليملأه المستخدم يدويا
 
 ## التفاصيل التقنية
 
-### الملف: `src/components/revenue/RevenueDisplay.tsx`
-- دمج الداشبورد والتنقل في تصميم واحد مدمج:
-  - صف علوي: التاريخ مع أسهم التنقل (للمدير)
-  - صف سفلي: 3 كروت صغيرة أفقية (كاش | خدمات | إجمالي)
-- كل كارت صغير: أيقونة ملونة + عنوان + قيمة بخط عريض
-- الضغط على أي كارت يفتح التفاصيل اليومية
+### الملف: `src/store/suggestionsStore.ts`
+- إضافة حقل `pharmacyGuideMap` من نوع `Map<string, string>` (trade_name -> scientific_name)
+- تعديل `fetchPharmacyGuide` لبناء هذا الـ Map
+- إضافة دالة جديدة:
+  ```
+  getScientificNameForTrade: (medicines, tradeName) => string | null
+  ```
+  تبحث في medicines أولا ثم في pharmacyGuideMap
 
-### الملف: `src/components/revenue/RevenueForm.tsx`
-- سطر 158-171: استبدال Textarea بـ Input عادي:
+### الملف: `src/components/shortage/AddMedicineDialog.tsx`
+- تعديل handler النقر على اقتراح الاسم التجاري (سطر 158-161):
   ```
-  <Input
-    value={notes}
-    onChange={...}
-    placeholder="ملاحظات..."
-    className="text-sm text-right h-9 ..."
-  />
+  onClick={() => {
+    setMedicineName(suggestion);
+    const scientificMatch = getScientificNameForTrade(medicines, suggestion);
+    if (scientificMatch) setScientificName(scientificMatch);
+    setShowMedicineSuggestions(false);
+  }}
   ```
-- إزالة أيقونة FileText من label الملاحظات لتبسيط العرض
 
 ### الملفات المتأثرة
 
 | الملف | التعديل |
 |-------|---------|
-| `src/components/revenue/RevenueDisplay.tsx` | إعادة تصميم - كروت أفقية + دمج التنقل |
-| `src/components/revenue/RevenueForm.tsx` | تصغير الملاحظات من Textarea إلى Input |
+| `src/store/suggestionsStore.ts` | إضافة pharmacyGuideMap + دالة getScientificNameForTrade |
+| `src/components/shortage/AddMedicineDialog.tsx` | استدعاء الملء التلقائي عند اختيار اقتراح |
+
