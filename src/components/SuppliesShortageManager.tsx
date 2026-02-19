@@ -99,6 +99,21 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
     });
   };
 
+  const handleUpdatePriority = (id: string, priority: number) => {
+    updateSupply(id, { repeat_count: priority });
+    const priorityLabels: Record<number, string> = {
+      1: language === 'ar' ? 'عادي' : 'Normal',
+      2: language === 'ar' ? 'متوسط' : 'Medium',
+      3: language === 'ar' ? 'عالي' : 'High',
+    };
+    toast({
+      title: language === 'ar' ? "تم التحديث" : "Updated",
+      description: language === 'ar' 
+        ? `تم تغيير الأولوية إلى ${priorityLabels[priority]}`
+        : `Priority changed to ${priorityLabels[priority]}`,
+    });
+  };
+
   const exportShortagesPDF = async () => {
     try {
       const doc = new jsPDF();
@@ -275,6 +290,7 @@ const SuppliesShortageManager: React.FC<SuppliesShortageManagerProps> = ({ onBac
                 onMarkAvailable={handleMarkAvailable}
                 onDelete={handleDelete}
                 onUpdateName={handleUpdateName}
+                onUpdatePriority={handleUpdatePriority}
                 canEdit={true}
                 canDelete={canDeleteSupply}
               />
