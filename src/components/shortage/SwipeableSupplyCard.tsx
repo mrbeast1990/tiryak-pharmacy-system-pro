@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useSwipeable } from 'react-swipeable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Save, X, RotateCcw } from 'lucide-react';
+import { Edit, Save, X, RotateCcw, CheckCircle, Trash2 } from 'lucide-react';
 import { Supply } from '@/store/pharmacyStore';
 import { useLanguageStore } from '@/store/languageStore';
 import {
@@ -16,12 +15,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface SwipeableSupplyCardProps {
   supply: Supply;
   onMarkAvailable: (supply: Supply) => void;
   onDelete: (supply: Supply) => void;
   onUpdateName: (id: string, name: string) => void;
+  onUpdatePriority?: (id: string, priority: number) => void;
   canEdit: boolean;
   canDelete: boolean;
 }
@@ -31,46 +36,16 @@ const SwipeableSupplyCard: React.FC<SwipeableSupplyCardProps> = ({
   onMarkAvailable,
   onDelete,
   onUpdateName,
+  onUpdatePriority,
   canEdit,
   canDelete,
 }) => {
   const { language } = useLanguageStore();
-  const [swipeOffset, setSwipeOffset] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(supply.name);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAvailableDialog, setShowAvailableDialog] = useState(false);
-
-  const handlers = useSwipeable({
-    onSwiping: (e) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        return;
-      }
-      const maxSwipe = 80;
-      const offset = Math.max(-maxSwipe, Math.min(maxSwipe, e.deltaX));
-      setSwipeOffset(offset);
-    },
-    onSwipedLeft: () => {
-      if (swipeOffset < -40 && canDelete) {
-        setShowDeleteDialog(true);
-      }
-      setSwipeOffset(0);
-    },
-    onSwipedRight: () => {
-      if (swipeOffset > 40) {
-        setShowAvailableDialog(true);
-      }
-      setSwipeOffset(0);
-    },
-    onTouchEndOrOnMouseUp: () => {
-      setSwipeOffset(0);
-    },
-    trackMouse: false,
-    trackTouch: true,
-    delta: 15,
-    preventScrollOnSwipe: false,
-    swipeDuration: 250,
-  });
+  const [showPriorityPopover, setShowPriorityPopover] = useState(false);
 
   const handleSave = () => {
     if (editedName.trim() && !/^\s/.test(editedName)) {
@@ -79,10 +54,17 @@ const SwipeableSupplyCard: React.FC<SwipeableSupplyCardProps> = ({
     }
   };
 
+  const handlePriorityChange = (newPriority: number) => {
+    if (onUpdatePriority) {
+      onUpdatePriority(supply.id, newPriority);
+    }
+    setShowPriorityPopover(false);
+  };
+
   const getPriorityColor = () => {
     const count = supply.repeat_count || 1;
-    if (count >= 3) return 'bg-destructive';
-    if (count >= 2) return 'bg-warning';
+    if (count >= 3) return 'bg-red-500';
+    if (count >= 2) return 'bg-amber-500';
     return 'bg-blue-500';
   };
 
@@ -91,6 +73,13 @@ const SwipeableSupplyCard: React.FC<SwipeableSupplyCardProps> = ({
     if (count >= 3) return language === 'ar' ? 'عالي' : 'High';
     if (count >= 2) return language === 'ar' ? 'متوسط' : 'Medium';
     return language === 'ar' ? 'عادي' : 'Normal';
+  };
+
+  const getPriorityBadgeStyle = () => {
+    const count = supply.repeat_count || 1;
+    if (count >= 3) return 'border-red-500 text-red-600 bg-red-50';
+    if (count >= 2) return 'border-amber-500 text-amber-600 bg-amber-50';
+    return 'border-blue-500 text-blue-600 bg-blue-50';
   };
 
   return (
@@ -147,117 +136,146 @@ const SwipeableSupplyCard: React.FC<SwipeableSupplyCardProps> = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="relative overflow-hidden rounded-lg">
-        {/* Swipe indicators */}
-        <div 
-          className="absolute inset-y-0 right-0 w-20 bg-blue-500/20 flex items-center justify-center transition-opacity"
-          style={{ opacity: swipeOffset > 20 ? 1 : 0 }}
-        >
-          <span className="text-blue-600 font-medium text-xs">
-            {language === 'ar' ? 'تم توفيره' : 'Available'}
-          </span>
-        </div>
-        <div 
-          className="absolute inset-y-0 left-0 w-20 bg-destructive/20 flex items-center justify-center transition-opacity"
-          style={{ opacity: swipeOffset < -20 ? 1 : 0 }}
-        >
-          <span className="text-destructive font-medium text-xs">
-            {language === 'ar' ? 'حذف' : 'Delete'}
-          </span>
-        </div>
-
-        {/* Card content - LTR Layout */}
-        <div 
-          {...handlers}
-          className="relative bg-card shadow-md rounded-lg transition-transform touch-pan-y"
-          style={{ transform: `translateX(${swipeOffset}px)` }}
-          dir="ltr"
-        >
-          <div className="flex">
-            {/* Priority strip - LEFT side - Blue/Purple theme */}
-            <div className={`w-1.5 rounded-l-lg ${getPriorityColor()}`} />
-            
-            {/* Content */}
-            <div className="flex-1 p-3">
-              <div className="flex items-start justify-between gap-2">
-                {/* Left side - Supply name and meta */}
-                <div className="flex-1 min-w-0">
-                  {isEditing ? (
-                    <div className="flex items-center gap-2">
-                      <Input 
-                        value={editedName} 
-                        onChange={(e) => setEditedName(e.target.value)} 
-                        className="h-7 text-sm"
-                        autoFocus
-                      />
-                      <Button size="icon" className="h-7 w-7 shrink-0 bg-blue-500 hover:bg-blue-600" onClick={handleSave}>
-                        <Save className="h-3 w-3" />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="h-7 w-7 shrink-0" 
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditedName(supply.name);
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+      {/* Compact Card - No swipe */}
+      <div className="relative bg-card shadow-sm rounded-lg overflow-hidden border border-border/30">
+        <div className="flex">
+          {/* Priority strip - 4px width */}
+          <div className={`w-1 ${getPriorityColor()}`} />
+          
+          {/* Content */}
+          <div className="flex-1 p-2 py-2.5">
+            {isEditing ? (
+              <div className="flex items-center gap-2">
+                <Input 
+                  value={editedName} 
+                  onChange={(e) => setEditedName(e.target.value)} 
+                  className="h-7 text-sm"
+                  autoFocus
+                />
+                <Button size="icon" className="h-7 w-7 shrink-0 bg-blue-500 hover:bg-blue-600" onClick={handleSave}>
+                  <Save className="h-3 w-3" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-7 w-7 shrink-0" 
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditedName(supply.name);
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                {/* Top row: Supply name + Edit button + Priority Badge */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-bold text-[15px] text-foreground truncate">
+                        {supply.name}
+                      </h3>
+                      {canEdit && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-5 w-5 text-muted-foreground hover:text-foreground shrink-0" 
+                          onClick={() => setIsEditing(true)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-base text-foreground truncate">
-                          {supply.name}
-                        </h3>
+                  </div>
+                  
+                  {/* Priority Badge - Clickable */}
+                  <Popover open={showPriorityPopover} onOpenChange={setShowPriorityPopover}>
+                    <PopoverTrigger asChild>
+                      <button className="focus:outline-none shrink-0">
+                        <Badge 
+                          variant="outline" 
+                          className={`text-[10px] px-1.5 py-0.5 cursor-pointer hover:opacity-80 transition-opacity ${getPriorityBadgeStyle()}`}
+                        >
+                          {supply.repeat_count && supply.repeat_count > 1 && (
+                            <span className="flex items-center gap-0.5">
+                              <RotateCcw className="w-2 h-2" />
+                              <span>{supply.repeat_count}x</span>
+                              <span className="mx-0.5">•</span>
+                            </span>
+                          )}
+                          {getPriorityLabel()}
+                        </Badge>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-36 p-1.5" align="end">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-muted-foreground text-center mb-1">
+                          {language === 'ar' ? 'تغيير الأولوية' : 'Change Priority'}
+                        </p>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start gap-1.5 h-7 text-xs text-blue-600 hover:bg-blue-50"
+                          onClick={() => handlePriorityChange(1)}
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          {language === 'ar' ? 'عادي' : 'Normal'}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start gap-1.5 h-7 text-xs text-amber-600 hover:bg-amber-50"
+                          onClick={() => handlePriorityChange(2)}
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          {language === 'ar' ? 'متوسط' : 'Medium'}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start gap-1.5 h-7 text-xs text-red-600 hover:bg-red-50"
+                          onClick={() => handlePriorityChange(3)}
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          {language === 'ar' ? 'عالي' : 'High'}
+                        </Button>
                       </div>
-                      {/* Meta info - Date (English numerals) */}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        <span>{new Date(supply.last_updated).toLocaleDateString('en-GB')}</span>
-                        {supply.updatedBy && (
-                          <span> • {supply.updatedBy}</span>
-                        )}
-                      </p>
-                    </>
-                  )}
+                    </PopoverContent>
+                  </Popover>
                 </div>
-
-                {/* Right side - Badges and Edit button */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {canEdit && !isEditing && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6" 
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Edit className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                  <div className="flex flex-col items-end gap-1">
-                    {supply.repeat_count && supply.repeat_count > 1 && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0.5 flex items-center gap-1">
-                        <RotateCcw className="w-2.5 h-2.5" />
-                        <span>{supply.repeat_count}x</span>
-                      </Badge>
+                
+                {/* Bottom row: Date & Employee (left) + Actions (right) */}
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[10px] text-muted-foreground/70">
+                    {new Date(supply.last_updated).toLocaleDateString('en-GB')}
+                    {supply.updatedBy && ` • ${supply.updatedBy}`}
+                  </span>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    {canDelete && (
+                      <button
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="h-6 px-2 flex items-center gap-1 text-[11px] font-medium border border-destructive/50 text-destructive bg-transparent hover:bg-destructive/10 rounded-full transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        {language === 'ar' ? 'حذف' : 'Delete'}
+                      </button>
                     )}
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs px-1.5 py-0.5 ${
-                        supply.repeat_count && supply.repeat_count >= 3 
-                          ? 'border-destructive text-destructive' 
-                          : supply.repeat_count && supply.repeat_count >= 2 
-                            ? 'border-warning text-warning'
-                            : 'border-blue-500 text-blue-500'
-                      }`}
+                    
+                    {/* Available Action Chip */}
+                    <button
+                      onClick={() => setShowAvailableDialog(true)}
+                      className="h-6 px-2 flex items-center gap-1 text-[11px] font-medium border border-blue-400 text-blue-600 bg-transparent hover:bg-blue-50 rounded-full transition-colors"
                     >
-                      {getPriorityLabel()}
-                    </Badge>
+                      <CheckCircle className="h-3 w-3" />
+                      {language === 'ar' ? 'تم التوفير' : 'Available'}
+                    </button>
                   </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>
