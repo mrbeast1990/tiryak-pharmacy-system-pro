@@ -81,22 +81,33 @@ const AdminRevenueDisplay: React.FC<AdminRevenueDisplayProps> = ({
   return (
     <div className="space-y-3">
       {/* Day Total Card */}
-      <Card className="bg-gradient-to-l from-primary/10 to-primary/5 border-0 shadow-lg rounded-2xl overflow-hidden">
-        <CardContent className="p-5">
-          <div className="text-center mb-3">
-            <p className="text-xs text-muted-foreground mb-1">إجمالي اليوم</p>
-            <p className="text-3xl font-bold text-primary">{dayTotal.total.toFixed(0)} <span className="text-lg">د</span></p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-green-50 dark:bg-green-950/30 rounded-xl p-2.5 text-center border border-green-200/50">
-              <DollarSign className="w-4 h-4 text-green-600 mx-auto mb-0.5" />
-              <p className="text-[10px] text-muted-foreground">كاش</p>
-              <p className="text-sm font-bold text-green-600">{dayTotal.cash.toFixed(0)} د</p>
+      <Card className="bg-card border border-border/50 shadow-sm rounded-2xl overflow-hidden">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            {/* Cash */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">كاش</p>
+                <p className="text-sm font-bold text-emerald-600">{dayTotal.cash.toFixed(0)} د</p>
+              </div>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-2.5 text-center border border-blue-200/50">
-              <Building2 className="w-4 h-4 text-blue-600 mx-auto mb-0.5" />
-              <p className="text-[10px] text-muted-foreground">خدمات</p>
-              <p className="text-sm font-bold text-blue-600">{dayTotal.banking.toFixed(0)} د</p>
+            {/* Total */}
+            <div className="text-center">
+              <p className="text-[10px] text-muted-foreground">إجمالي اليوم</p>
+              <p className="text-xl font-bold text-primary">{dayTotal.total.toFixed(0)} د</p>
+            </div>
+            {/* Banking */}
+            <div className="flex items-center gap-2">
+              <div>
+                <p className="text-[10px] text-muted-foreground text-left">خدمات</p>
+                <p className="text-sm font-bold text-blue-600">{dayTotal.banking.toFixed(0)} د</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-blue-600" />
+              </div>
             </div>
           </div>
         </CardContent>
