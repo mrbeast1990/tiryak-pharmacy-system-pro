@@ -1,51 +1,37 @@
 
 
-# الملء التلقائي للاسم العلمي عند اختيار اسم الدواء من الاقتراحات
+# إعادة تصميم داشبورد إيراد اليوم - تصميم احترافي
 
-## الفكرة
-عند اختيار اسم دواء من قائمة الاقتراحات، يتم تعبئة حقل "الاسم العلمي" تلقائيا بالاسم العلمي المسجل مسبقا لهذا الصنف (من جدول medicines أو pharmacy_guide)، بدلا من إعادة كتابته يدويا في كل مرة.
+## المشكلة الحالية
+من الصورة المرفقة، كارت "إجمالي اليوم" يعرض الكاش والخدمات تحت بعض، والفترات (صباحية/ليلية) أيضا تحت بعض. المستخدم يريد:
+1. كروت الكاش والخدمات **جنب بعض** داخل كارت إجمالي اليوم
+2. أسهم التنقل بالأيام تكون **بجانب** "إيراد اليوم" في الأسفل (وليس فوق)
+3. شكل أكثر احترافية للداشبورد بالكامل
 
 ## التعديلات
 
-### 1. إضافة دالة بحث عن الاسم العلمي في suggestionsStore
-- إضافة دالة `getScientificNameForTrade` في `suggestionsStore.ts`
-- تبحث أولا في جدول `medicines` (الأدوية المسجلة سابقا) عن أي صنف بنفس الاسم التجاري وتعيد اسمه العلمي
-- إذا لم تجد، تبحث في بيانات `pharmacy_guide` المحملة مسبقا
-- تعديل `fetchPharmacyGuide` لتخزين البيانات كاملة (trade_name + scientific_name) كـ Map للبحث السريع
+### 1. إعادة تصميم `RevenueDisplay.tsx` بالكامل
+- التصميم الجديد: كارت واحد أنيق يحتوي على:
+  - **صف "إيراد اليوم"** مع التاريخ + أسهم التنقل على الجانبين (للمدير)
+  - **الإجمالي** بخط كبير وبارز في المنتصف
+  - **كارتين صغيرين جنب بعض** (كاش | خدمات) بتصميم مسطح وألوان خفيفة
+- إزالة الشريط الجانبي الملون (w-1.5 bg-primary)
+- تحسين الأسهم بتصميم دائري أنيق مع خلفية ملونة
 
-### 2. تعديل AddMedicineDialog لاستخدام الملء التلقائي
-- عند النقر على اقتراح في قائمة الاسم التجاري:
-  - يتم تعبئة `medicineName` كالمعتاد
-  - يتم استدعاء `getScientificNameForTrade` للحصول على الاسم العلمي
-  - إذا وُجد اسم علمي مطابق، يتم تعبئة `scientificName` تلقائيا
-  - إذا لم يوجد، يبقى الحقل فارغا ليملأه المستخدم يدويا
+### 2. تحسين `AdminRevenueDisplay.tsx` - كارت إجمالي اليوم
+- كروت الكاش والخدمات **جنب بعض** (grid-cols-2) بدلا من تحت بعض
+- تحسين التدرج اللوني والمسافات
+- أرقام أكبر وأوضح
 
-## التفاصيل التقنية
+### 3. تعديل `RevenueManager.tsx` - ترتيب العرض
+- عرض `RevenueDisplay` (إيراد اليوم مع التنقل) **فوق** كروت الفترات للمدير
+- بحيث يكون الترتيب: نموذج التسجيل > إيراد اليوم (مع التنقل) > تفاصيل الفترات
 
-### الملف: `src/store/suggestionsStore.ts`
-- إضافة حقل `pharmacyGuideMap` من نوع `Map<string, string>` (trade_name -> scientific_name)
-- تعديل `fetchPharmacyGuide` لبناء هذا الـ Map
-- إضافة دالة جديدة:
-  ```
-  getScientificNameForTrade: (medicines, tradeName) => string | null
-  ```
-  تبحث في medicines أولا ثم في pharmacyGuideMap
-
-### الملف: `src/components/shortage/AddMedicineDialog.tsx`
-- تعديل handler النقر على اقتراح الاسم التجاري (سطر 158-161):
-  ```
-  onClick={() => {
-    setMedicineName(suggestion);
-    const scientificMatch = getScientificNameForTrade(medicines, suggestion);
-    if (scientificMatch) setScientificName(scientificMatch);
-    setShowMedicineSuggestions(false);
-  }}
-  ```
-
-### الملفات المتأثرة
+## الملفات المتأثرة
 
 | الملف | التعديل |
 |-------|---------|
-| `src/store/suggestionsStore.ts` | إضافة pharmacyGuideMap + دالة getScientificNameForTrade |
-| `src/components/shortage/AddMedicineDialog.tsx` | استدعاء الملء التلقائي عند اختيار اقتراح |
+| `src/components/revenue/RevenueDisplay.tsx` | إعادة تصميم كاملة - أسهم مدمجة + كاش/خدمات جنب بعض |
+| `src/components/revenue/AdminRevenueDisplay.tsx` | كروت جنب بعض + تحسين بصري |
+| `src/components/RevenueManager.tsx` | إعادة ترتيب: RevenueDisplay فوق AdminRevenueDisplay |
 
