@@ -122,16 +122,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           bankingTotal={manager.bankingTotal}
         />
 
-        {/* Admin sees full period breakdown, cashier sees summary */}
-        {manager.isAdmin ? (
-          <AdminRevenueDisplay
-            dailyRevenues={manager.dailyRevenues}
-            selectedDate={manager.selectedDate}
-            updateRevenue={manager.updateRevenue}
-            deleteRevenue={manager.deleteRevenue}
-          />
-        ) : null}
-
         <RevenueDisplay
           dailyRevenue={manager.dailyRevenue}
           dailyBankingServices={manager.dailyBankingServices}
@@ -141,6 +131,16 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           canNavigateDate={manager.canNavigateDate}
           isAdmin={manager.isAdmin}
         />
+
+        {/* Admin sees full period breakdown */}
+        {manager.isAdmin ? (
+          <AdminRevenueDisplay
+            dailyRevenues={manager.dailyRevenues}
+            selectedDate={manager.selectedDate}
+            updateRevenue={manager.updateRevenue}
+            deleteRevenue={manager.deleteRevenue}
+          />
+        ) : null}
       </main>
 
       {/* FAB for Reports - Admin only */}
