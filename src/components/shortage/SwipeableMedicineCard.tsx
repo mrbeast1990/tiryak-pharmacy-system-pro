@@ -138,7 +138,11 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
       </AlertDialog>
 
       {/* Compact Card */}
-      <div className="relative bg-card shadow-sm rounded-lg overflow-hidden border border-border/30">
+      <div className={`relative shadow-sm rounded-lg overflow-hidden border ${
+        (medicine.repeat_count || 1) >= 3 ? 'bg-red-50 border-red-200' :
+        (medicine.repeat_count || 1) >= 2 ? 'bg-amber-50 border-amber-200' :
+        'bg-emerald-50 border-emerald-200'
+      }`}>
         <div className="flex">
           {/* Priority strip - 4px width */}
           <div className={`w-1 ${getPriorityColor()}`} />
