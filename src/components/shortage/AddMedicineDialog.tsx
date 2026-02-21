@@ -78,7 +78,7 @@ const AddMedicineDialog: React.FC<AddMedicineDialogProps> = ({ open, onOpenChang
       status: 'shortage',
       notes: null,
       repeat_count: parseInt(priority),
-    } as any);
+    });
     
     const priorityLabels = {
       '1': language === 'ar' ? 'عادي' : 'Normal',

@@ -279,7 +279,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                 <option value="">{language === 'ar' ? 'ترتيب حسب' : 'Sort by'}</option>
                 <option value="name">{language === 'ar' ? 'الاسم' : 'Name'}</option>
                 <option value="date">{language === 'ar' ? 'التاريخ' : 'Date'}</option>
-                <option value="repeat">{language === 'ar' ? 'التكرار' : 'Repeat'}</option>
+                <option value="repeat">{language === 'ar' ? 'الأولوية' : 'Priority'}</option>
               </select>
               {checkPermission('export_shortages_pdf') && (
                 <>
