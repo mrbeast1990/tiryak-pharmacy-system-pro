@@ -17,6 +17,7 @@ const SERVICE_OPTIONS = [
   { key: 'mobi_nab', label: 'موبي ناب' },
   { key: 'bank_transfer', label: 'تحويل مصرفي' },
   { key: 'pay_for_me', label: 'ادفع لي' },
+  { key: 'cards', label: 'بطاقات' },
 ];
 
 const SERVICE_LABELS: Record<string, string> = Object.fromEntries(
