@@ -44,8 +44,9 @@ export async function addArabicFont(doc: jsPDF): Promise<void> {
     // Add the font to jsPDF's virtual file system
     doc.addFileToVFS("Amiri-Regular.ttf", fontBase64);
     
-    // Register the font with jsPDF
+    // Register the font with jsPDF (normal + bold using same file)
     doc.addFont("Amiri-Regular.ttf", "Amiri", "normal");
+    doc.addFont("Amiri-Regular.ttf", "Amiri", "bold");
     
     // Set the font as active
     doc.setFont("Amiri");

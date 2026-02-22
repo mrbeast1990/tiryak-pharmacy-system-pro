@@ -16,7 +16,22 @@ interface FileUploaderProps {
 // Keywords for column detection
 const NAME_KEYWORDS = ['اسم الصنف', 'الاسم', 'الصنف', 'المنتج', 'trade_name', 'name', 'product', 'البند', 'الدواء'];
 const PRICE_KEYWORDS = ['السعر', 'سعر الوحدة', 'unit_price', 'price', 'سعر', 'القيمة'];
-const EXPIRY_KEYWORDS = ['الصلاحية', 'تاريخ الصلاحية', 'انتهاء', 'expiry', 'expiry_date', 'exp'];
+const EXPIRY_KEYWORDS = ['الصلاحية', 'تاريخ الصلاحية', 'الصلاحيه', 'انتهاء', 'expiry', 'expiry_date', 'exp'];
+
+// Convert Excel serial date number to readable date string
+const parseExcelDate = (value: any): string | undefined => {
+  if (value === null || value === undefined || value === '') return undefined;
+  const num = Number(value);
+  if (!isNaN(num) && num > 1 && num < 100000) {
+    // Excel epoch: 1899-12-30
+    const excelEpoch = new Date(1899, 11, 30);
+    const date = new Date(excelEpoch.getTime() + num * 86400000);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${year}`;
+  }
+  return String(value);
+};
 
 interface PDFParseResult {
   products: Array<{ name: string; code?: string; price: number; expiryDate?: string }>;
@@ -93,7 +108,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
 
       const price = parseFloat(row[mapping.priceColumn]) || 0;
       const expiryDate = mapping.expiryColumn !== null 
-        ? String(row[mapping.expiryColumn] || '') 
+        ? parseExcelDate(row[mapping.expiryColumn]) 
         : undefined;
 
       products.push({
@@ -149,7 +164,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
             if (!name) continue;
 
             const price = priceIndex >= 0 ? parseFloat(row[priceIndex]) || 0 : 0;
-            const expiryDate = expiryIndex >= 0 ? String(row[expiryIndex] || '') : undefined;
+            const expiryDate = expiryIndex >= 0 ? parseExcelDate(row[expiryIndex]) : undefined;
 
             products.push({
               id: `excel-${i}`,
