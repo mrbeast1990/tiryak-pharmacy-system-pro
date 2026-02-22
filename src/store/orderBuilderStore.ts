@@ -12,6 +12,7 @@ export interface OrderProduct {
 interface OrderBuilderState {
   products: OrderProduct[];
   supplierName: string;
+  supplierPhone: string;
   searchQuery: string;
   isLoading: boolean;
   
@@ -22,6 +23,7 @@ interface OrderBuilderState {
   incrementQuantity: (productId: string) => void;
   decrementQuantity: (productId: string) => void;
   setSupplierName: (name: string) => void;
+  setSupplierPhone: (phone: string) => void;
   setSearchQuery: (query: string) => void;
   setIsLoading: (loading: boolean) => void;
   clearOrder: () => void;
@@ -32,6 +34,7 @@ interface OrderBuilderState {
 export const useOrderBuilderStore = create<OrderBuilderState>((set, get) => ({
   products: [],
   supplierName: '',
+  supplierPhone: '',
   searchQuery: '',
   isLoading: false,
 
@@ -67,6 +70,7 @@ export const useOrderBuilderStore = create<OrderBuilderState>((set, get) => ({
   })),
 
   setSupplierName: (name) => set({ supplierName: name }),
+  setSupplierPhone: (phone) => set({ supplierPhone: phone }),
   
   setSearchQuery: (query) => set({ searchQuery: query }),
   
@@ -75,6 +79,7 @@ export const useOrderBuilderStore = create<OrderBuilderState>((set, get) => ({
   clearOrder: () => set({
     products: [],
     supplierName: '',
+    supplierPhone: '',
     searchQuery: '',
   }),
 
