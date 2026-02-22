@@ -138,7 +138,6 @@ export const useOrderPDF = () => {
     // === Products Table ===
     const tableData = selectedProducts.map((p, index) => [
       (index + 1).toString(),
-      p.code || '-',
       p.name,
       p.expiryDate || '-',
       p.price.toFixed(2),
@@ -148,34 +147,33 @@ export const useOrderPDF = () => {
     const totalAmount = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
     autoTable(doc, {
-      head: [['ر.م', 'الكود', 'اسم الصنف', 'الصلاحية', 'السعر', 'الإجمالي']],
+      head: [['ر.م', 'اسم الصنف', 'الصلاحية', 'السعر', 'الإجمالي']],
       body: tableData,
       startY: yPos,
       margin: { left: margin, right: margin, bottom: 40 },
       styles: {
         font: 'Amiri',
-        fontSize: 9,
+        fontSize: 8,
         halign: 'center',
         valign: 'middle',
-        cellPadding: 3,
+        cellPadding: 2,
       },
       headStyles: {
         fillColor: [16, 120, 96],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center',
-        fontSize: 10,
+        fontSize: 9,
       },
       alternateRowStyles: {
         fillColor: [240, 253, 244],
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 12 },
-        1: { halign: 'center', cellWidth: 18 },
-        2: { halign: 'right', cellWidth: 'auto' },
-        3: { halign: 'center', cellWidth: 22 },
-        4: { halign: 'center', cellWidth: 20 },
-        5: { halign: 'center', cellWidth: 22 },
+        0: { halign: 'center', cellWidth: 10 },
+        1: { halign: 'left', cellWidth: 'auto' },
+        2: { halign: 'center', cellWidth: 22 },
+        3: { halign: 'center', cellWidth: 20 },
+        4: { halign: 'center', cellWidth: 22 },
       },
     });
 
@@ -205,7 +203,7 @@ export const useOrderPDF = () => {
     yPos += 14;
 
     // === Red Notice ===
-    doc.setFontSize(11);
+    doc.setFontSize(13);
     doc.setTextColor(220, 38, 38);
     doc.setFont('Amiri', 'bold');
     
