@@ -7,26 +7,66 @@ import { toast } from 'sonner';
 
 interface UseOrderPDFOptions {
   supplierName: string;
+  supplierPhone: string;
   products: OrderProduct[];
 }
 
-// Load letterhead image
-const loadLetterhead = async (): Promise<HTMLImageElement | null> => {
+// Helper: convert number to Arabic words
+const numberToArabicWords = (num: number): string => {
+  const ones = ['', 'واحد', 'اثنان', 'ثلاثة', 'أربعة', 'خمسة', 'ستة', 'سبعة', 'ثمانية', 'تسعة'];
+  const tens = ['', 'عشرة', 'عشرون', 'ثلاثون', 'أربعون', 'خمسون', 'ستون', 'سبعون', 'ثمانون', 'تسعون'];
+  const hundreds = ['', 'مائة', 'مائتان', 'ثلاثمائة', 'أربعمائة', 'خمسمائة', 'ستمائة', 'سبعمائة', 'ثمانمائة', 'تسعمائة'];
+  const thousands = ['', 'ألف', 'ألفان', 'ثلاثة آلاف', 'أربعة آلاف', 'خمسة آلاف', 'ستة آلاف', 'سبعة آلاف', 'ثمانية آلاف', 'تسعة آلاف'];
+
+  if (num === 0) return 'صفر';
+
+  const intPart = Math.floor(num);
+  const decPart = Math.round((num - intPart) * 100);
+
+  let result = '';
+
+  const th = Math.floor(intPart / 1000);
+  const h = Math.floor((intPart % 1000) / 100);
+  const t = Math.floor((intPart % 100) / 10);
+  const o = intPart % 10;
+
+  if (th > 0) result += thousands[th] + ' و ';
+  if (h > 0) result += hundreds[h] + ' و ';
+  if (t > 1) {
+    if (o > 0) result += ones[o] + ' و ';
+    result += tens[t];
+  } else if (t === 1) {
+    if (o === 0) result += 'عشرة';
+    else result += ones[o] + ' عشر';
+  } else if (o > 0) {
+    result += ones[o];
+  }
+
+  result = result.replace(/ و $/, '');
+
+  if (decPart > 0) {
+    result += ` و ${decPart}/100`;
+  }
+
+  return result + ' دينار ليبي';
+};
+
+// Load logo image
+const loadLogo = async (): Promise<HTMLImageElement | null> => {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => {
-      console.warn('Could not load letterhead');
+      console.warn('Could not load logo');
       resolve(null);
     };
-    img.src = '/images/letterhead-tiryaq.jpg';
+    img.src = '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png';
   });
 };
 
 export const useOrderPDF = () => {
-  const generatePDF = useCallback(async ({ supplierName, products }: UseOrderPDFOptions) => {
-    // Filter out zero-quantity products
+  const generatePDF = useCallback(async ({ supplierName, supplierPhone, products }: UseOrderPDFOptions) => {
     const selectedProducts = products.filter(p => p.quantity > 0);
     
     if (selectedProducts.length === 0) {
@@ -40,34 +80,42 @@ export const useOrderPDF = () => {
       format: 'a4',
     });
 
-    // Add Arabic font support
     await addArabicFont(doc);
     doc.setFont('Amiri');
 
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
+
+    // === LOGO ===
+    const logo = await loadLogo();
+    let yPos = 15;
     
-    // Letterhead margins
-    const headerMargin = 45; // Space for letterhead header
-    const footerMargin = 30; // Space for letterhead footer
+    if (logo) {
+      const logoW = 25;
+      const logoH = 25;
+      doc.addImage(logo, 'PNG', (pageWidth - logoW) / 2, yPos, logoW, logoH);
+      yPos += logoH + 3;
+    }
 
-    // Load and add letterhead background
-    const letterhead = await loadLetterhead();
-    
-    const addLetterheadBackground = () => {
-      if (letterhead) {
-        doc.addImage(letterhead, 'JPEG', 0, 0, pageWidth, pageHeight);
-      }
-    };
+    // === Pharmacy Name (Title) ===
+    doc.setFontSize(20);
+    doc.setTextColor(16, 120, 96); // Teal
+    doc.text('صيدلية الترياق الشافي', pageWidth / 2, yPos + 7, { align: 'center' });
+    yPos += 12;
 
-    // Add letterhead to first page
-    addLetterheadBackground();
+    // === Pharmacy Info ===
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text('هاتف: 0915938155', pageWidth / 2, yPos + 5, { align: 'center' });
+    yPos += 10;
 
-    // Starting position after letterhead header
-    let yPos = headerMargin;
+    // === Divider ===
+    doc.setDrawColor(16, 120, 96);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 8;
 
-    // === Supplier & Date Section ===
+    // === Supplier Info + Date ===
     doc.setFontSize(11);
     doc.setTextColor(0, 0, 0);
     const today = new Date().toLocaleDateString('ar-LY', {
@@ -75,17 +123,23 @@ export const useOrderPDF = () => {
       month: 'long',
       day: 'numeric',
     });
-    
-    doc.text(`الشركة الموردة: ${supplierName || 'غير محدد'}`, pageWidth - margin, yPos, { align: 'right' });
-    yPos += 7;
-    doc.text(`التاريخ: ${today}`, pageWidth - margin, yPos, { align: 'right' });
-    yPos += 10;
 
-    // === Products Table (LTR Layout) ===
+    doc.text(`الشركة الموردة: ${supplierName || 'غير محدد'}`, pageWidth - margin, yPos, { align: 'right' });
+    doc.text(`التاريخ: ${today}`, margin, yPos, { align: 'left' });
+    yPos += 7;
+
+    if (supplierPhone) {
+      doc.text(`هاتف الشركة: ${supplierPhone}`, pageWidth - margin, yPos, { align: 'right' });
+      yPos += 7;
+    }
+
+    yPos += 3;
+
+    // === Products Table ===
     const tableData = selectedProducts.map((p, index) => [
       (index + 1).toString(),
       p.code || '-',
-      p.name, // Full name with text wrap
+      p.name,
       p.expiryDate || '-',
       p.price.toFixed(2),
       (p.price * p.quantity).toFixed(2),
@@ -93,14 +147,11 @@ export const useOrderPDF = () => {
 
     const totalAmount = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
-    // Track page additions for letterhead
-    let currentPage = 1;
-    
     autoTable(doc, {
-      head: [['NO', 'CODE', 'ITEM DESCRIPTION', 'EXP', 'PRICE', 'T.PRICE']],
+      head: [['ر.م', 'الكود', 'اسم الصنف', 'الصلاحية', 'السعر', 'الإجمالي']],
       body: tableData,
       startY: yPos,
-      margin: { left: margin, right: margin, bottom: footerMargin + 15 },
+      margin: { left: margin, right: margin, bottom: 40 },
       styles: {
         font: 'Amiri',
         fontSize: 9,
@@ -109,68 +160,66 @@ export const useOrderPDF = () => {
         cellPadding: 3,
       },
       headStyles: {
-        fillColor: [16, 185, 129], // Emerald green
+        fillColor: [16, 120, 96],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
         halign: 'center',
+        fontSize: 10,
       },
       alternateRowStyles: {
-        fillColor: [240, 253, 244], // Light green
+        fillColor: [240, 253, 244],
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 10 },   // NO (~5%)
-        1: { halign: 'center', cellWidth: 18 },   // CODE (~10%)
-        2: { halign: 'left', cellWidth: 'auto' }, // ITEM DESCRIPTION - auto width with wrap
-        3: { halign: 'center', cellWidth: 20 },   // EXP (~10%)
-        4: { halign: 'center', cellWidth: 18 },   // PRICE (~10%)
-        5: { halign: 'center', cellWidth: 20 },   // T.PRICE (~10%)
-      },
-      // Add letterhead to new pages
-      didDrawPage: (data) => {
-        const pageNumber = doc.getNumberOfPages();
-        if (pageNumber > currentPage) {
-          currentPage = pageNumber;
-          addLetterheadBackground();
-        }
+        0: { halign: 'center', cellWidth: 12 },
+        1: { halign: 'center', cellWidth: 18 },
+        2: { halign: 'right', cellWidth: 'auto' },
+        3: { halign: 'center', cellWidth: 22 },
+        4: { halign: 'center', cellWidth: 20 },
+        5: { halign: 'center', cellWidth: 22 },
       },
     });
 
-    // Get the final Y position after the table
     const finalY = (doc as any).lastAutoTable?.finalY || yPos + 50;
-    yPos = finalY + 8;
+    yPos = finalY + 5;
 
-    // Check if we need a new page for the total section
-    if (yPos + 30 > pageHeight - footerMargin) {
+    // === Total Box ===
+    const pageHeight = doc.internal.pageSize.getHeight();
+    if (yPos + 40 > pageHeight - 20) {
       doc.addPage();
-      addLetterheadBackground();
-      yPos = headerMargin;
+      yPos = 20;
     }
 
-    // === Total Section ===
-    doc.setFillColor(16, 185, 129);
-    doc.rect(margin, yPos, pageWidth - 2 * margin, 12, 'F');
-    doc.setFontSize(13);
+    // Total in numbers
+    doc.setFillColor(16, 120, 96);
+    doc.roundedRect(margin, yPos, pageWidth - 2 * margin, 14, 2, 2, 'F');
+    doc.setFontSize(14);
     doc.setTextColor(255, 255, 255);
-    doc.text(`الإجمالي الكلي: ${totalAmount.toFixed(2)} د.ل`, pageWidth / 2, yPos + 8, { align: 'center' });
+    doc.text(`الإجمالي الكلي: ${totalAmount.toFixed(2)} د.ل`, pageWidth / 2, yPos + 9, { align: 'center' });
     yPos += 18;
 
-    // === WhatsApp Notice (Red, Bold, below total) ===
+    // Total in words
     doc.setFontSize(10);
-    doc.setTextColor(220, 38, 38); // Red color (#DC2626)
+    doc.setTextColor(60, 60, 60);
+    const totalInWords = numberToArabicWords(totalAmount);
+    doc.text(`فقط ${totalInWords} لا غير`, pageWidth / 2, yPos + 3, { align: 'center' });
+    yPos += 14;
+
+    // === Red Notice ===
+    doc.setFontSize(11);
+    doc.setTextColor(220, 38, 38);
     doc.setFont('Amiri', 'bold');
     
-    // Single line LTR: WhatsApp number + Arabic text
-    const noteText = '0915938155  الرجاء ارسال نسخه PDF من الفاتورة عند صدورها مباشراً عبر واتس اب';
-    doc.text(noteText, margin, yPos, { align: 'left' });
+    const noticeLines = doc.splitTextToSize(
+      'الرجاء ارسال نسخة من الفاتورة عند اصدارها عبر واتس اب 0915938155',
+      pageWidth - 2 * margin
+    );
+    doc.text(noticeLines, pageWidth / 2, yPos, { align: 'center' });
 
     // Generate filename
     const filename = `طلبية-${supplierName || 'شراء'}-${new Date().toISOString().split('T')[0]}.pdf`;
-    
-    // Save the PDF
     doc.save(filename);
 
     toast.success('تم توليد الطلبية بنجاح');
-    
     return filename;
   }, []);
 

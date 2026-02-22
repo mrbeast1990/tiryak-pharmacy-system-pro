@@ -22,7 +22,8 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
   
   const { 
     products, 
-    supplierName, 
+    supplierName,
+    supplierPhone,
     searchQuery,
     setSearchQuery,
     clearOrder,
@@ -47,7 +48,7 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
 
   const handleExportPDF = async () => {
     const selectedProducts = getSelectedProducts();
-    await generatePDF({ supplierName, products: selectedProducts });
+    await generatePDF({ supplierName, supplierPhone, products: selectedProducts });
   };
 
   const handleShareWhatsApp = () => {
