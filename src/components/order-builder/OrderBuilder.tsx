@@ -54,19 +54,25 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
 
   const handleExportPDF = async () => {
     const selectedProducts = getSelectedProducts();
-    const result = await generatePDF({ supplierName, supplierPhone, products: selectedProducts });
-    if (result) {
-      const totalAmount = getTotalAmount();
-      if (currentOrderId) {
-        updateOrder(currentOrderId, { supplierName, supplierPhone, products, totalAmount });
-      } else {
-        saveOrder({ supplierName, supplierPhone, products, totalAmount });
-      }
+    let orderNumber: string;
+    
+    if (currentOrderId) {
+      // Existing order - find its number
+      const existing = useOrderHistoryStore.getState().orders.find(o => o.id === currentOrderId);
+      orderNumber = existing?.orderNumber || 'TS000';
+      updateOrder(currentOrderId, { supplierName, supplierPhone, products, totalAmount: getTotalAmount() });
+    } else {
+      // New order - save and get number
+      const result = saveOrder({ supplierName, supplierPhone, products, totalAmount: getTotalAmount() });
+      orderNumber = result.orderNumber;
     }
+    
+    await generatePDF({ supplierName, supplierPhone, products: selectedProducts, orderNumber });
+    return orderNumber;
   };
 
-  const handleShareWhatsApp = () => {
-    shareViaWhatsApp(supplierName);
+  const handleShareWhatsApp = (orderNumber?: string) => {
+    shareViaWhatsApp(supplierName, supplierPhone, orderNumber);
   };
 
   const selectedCount = getSelectedProducts().length;

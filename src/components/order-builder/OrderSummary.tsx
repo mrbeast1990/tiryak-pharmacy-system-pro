@@ -1,13 +1,13 @@
 import React from 'react';
-import { Share2, Loader2 } from 'lucide-react';
+import { Share2, Loader2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useOrderBuilderStore } from '@/store/orderBuilderStore';
 
 interface OrderSummaryProps {
   selectedCount: number;
   totalAmount: number;
-  onExportPDF: () => Promise<void>;
-  onShareWhatsApp: () => void;
+  onExportPDF: () => Promise<string | undefined>;
+  onShareWhatsApp: (orderNumber?: string) => void;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -19,11 +19,20 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { isLoading } = useOrderBuilderStore();
   const [isExporting, setIsExporting] = React.useState(false);
 
-  const handleExportAndShare = async () => {
+  const handleExport = async () => {
     setIsExporting(true);
     try {
       await onExportPDF();
-      onShareWhatsApp();
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportAndShare = async () => {
+    setIsExporting(true);
+    try {
+      const orderNumber = await onExportPDF();
+      onShareWhatsApp(orderNumber);
     } finally {
       setIsExporting(false);
     }
@@ -42,19 +51,36 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </p>
         </div>
 
-        {/* Left side - Action Button */}
-        <Button
-          className="rounded-full px-6 bg-primary hover:bg-primary/90"
-          onClick={handleExportAndShare}
-          disabled={selectedCount === 0 || isExporting || isLoading}
-        >
-          {isExporting ? (
-            <Loader2 className="h-4 w-4 ml-2 animate-spin" />
-          ) : (
-            <Share2 className="h-4 w-4 ml-2" />
-          )}
-          تصدير ومشاركة
-        </Button>
+        {/* Left side - Action Buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full px-4"
+            onClick={handleExport}
+            disabled={selectedCount === 0 || isExporting || isLoading}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 ml-1 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 ml-1" />
+            )}
+            تصدير
+          </Button>
+          <Button
+            size="sm"
+            className="rounded-full px-4 bg-[hsl(var(--chart-4))] hover:bg-[hsl(var(--chart-4))]/90 text-white"
+            onClick={handleExportAndShare}
+            disabled={selectedCount === 0 || isExporting || isLoading}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 ml-1 animate-spin" />
+            ) : (
+              <Share2 className="h-4 w-4 ml-1" />
+            )}
+            واتساب
+          </Button>
+        </div>
       </div>
     </div>
   );

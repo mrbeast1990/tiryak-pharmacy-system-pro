@@ -9,6 +9,7 @@ interface UseOrderPDFOptions {
   supplierName: string;
   supplierPhone: string;
   products: OrderProduct[];
+  orderNumber: string;
 }
 
 // Helper: convert number to Arabic words
@@ -66,7 +67,7 @@ const loadLogo = async (): Promise<HTMLImageElement | null> => {
 };
 
 export const useOrderPDF = () => {
-  const generatePDF = useCallback(async ({ supplierName, supplierPhone, products }: UseOrderPDFOptions) => {
+  const generatePDF = useCallback(async ({ supplierName, supplierPhone, products, orderNumber }: UseOrderPDFOptions) => {
     const selectedProducts = products.filter(p => p.quantity > 0);
     
     if (selectedProducts.length === 0) {
@@ -135,7 +136,14 @@ export const useOrderPDF = () => {
       yPos += 7;
     }
 
+    // Order number
     yPos += 3;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('Amiri', 'bold');
+    doc.text(`طلب شراء رقم ${orderNumber}`, pageWidth / 2, yPos, { align: 'center' });
+    doc.setFont('Amiri', 'normal');
+    yPos += 8;
 
     // === Products Table ===
     const tableData = selectedProducts.map((p, index) => [
@@ -223,11 +231,18 @@ export const useOrderPDF = () => {
     return filename;
   }, []);
 
-  const shareViaWhatsApp = useCallback((supplierName: string) => {
-    const message = encodeURIComponent(
-      `مرفق طلبية شراء من صيدلية الترياق الشافي - ${supplierName || 'طلبية جديدة'}`
-    );
-    const whatsappUrl = `https://wa.me/218915938155?text=${message}`;
+  const shareViaWhatsApp = useCallback((supplierName: string, supplierPhone?: string, orderNumber?: string) => {
+    const lines = [
+      `طلبية شراء من صيدلية الترياق الشافي`,
+      orderNumber ? `رقم الطلبية: ${orderNumber}` : '',
+      `الشركة الموردة: ${supplierName || 'غير محدد'}`,
+      ``,
+      `الرجاء ارسال نسخة من الفاتورة عند اصدارها عبر واتساب 0915938155`,
+    ].filter(Boolean).join('\n');
+    const phone = supplierPhone ? supplierPhone.replace(/^0/, '218') : '';
+    const whatsappUrl = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(lines)}`
+      : `https://wa.me/?text=${encodeURIComponent(lines)}`;
     window.open(whatsappUrl, '_blank');
   }, []);
 

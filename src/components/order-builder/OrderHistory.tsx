@@ -32,6 +32,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = ({ onClose }) => {
       supplierName: order.supplierName,
       supplierPhone: order.supplierPhone,
       products: selected,
+      orderNumber: order.orderNumber || 'TS000',
     });
   };
 
@@ -78,6 +79,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = ({ onClose }) => {
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-foreground truncate">
+                      {order.orderNumber && <span className="text-primary ml-1">{order.orderNumber}</span>}
                       {order.supplierName || 'بدون مورد'}
                     </p>
                     <p className="text-xs text-muted-foreground">
