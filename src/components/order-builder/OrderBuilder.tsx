@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { ArrowRight, ShoppingCart, Trash2, Upload, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, ShoppingCart, Trash2, Upload, Search, ChevronDown, ChevronUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useOrderBuilderStore } from '@/store/orderBuilderStore';
+import { useOrderHistoryStore } from '@/store/orderHistoryStore';
 import { useOrderPDF } from '@/hooks/useOrderPDF';
 import FileUploader from './FileUploader';
 import DataReviewDialog from './DataReviewDialog';
 import CompactProductList from './CompactProductList';
 import OrderSummary from './OrderSummary';
 import SupplierSelector from './SupplierSelector';
+import OrderHistory from './OrderHistory';
 import { OrderProduct } from '@/store/orderBuilderStore';
 
 interface OrderBuilderProps {
@@ -19,6 +21,7 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [parsedProducts, setParsedProducts] = useState<Omit<OrderProduct, 'quantity'>[]>([]);
   const [showUploadTools, setShowUploadTools] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   
   const { 
     products, 
@@ -30,7 +33,10 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
     addProducts,
     getSelectedProducts,
     getTotalAmount,
+    currentOrderId,
   } = useOrderBuilderStore();
+  
+  const { saveOrder, updateOrder } = useOrderHistoryStore();
   
   const { generatePDF, shareViaWhatsApp } = useOrderPDF();
 
@@ -48,7 +54,15 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
 
   const handleExportPDF = async () => {
     const selectedProducts = getSelectedProducts();
-    await generatePDF({ supplierName, supplierPhone, products: selectedProducts });
+    const result = await generatePDF({ supplierName, supplierPhone, products: selectedProducts });
+    if (result) {
+      const totalAmount = getTotalAmount();
+      if (currentOrderId) {
+        updateOrder(currentOrderId, { supplierName, supplierPhone, products, totalAmount });
+      } else {
+        saveOrder({ supplierName, supplierPhone, products, totalAmount });
+      }
+    }
   };
 
   const handleShareWhatsApp = () => {
@@ -79,15 +93,25 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
               إنشاء الطلبيات
             </h1>
             
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={clearOrder}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
-              disabled={products.length === 0}
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowHistory(!showHistory)}
+                className="text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                <History className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={clearOrder}
+                className="text-primary-foreground hover:bg-primary-foreground/10"
+                disabled={products.length === 0}
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
           
           {/* Search bar */}
@@ -105,6 +129,11 @@ const OrderBuilder: React.FC<OrderBuilderProps> = ({ onBack }) => {
 
       {/* Main Content */}
       <main className="max-w-lg mx-auto pb-28">
+        {/* Order History */}
+        {showHistory && (
+          <OrderHistory onClose={() => setShowHistory(false)} />
+        )}
+
         {/* Upload Tools Toggle */}
         <div className="px-4 py-2">
           <Button
