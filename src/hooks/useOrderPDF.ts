@@ -149,6 +149,7 @@ export const useOrderPDF = () => {
     const tableData = selectedProducts.map((p, index) => [
       (index + 1).toString(),
       p.name,
+      p.quantity.toString(),
       p.expiryDate || '-',
       p.price.toFixed(2),
       (p.price * p.quantity).toFixed(2),
@@ -157,7 +158,7 @@ export const useOrderPDF = () => {
     const totalAmount = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
     autoTable(doc, {
-      head: [['ر.م', 'اسم الصنف', 'الصلاحية', 'السعر', 'الإجمالي']],
+      head: [['ر.م', 'اسم الصنف', 'الكمية', 'الصلاحية', 'السعر', 'الإجمالي']],
       body: tableData,
       startY: yPos,
       margin: { left: margin, right: margin, bottom: 40 },
@@ -181,9 +182,10 @@ export const useOrderPDF = () => {
       columnStyles: {
         0: { halign: 'center', cellWidth: 10 },
         1: { halign: 'left', cellWidth: 'auto', fontStyle: 'bold' },
-        2: { halign: 'center', cellWidth: 22 },
-        3: { halign: 'center', cellWidth: 20 },
-        4: { halign: 'center', cellWidth: 22 },
+        2: { halign: 'center', cellWidth: 15 },
+        3: { halign: 'center', cellWidth: 22 },
+        4: { halign: 'center', cellWidth: 20 },
+        5: { halign: 'center', cellWidth: 22 },
       },
     });
 
