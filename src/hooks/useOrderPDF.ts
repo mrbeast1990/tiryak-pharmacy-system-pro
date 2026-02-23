@@ -107,6 +107,8 @@ export const useOrderPDF = () => {
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.text('هاتف: 0915938155', pageWidth / 2, yPos + 5, { align: 'center' });
+    yPos += 7;
+    doc.text('اجدابيا - حي 7 أكتوبر - طريق المزدوج تحت الكوبري', pageWidth / 2, yPos + 5, { align: 'center' });
     yPos += 10;
 
     // === Divider ===
@@ -153,7 +155,7 @@ export const useOrderPDF = () => {
       margin: { left: margin, right: margin, bottom: 40 },
       styles: {
         font: 'Amiri',
-        fontSize: 8,
+        fontSize: 9,
         halign: 'center',
         valign: 'middle',
         cellPadding: 2,
@@ -170,7 +172,7 @@ export const useOrderPDF = () => {
       },
       columnStyles: {
         0: { halign: 'center', cellWidth: 10 },
-        1: { halign: 'left', cellWidth: 'auto' },
+        1: { halign: 'left', cellWidth: 'auto', fontStyle: 'bold' },
         2: { halign: 'center', cellWidth: 22 },
         3: { halign: 'center', cellWidth: 20 },
         4: { halign: 'center', cellWidth: 22 },

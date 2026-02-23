@@ -15,6 +15,7 @@ interface OrderBuilderState {
   supplierPhone: string;
   searchQuery: string;
   isLoading: boolean;
+  currentOrderId: string | null;
   
   // Actions
   setProducts: (products: OrderProduct[]) => void;
@@ -27,6 +28,7 @@ interface OrderBuilderState {
   setSearchQuery: (query: string) => void;
   setIsLoading: (loading: boolean) => void;
   clearOrder: () => void;
+  loadOrder: (order: { id: string; supplierName: string; supplierPhone: string; products: OrderProduct[] }) => void;
   getSelectedProducts: () => OrderProduct[];
   getTotalAmount: () => number;
 }
@@ -37,6 +39,7 @@ export const useOrderBuilderStore = create<OrderBuilderState>((set, get) => ({
   supplierPhone: '',
   searchQuery: '',
   isLoading: false,
+  currentOrderId: null,
 
   setProducts: (products) => set({ products }),
   
@@ -80,6 +83,15 @@ export const useOrderBuilderStore = create<OrderBuilderState>((set, get) => ({
     products: [],
     supplierName: '',
     supplierPhone: '',
+    searchQuery: '',
+    currentOrderId: null,
+  }),
+
+  loadOrder: (order) => set({
+    products: order.products,
+    supplierName: order.supplierName,
+    supplierPhone: order.supplierPhone,
+    currentOrderId: order.id,
     searchQuery: '',
   }),
 
