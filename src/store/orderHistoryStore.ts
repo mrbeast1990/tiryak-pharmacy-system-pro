@@ -4,6 +4,7 @@ import { OrderProduct } from './orderBuilderStore';
 
 export interface SavedOrder {
   id: string;
+  orderNumber: string;
   supplierName: string;
   supplierPhone: string;
   products: OrderProduct[];
@@ -14,8 +15,9 @@ export interface SavedOrder {
 
 interface OrderHistoryState {
   orders: SavedOrder[];
-  saveOrder: (order: Omit<SavedOrder, 'id' | 'createdAt' | 'updatedAt'>) => string;
-  updateOrder: (id: string, order: Partial<Omit<SavedOrder, 'id' | 'createdAt'>>) => void;
+  nextOrderNumber: number;
+  saveOrder: (order: Omit<SavedOrder, 'id' | 'orderNumber' | 'createdAt' | 'updatedAt'>) => { id: string; orderNumber: string };
+  updateOrder: (id: string, order: Partial<Omit<SavedOrder, 'id' | 'orderNumber' | 'createdAt'>>) => void;
   deleteOrder: (id: string) => void;
 }
 
@@ -23,18 +25,22 @@ export const useOrderHistoryStore = create<OrderHistoryState>()(
   persist(
     (set, get) => ({
       orders: [],
+      nextOrderNumber: 101,
 
       saveOrder: (order) => {
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
+        const num = get().nextOrderNumber;
+        const orderNumber = `TS${num}`;
         const saved: SavedOrder = {
           ...order,
           id,
+          orderNumber,
           createdAt: now,
           updatedAt: now,
         };
-        set((state) => ({ orders: [saved, ...state.orders] }));
-        return id;
+        set((state) => ({ orders: [saved, ...state.orders], nextOrderNumber: num + 1 }));
+        return { id, orderNumber };
       },
 
       updateOrder: (id, updates) => {
