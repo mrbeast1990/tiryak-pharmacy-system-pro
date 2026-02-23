@@ -1,77 +1,49 @@
 
-# تحسين PDF + نظام سجل الطلبيات
+# اضافة رقم تسلسلي للطلبية + اصلاح مشاركة الواتساب
 
 ## التعديلات المطلوبة
 
-### 1. إضافة العنوان في PDF
+### 1. رقم تسلسلي للطلبية (TS101, TS102, ...)
+- اضافة `nextOrderNumber` في `orderHistoryStore.ts` محفوظ في localStorage يبدأ من 101
+- كل طلبية جديدة تأخذ رقم `TS{nextOrderNumber}` ويزيد العداد تلقائيا
+- حفظ `orderNumber` في واجهة `SavedOrder`
+- عرض "طلب شراء رقم TS101" في PDF تحت سطر التاريخ والشركة الموردة
+
+### 2. عرض رقم الطلبية في PDF
 **الملف**: `src/hooks/useOrderPDF.ts`
-- بعد سطر رقم الهاتف (سطر 109)، إضافة سطر جديد:
-  `"اجدابيا - حي 7 أكتوبر - طريق المزدوج تحت الكوبري"`
-- بنفس حجم خط رقم الهاتف (10) ولون رمادي
+- اضافة معامل `orderNumber` في `UseOrderPDFOptions`
+- بعد سطر التاريخ (سطر 131)، اضافة سطر: `طلب شراء رقم TS{number}`
+- بخط حجم 12 ولون أسود عريض
 
-### 2. تكبير خط بيانات الجدول + Bold لأسماء الأصناف
-**الملف**: `src/hooks/useOrderPDF.ts`
-- تغيير `fontSize` في `styles` من 8 إلى 9
-- إضافة `fontStyle: 'bold'` لعمود اسم الصنف (`columnStyles[1]`)
+### 3. فصل زر التصدير عن المشاركة
+**الملف**: `src/components/order-builder/OrderSummary.tsx`
+- تغيير الزر الحالي "تصدير ومشاركة" ليقوم بالتصدير فقط (حفظ PDF)
+- اضافة زر منفصل لمشاركة الواتساب يفتح واتساب بدون مرفق (رسالة نصية فقط)
+- او الابقاء على زر واحد لكن يصدر PDF اولا ثم يفتح واتساب
 
-### 3. نظام سجل الطلبيات (History)
-إنشاء نظام محلي (Zustand + localStorage) لحفظ الطلبيات السابقة مع إمكانية استعراضها وتعديلها وإعادة تصديرها.
-
-#### الملفات الجديدة:
-
-**`src/store/orderHistoryStore.ts`** - متجر Zustand مع persist:
-- واجهة `SavedOrder`: تحتوي `id`, `supplierName`, `supplierPhone`, `products`, `totalAmount`, `createdAt`, `updatedAt`
-- الإجراءات: `saveOrder`, `updateOrder`, `deleteOrder`, `getOrders`
-- حفظ تلقائي في localStorage
-
-**`src/components/order-builder/OrderHistory.tsx`** - مكون عرض السجل:
-- قائمة بالطلبيات السابقة مرتبة بالتاريخ (الأحدث أولا)
-- كل طلبية تعرض: اسم المورد، عدد الأصناف، الإجمالي، التاريخ
-- أزرار: تحميل للتعديل، حذف، إعادة تصدير PDF
-
-#### الملفات المعدلة:
-
-**`src/hooks/useOrderPDF.ts`**:
-- إضافة العنوان بعد رقم الهاتف
-- تكبير خط الجدول من 8 إلى 9
-- Bold لعمود اسم الصنف
-
-**`src/components/order-builder/OrderBuilder.tsx`**:
-- إضافة زر "السجل" في الهيدر
-- عند التصدير: حفظ الطلبية تلقائيا في السجل
-- إضافة حالة عرض السجل ومكون OrderHistory
-- عند تحميل طلبية من السجل: تعبئة البيانات في النموذج للتعديل
-
-**`src/store/orderBuilderStore.ts`**:
-- إضافة `currentOrderId` لتتبع الطلبية المحملة من السجل
-- إضافة `loadOrder` لتحميل طلبية محفوظة
+### 4. اصلاح مشاركة الواتساب
+**الملف**: `src/hooks/useOrderPDF.ts` - دالة `shareViaWhatsApp`
+- تعديل الرسالة لتشمل رقم الطلبية واسم المورد
+- ارسال رسالة نصية فقط (بدون مرفق) وهذا هو السلوك الحالي اصلا عبر `wa.me`
+- المشكلة الحالية: الزر يصدر PDF ثم يفتح واتساب معا - سنبقي نفس السلوك لكن نوضح ان واتساب يرسل رسالة فقط
 
 ---
 
 ## التفاصيل التقنية
 
-### هيكل SavedOrder:
-```text
-{
-  id: string (UUID)
-  supplierName: string
-  supplierPhone: string
-  products: OrderProduct[]
-  totalAmount: number
-  createdAt: string (ISO date)
-  updatedAt: string (ISO date)
-}
-```
+### تعديل `orderHistoryStore.ts`:
+- اضافة `nextOrderNumber: number` (يبدأ من 101) في الـ state
+- تعديل `saveOrder` ليعطي رقم `TS{nextOrderNumber}` ويزيد العداد
+- اضافة حقل `orderNumber: string` في `SavedOrder`
 
-### تدفق العمل:
-```text
-تصدير PDF -> حفظ تلقائي في السجل
-السجل -> اختيار طلبية -> تحميل في المحرر -> تعديل -> إعادة تصدير -> تحديث في السجل
-```
+### تعديل `useOrderPDF.ts`:
+- اضافة `orderNumber` في الـ interface
+- اضافة سطر في PDF بعد التاريخ: `طلب شراء رقم {orderNumber}`
 
-### عمود اسم الصنف Bold:
-```text
-columnStyles: {
-  1: { halign: 'left', cellWidth: 'auto', fontStyle: 'bold' }
-}
-```
+### تعديل `OrderBuilder.tsx`:
+- عند `handleExportPDF`: توليد رقم الطلبية من الـ store وتمريره لـ `generatePDF`
+- عند طلبية محملة من السجل: استخدام رقمها الموجود
+
+### تعديل `OrderSummary.tsx`:
+- فصل الازرار: زر "تصدير PDF" وزر "مشاركة واتساب" منفصلين
+- او الابقاء على زر واحد مع توضيح انه يحفظ PDF ثم يفتح واتساب برسالة نصية
