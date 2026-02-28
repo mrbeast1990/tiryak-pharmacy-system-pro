@@ -1,0 +1,1 @@
+ALTER TABLE public.medicines ADD COLUMN is_ordered BOOLEAN DEFAULT FALSE;

@@ -191,6 +191,7 @@ export type Database = {
           company: string | null
           created_at: string
           id: string
+          is_ordered: boolean | null
           last_updated: string
           name: string
           notes: string | null
@@ -204,6 +205,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           id?: string
+          is_ordered?: boolean | null
           last_updated?: string
           name: string
           notes?: string | null
@@ -217,6 +219,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           id?: string
+          is_ordered?: boolean | null
           last_updated?: string
           name?: string
           notes?: string | null

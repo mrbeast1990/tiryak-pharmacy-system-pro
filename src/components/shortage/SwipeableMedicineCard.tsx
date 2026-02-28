@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Save, X, RotateCcw, CheckCircle, Trash2 } from 'lucide-react';
+import { Edit, Save, X, RotateCcw, CheckCircle, Trash2, Package } from 'lucide-react';
 import { Medicine } from '@/store/pharmacyStore';
 import { useLanguageStore } from '@/store/languageStore';
 import {
@@ -27,8 +27,10 @@ interface SwipeableMedicineCardProps {
   onDelete: (medicine: Medicine) => void;
   onUpdateName: (id: string, name: string, scientificName?: string) => void;
   onUpdatePriority?: (id: string, priority: number) => void;
+  onToggleOrdered?: (medicine: Medicine) => void;
   canEdit: boolean;
   canDelete: boolean;
+  canMarkOrdered?: boolean;
 }
 
 const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
@@ -37,8 +39,10 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
   onDelete,
   onUpdateName,
   onUpdatePriority,
+  onToggleOrdered,
   canEdit,
   canDelete,
+  canMarkOrdered,
 }) => {
   const { language } = useLanguageStore();
   const [isEditing, setIsEditing] = useState(false);
@@ -47,6 +51,8 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAvailableDialog, setShowAvailableDialog] = useState(false);
   const [showPriorityPopover, setShowPriorityPopover] = useState(false);
+
+  const isOrdered = !!(medicine as any).is_ordered;
 
   const handleSave = () => {
     if (editedName.trim() && !/^\s/.test(editedName)) {
@@ -63,6 +69,7 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
   };
 
   const getPriorityColor = () => {
+    if (isOrdered) return 'bg-sky-500';
     const count = medicine.repeat_count || 1;
     if (count >= 3) return 'bg-red-500';
     if (count >= 2) return 'bg-amber-500';
@@ -81,6 +88,14 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
     if (count >= 3) return 'border-red-500 text-red-600 bg-red-50';
     if (count >= 2) return 'border-amber-500 text-amber-600 bg-amber-50';
     return 'border-emerald-500 text-emerald-600 bg-emerald-50';
+  };
+
+  const getCardStyle = () => {
+    if (isOrdered) return 'bg-sky-50 border-sky-300';
+    const count = medicine.repeat_count || 1;
+    if (count >= 3) return 'bg-red-50 border-red-200';
+    if (count >= 2) return 'bg-amber-50 border-amber-200';
+    return 'bg-emerald-50 border-emerald-200';
   };
 
   return (
@@ -138,13 +153,9 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
       </AlertDialog>
 
       {/* Compact Card */}
-      <div className={`relative shadow-sm rounded-lg overflow-hidden border ${
-        (medicine.repeat_count || 1) >= 3 ? 'bg-red-50 border-red-200' :
-        (medicine.repeat_count || 1) >= 2 ? 'bg-amber-50 border-amber-200' :
-        'bg-emerald-50 border-emerald-200'
-      }`}>
+      <div className={`relative shadow-sm rounded-lg overflow-hidden border ${getCardStyle()}`}>
         <div className="flex">
-          {/* Priority strip - 4px width */}
+          {/* Priority strip */}
           <div className={`w-1 ${getPriorityColor()}`} />
           
           {/* Content */}
@@ -211,7 +222,18 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
                     )}
                   </div>
                   
-                  {/* Priority Badge - Small & Clickable */}
+                  {/* Ordered Badge (visible to all when ordered) */}
+                  {isOrdered && (
+                    <Badge 
+                      variant="outline" 
+                      className="text-[10px] px-1.5 py-0.5 border-sky-400 text-sky-600 bg-sky-100 animate-ordered-pulse shrink-0"
+                    >
+                      <Package className="w-2.5 h-2.5 ml-0.5" />
+                      {language === 'ar' ? 'قيد الطلب' : 'Ordered'}
+                    </Badge>
+                  )}
+
+                  {/* Priority Badge */}
                   <Popover open={showPriorityPopover} onOpenChange={setShowPriorityPopover}>
                     <PopoverTrigger asChild>
                       <button className="focus:outline-none shrink-0">
@@ -275,25 +297,39 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
                   </span>
                   
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-1.5">
-                    {/* Delete Button */}
+                  <div className="flex items-center gap-1">
+                    {/* Toggle Ordered - Admin only */}
+                    {canMarkOrdered && onToggleOrdered && (
+                      <button
+                        onClick={() => onToggleOrdered(medicine)}
+                        className={`h-6 px-2 flex items-center gap-1 text-[10px] font-medium border rounded-full transition-colors ${
+                          isOrdered 
+                            ? 'border-sky-400 text-sky-700 bg-sky-100 hover:bg-sky-200' 
+                            : 'border-sky-300 text-sky-600 bg-transparent hover:bg-sky-50'
+                        }`}
+                      >
+                        <Package className="h-2.5 w-2.5" />
+                        {language === 'ar' ? 'قيد الطلب' : 'Ordered'}
+                      </button>
+                    )}
+
+                    {/* Delete Button - icon only */}
                     {canDelete && (
                       <button
                         onClick={() => setShowDeleteDialog(true)}
-                        className="h-6 px-2 flex items-center gap-1 text-[11px] font-medium border border-destructive/50 text-destructive bg-transparent hover:bg-destructive/10 rounded-full transition-colors"
+                        className="h-6 w-6 flex items-center justify-center text-destructive border border-destructive/50 bg-transparent hover:bg-destructive/10 rounded-full transition-colors"
                       >
                         <Trash2 className="h-3 w-3" />
-                        {language === 'ar' ? 'حذف' : 'Delete'}
                       </button>
                     )}
                     
-                    {/* Available Action Chip */}
+                    {/* Available Action Chip - smaller */}
                     <button
                       onClick={() => setShowAvailableDialog(true)}
-                      className="h-6 px-2 flex items-center gap-1 text-[11px] font-medium border border-emerald-400 text-emerald-600 bg-transparent hover:bg-emerald-50 rounded-full transition-colors"
+                      className="h-6 px-1.5 flex items-center gap-0.5 text-[10px] font-medium border border-emerald-400 text-emerald-600 bg-transparent hover:bg-emerald-50 rounded-full transition-colors"
                     >
-                      <CheckCircle className="h-3 w-3" />
-                      {language === 'ar' ? 'تم التوفير' : 'Available'}
+                      <CheckCircle className="h-2.5 w-2.5" />
+                      {language === 'ar' ? 'توفير' : 'Available'}
                     </button>
                   </div>
                 </div>
