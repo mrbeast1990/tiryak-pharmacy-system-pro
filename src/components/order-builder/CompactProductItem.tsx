@@ -22,63 +22,59 @@ const CompactProductItem: React.FC<CompactProductItemProps> = ({ product }) => {
   return (
     <div
       className={cn(
-        'flex items-center justify-between px-3 py-2.5 border-b border-border/50 transition-colors',
+        'flex flex-col px-3 py-2.5 border-b border-border/50 transition-colors',
         isSelected && 'bg-primary/5'
       )}
     >
-      {/* Right side - Product Info (RTL) */}
-      <div className="flex-1 min-w-0 pl-3">
-        <p className="font-semibold text-sm text-foreground line-clamp-1">
-          {product.name}
-        </p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {product.price.toFixed(2)} د.ل
-          {product.expiryDate && ` | EXP: ${product.expiryDate}`}
-        </p>
-      </div>
+      {/* Row 1 - Product Name (full width) */}
+      <p className="font-semibold text-sm text-foreground line-clamp-2" dir="ltr">
+        {product.name}
+      </p>
 
-      {/* Left side - Quantity Controls */}
-      <div className="flex flex-col items-center gap-1">
-        <div className="flex items-center gap-2">
-          {/* Plus button */}
+      {/* Row 2 - Price & Controls */}
+      <div className="flex items-center justify-between mt-1.5">
+        {/* Price & Expiry */}
+        <div className="text-xs text-muted-foreground">
+          <span>{product.price.toFixed(2)} د.ل</span>
+          {product.expiryDate && <span className="mr-2"> | EXP: {product.expiryDate}</span>}
+        </div>
+
+        {/* Quantity Controls + Subtotal */}
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8 rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            className="h-7 w-7 rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={() => incrementQuantity(product.id)}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
           </Button>
           
-          {/* Quantity display */}
           <input
             type="number"
             min="0"
             value={product.quantity}
             onChange={(e) => handleQuantityChange(e.target.value)}
-            className="h-8 w-10 text-center text-sm font-medium bg-transparent border-0 focus:outline-none focus:ring-0"
+            className="h-7 w-9 text-center text-sm font-medium bg-transparent border-0 focus:outline-none focus:ring-0"
             dir="ltr"
           />
           
-          {/* Minus button */}
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8 rounded-full border-muted-foreground/30 text-muted-foreground hover:bg-muted"
+            className="h-7 w-7 rounded-full border-muted-foreground/30 text-muted-foreground hover:bg-muted"
             onClick={() => decrementQuantity(product.id)}
             disabled={product.quantity === 0}
           >
-            <Minus className="h-4 w-4" />
+            <Minus className="h-3.5 w-3.5" />
           </Button>
+
+          {isSelected && (
+            <span className="text-xs font-medium text-primary mr-1">
+              {subtotal.toFixed(2)}
+            </span>
+          )}
         </div>
-        
-        {/* Subtotal */}
-        <span className={cn(
-          'text-xs font-medium',
-          isSelected ? 'text-primary' : 'text-muted-foreground'
-        )}>
-          {subtotal.toFixed(2)} د.ل
-        </span>
       </div>
     </div>
   );
