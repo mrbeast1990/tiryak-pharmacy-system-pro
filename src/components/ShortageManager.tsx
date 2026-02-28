@@ -119,6 +119,19 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
     });
   };
 
+  const handleToggleOrdered = (medicine: Medicine) => {
+    const currentOrdered = !!(medicine as any).is_ordered;
+    updateMedicine(medicine.id, { is_ordered: !currentOrdered } as any);
+    toast({
+      title: language === 'ar' ? "تم التحديث" : "Updated",
+      description: language === 'ar' 
+        ? (currentOrdered ? `تم إلغاء طلب "${medicine.name}"` : `تم وضع "${medicine.name}" قيد الطلب`)
+        : (currentOrdered ? `"${medicine.name}" unmarked as ordered` : `"${medicine.name}" marked as ordered`),
+    });
+  };
+
+  const canMarkOrdered = checkPermission('manage_users');
+
   const exportShortagesPDF = async () => {
     try {
       const doc = new jsPDF();
@@ -309,8 +322,10 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                 onDelete={handleDelete}
                 onUpdateName={handleUpdateName}
                 onUpdatePriority={handleUpdatePriority}
+                onToggleOrdered={handleToggleOrdered}
                 canEdit={true}
                 canDelete={canDeleteMedicine}
+                canMarkOrdered={canMarkOrdered}
               />
             ))}
             {shortages.length === 0 && (

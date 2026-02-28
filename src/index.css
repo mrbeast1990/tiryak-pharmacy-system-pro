@@ -120,3 +120,11 @@
 .safe-area-top {
   padding-top: max(24px, env(safe-area-inset-top));
 }
+
+@keyframes ordered-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-ordered-pulse {
+  animation: ordered-pulse 2s ease-in-out infinite;
+}
