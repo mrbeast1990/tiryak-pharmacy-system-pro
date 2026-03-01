@@ -32,8 +32,10 @@ const canRequestPermission = async (): Promise<boolean> => {
 
 // Check notification permissions status
 export const checkNotificationPermissions = async (): Promise<'granted' | 'denied' | 'prompt'> => {
+  // Web platform - use browser Notification API
   if (!Capacitor.isNativePlatform()) {
-    return 'prompt';
+    if (!('Notification' in window)) return 'denied';
+    return Notification.permission === 'default' ? 'prompt' : Notification.permission as 'granted' | 'denied';
   }
 
   try {
@@ -57,9 +59,20 @@ export const checkNotificationPermissions = async (): Promise<'granted' | 'denie
 
 // Request notification permissions (manual trigger only)
 export const requestNotificationPermissions = async (): Promise<boolean> => {
+  // Web platform - use browser Notification API
   if (!Capacitor.isNativePlatform()) {
-    console.log('⚠️ Not a native platform - skipping permission request');
-    return false;
+    if (!('Notification' in window)) {
+      console.log('⚠️ Browser does not support notifications');
+      return false;
+    }
+    try {
+      const result = await Notification.requestPermission();
+      console.log('🌐 Web notification permission result:', result);
+      return result === 'granted';
+    } catch (error) {
+      console.error('❌ Error requesting web notification permission:', error);
+      return false;
+    }
   }
 
   try {
@@ -153,8 +166,15 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
 
 // Send local notification (can be used without permission request)
 export const sendLocalNotification = async (title: string, body: string, data?: any): Promise<void> => {
+  // Web platform - use browser Notification API
   if (!Capacitor.isNativePlatform()) {
-    console.log('⚠️ Local notifications only available on mobile');
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      new Notification(title, { body, icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png' });
+      console.log('✅ Web notification sent:', title);
+    } catch (error) {
+      console.error('❌ Error sending web notification:', error);
+    }
     return;
   }
 

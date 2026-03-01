@@ -19,11 +19,6 @@ const NotificationPromptCard: React.FC = () => {
 
   useEffect(() => {
     const checkVisibility = async () => {
-      // Only show on mobile
-      if (!Capacitor.isNativePlatform()) {
-        setIsVisible(false);
-        return;
-      }
 
       try {
         // Check if dismissed recently

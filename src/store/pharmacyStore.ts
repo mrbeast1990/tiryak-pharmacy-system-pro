@@ -193,11 +193,16 @@ addMedicine: async (medicine) => {
     },
     
     updateMedicine: async (id, updates) => {
-      // فقط تحديث البيانات المطلوبة دون تغيير المستخدم الأصلي
-      const { error } = await supabase.from('medicines').update({ 
-        ...updates, 
-        last_updated: new Date().toISOString() 
-      }).eq('id', id);
+      // لا نغير التاريخ إذا كان التحديث فقط لـ is_ordered
+      const updateKeys = Object.keys(updates);
+      const isOnlyOrderedToggle = updateKeys.length === 1 && updateKeys[0] === 'is_ordered';
+      
+      const dbUpdates: any = { ...updates };
+      if (!isOnlyOrderedToggle) {
+        dbUpdates.last_updated = new Date().toISOString();
+      }
+      
+      const { error } = await supabase.from('medicines').update(dbUpdates).eq('id', id);
       if (error) console.error("Error updating medicine:", error);
       await get().fetchMedicines();
     },

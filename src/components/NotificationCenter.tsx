@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import NotificationPortal from './NotificationPortal';
+import { sendLocalNotification } from '@/hooks/usePushNotifications';
 
 interface Notification {
   id: string;
@@ -200,6 +201,12 @@ const NotificationCenter: React.FC = () => {
           if (payload.eventType === 'INSERT') {
             // New notification received
             fetchNotifications();
+            
+            // Send web/native notification
+            sendLocalNotification(
+              language === 'ar' ? 'إشعار جديد' : 'New Notification',
+              language === 'ar' ? 'لديك إشعار جديد' : 'You have a new notification'
+            );
             
             // Show toast for new notification
             toast({
