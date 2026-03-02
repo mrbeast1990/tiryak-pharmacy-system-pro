@@ -67,6 +67,8 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
         return allShortages.sort((a, b) => new Date(b.last_updated).getTime() - new Date(a.last_updated).getTime());
       case 'repeat':
         return allShortages.sort((a, b) => (b.repeat_count || 0) - (a.repeat_count || 0));
+      case 'ordered':
+        return allShortages.sort((a, b) => ((b as any).is_ordered ? 1 : 0) - ((a as any).is_ordered ? 1 : 0));
       default:
         return allShortages;
     }
@@ -293,6 +295,7 @@ const ShortageManager: React.FC<ShortageManagerProps> = ({ onBack }) => {
                 <option value="name">{language === 'ar' ? 'الاسم' : 'Name'}</option>
                 <option value="date">{language === 'ar' ? 'التاريخ' : 'Date'}</option>
                 <option value="repeat">{language === 'ar' ? 'الأولوية' : 'Priority'}</option>
+                <option value="ordered">{language === 'ar' ? 'قيد الطلب' : 'Under Order'}</option>
               </select>
               {checkPermission('export_shortages_pdf') && (
                 <>

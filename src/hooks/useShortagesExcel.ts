@@ -22,7 +22,7 @@ export const useShortagesExcel = () => {
         'No.': index + 1,
         'Drug Name': med.name,
         'Description': med.scientific_name || '-',
-        'Notes': med.notes || '-',
+        'Status': (med as any).is_ordered ? 'Under Order' : '-',
       }));
       
       const wb = XLSX.utils.book_new();
@@ -31,7 +31,7 @@ export const useShortagesExcel = () => {
         { wch: 5 },   // No.
         { wch: 30 },  // Drug Name
         { wch: 30 },  // Description
-        { wch: 25 },  // Notes
+        { wch: 15 },  // Status
       ];
       XLSX.utils.book_append_sheet(wb, ws, 'Shortages');
       
