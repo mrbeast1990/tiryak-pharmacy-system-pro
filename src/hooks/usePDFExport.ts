@@ -58,13 +58,20 @@ export const usePDFExport = () => {
           });
         }
       } else {
-        // Web platform - use traditional download
-        console.log('Exporting PDF on web platform...');
-        doc.save(filename);
+        // Web platform - open print dialog
+        console.log('Opening print dialog for PDF...');
+        const pdfBlob = doc.output('blob');
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const printWindow = window.open(pdfUrl);
+        if (printWindow) {
+          printWindow.onload = () => {
+            printWindow.print();
+          };
+        }
         
         toast({
-          title: language === 'ar' ? "تم التصدير" : "Exported",
-          description: language === 'ar' ? "تم تحميل الملف" : "File downloaded",
+          title: language === 'ar' ? "طباعة" : "Print",
+          description: language === 'ar' ? "جاري فتح الطباعة..." : "Opening print...",
         });
       }
     } catch (error) {
