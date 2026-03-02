@@ -1,52 +1,49 @@
 
 
-# خطة إصلاح 3 مشاكل
+# خطة التعديلات
 
-## المشكلة 1: تغير تاريخ الصنف عند النقر على "قيد الطلب"
+## 1. إزالة badge "قيد الطلب" المنفصل وإضافة نبض للبطاقة كاملة
 
-**السبب**: `updateMedicine` في `pharmacyStore.ts` (سطر 197-200) يضيف `last_updated: new Date().toISOString()` دائماً مع كل تحديث.
+**الملف**: `src/components/shortage/SwipeableMedicineCard.tsx`
 
-**الحل**: تعديل `updateMedicine` بحيث لا يغير `last_updated` إذا كان التحديث فقط لـ `is_ordered`. سنتحقق إذا كانت المفاتيح المحدثة هي `is_ordered` فقط، نتجنب تعيين `last_updated`.
+- إزالة الـ Badge المنفصل (سطور 225-234) الذي يعرض "قيد الطلب" بشكل منفصل
+- عند `isOrdered === true`، إضافة class `animate-ordered-pulse` على البطاقة الرئيسية (السطر 156) بدلاً من badge منفصل، بحيث البطاقة كلها تنبض
 
-**الملف**: `src/store/pharmacyStore.ts` - تعديل دالة `updateMedicine`
+التعديل على السطر 156:
+```tsx
+<div className={`relative shadow-sm rounded-lg overflow-hidden border ${getCardStyle()} ${isOrdered ? 'animate-ordered-pulse' : ''}`}>
+```
 
----
+وحذف السطور 225-234 (الـ Ordered Badge المنفصل).
 
-## المشكلة 2: الأولوية تظهر دائماً "عادي" عند إضافة صنف جديد
+## 2. تحسين الإشعارات لتظهر في notification bar الهاتف
 
-**السبب**: في `addMedicine` (سطر 113)، عند وجود الدواء مسبقاً بحالة shortage، يستخدم `Math.max(selectedPriority, existing)` وهذا صحيح. لكن المشكلة الأساسية في أن `addMedicine` للأصناف الموجودة يعمل بشكل مختلف عن المتوقع. بعد مراجعة الكود، المشكلة هي أن `repeat_count` في type الـ `addMedicine` signature (سطر 22) هو `optional` ولكن في الواقع يتم تمريره. سأتحقق من أن القيمة تصل بشكل صحيح وأضيف logging للتشخيص. بالإضافة لذلك، يجب التأكد أن الـ `insert` للسجلات الجديدة يمرر `repeat_count` بشكل صحيح.
+**الملف**: `public/sw.js`
 
-**الحل**: التأكد أن `addMedicine` يحفظ `repeat_count` المحدد من المستخدم بشكل صريح وليس القيمة الافتراضية 1. سأضيف log وأتحقق من المسار.
+- إضافة مستمع `push` event في Service Worker لعرض إشعارات في شريط الإشعارات حتى عندما التبويب غير نشط:
+```js
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'تيرياق';
+  const options = {
+    body: data.body || 'لديك إشعار جديد',
+    icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
+    badge: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
+    vibrate: [200, 100, 200],
+    tag: 'tiryak-notification',
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+```
 
-**الملف**: `src/store/pharmacyStore.ts`
+- إضافة مستمع `notificationclick` لفتح التطبيق عند النقر على الإشعار
 
----
+**الملف**: `src/components/NotificationCenter.tsx`
 
-## المشكلة 3: تفعيل الإشعارات للويب
+- تحسين `sendLocalNotification` ليستخدم `navigator.serviceWorker.ready` + `showNotification` بدلاً من `new Notification()` مباشرة، لأن Service Worker notifications تظهر في notification bar حتى لو التطبيق مغلق
 
-**الوضع الحالي**: نظام الإشعارات يعتمد على `@capacitor/push-notifications` ولا يعمل إلا على التطبيق الأصلي (Native). على الويب، `Capacitor.isNativePlatform()` يرجع `false` فيتم تجاهل كل شيء.
+**الملف**: `src/hooks/usePushNotifications.ts`
 
-**الحل**: إضافة دعم **Web Notifications API** (إشعارات المتصفح) بالتوازي مع النظام الحالي:
-
-1. **تعديل `usePushNotifications.ts`**: إضافة دوال للويب:
-   - `checkNotificationPermissions`: إذا كان الويب، نستخدم `Notification.permission`
-   - `requestNotificationPermissions`: إذا كان الويب، نستخدم `Notification.requestPermission()`
-   - `sendLocalNotification`: إذا كان الويب، نستخدم `new Notification(title, { body })`
-
-2. **تعديل `NotificationPromptCard.tsx`**: إزالة شرط `Capacitor.isNativePlatform()` لعرض البطاقة على الويب أيضاً.
-
-3. **تعديل `NotificationCenter.tsx`**: عند استلام إشعار جديد عبر realtime، إرسال Web Notification إذا كان المستخدم على الويب والإذن ممنوح.
-
-4. **تحديث `sw.js`**: إضافة مستمع `push` event لعرض إشعارات push عبر Service Worker (للإشعارات عندما يكون التبويب مغلقاً - اختياري لاحقاً).
-
----
-
-## ملخص الملفات المتأثرة
-
-| الملف | التغيير |
-|---|---|
-| `src/store/pharmacyStore.ts` | إصلاح `updateMedicine` لعدم تغيير التاريخ عند toggle ordered + التأكد من حفظ الأولوية |
-| `src/hooks/usePushNotifications.ts` | إضافة دعم Web Notifications API |
-| `src/components/NotificationPromptCard.tsx` | عرض البطاقة على الويب |
-| `src/components/NotificationCenter.tsx` | إرسال Web Notification عند استلام إشعار جديد |
+- تعديل `sendLocalNotification` على الويب ليستخدم `registration.showNotification()` عبر Service Worker بدلاً من `new Notification()` العادي، لأن هذا هو الذي يظهر في الـ notification bar في الهاتف
 
