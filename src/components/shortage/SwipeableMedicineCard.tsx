@@ -153,7 +153,7 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
       </AlertDialog>
 
       {/* Compact Card */}
-      <div className={`relative shadow-sm rounded-lg overflow-hidden border ${getCardStyle()}`}>
+      <div className={`relative shadow-sm rounded-lg overflow-hidden border ${getCardStyle()} ${isOrdered ? 'animate-ordered-pulse' : ''}`}>
         <div className="flex">
           {/* Priority strip */}
           <div className={`w-1 ${getPriorityColor()}`} />
@@ -222,17 +222,6 @@ const SwipeableMedicineCard: React.FC<SwipeableMedicineCardProps> = ({
                     )}
                   </div>
                   
-                  {/* Ordered Badge (visible to all when ordered) */}
-                  {isOrdered && (
-                    <Badge 
-                      variant="outline" 
-                      className="text-[10px] px-1.5 py-0.5 border-sky-400 text-sky-600 bg-sky-100 animate-ordered-pulse shrink-0"
-                    >
-                      <Package className="w-2.5 h-2.5 ml-0.5" />
-                      {language === 'ar' ? 'قيد الطلب' : 'Ordered'}
-                    </Badge>
-                  )}
-
                   {/* Priority Badge */}
                   <Popover open={showPriorityPopover} onOpenChange={setShowPriorityPopover}>
                     <PopoverTrigger asChild>

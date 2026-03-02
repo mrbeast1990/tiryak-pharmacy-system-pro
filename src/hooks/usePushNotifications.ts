@@ -170,7 +170,19 @@ export const sendLocalNotification = async (title: string, body: string, data?: 
   if (!Capacitor.isNativePlatform()) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
-      new Notification(title, { body, icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png' });
+      // Use Service Worker showNotification for notification bar visibility
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, {
+          body,
+          icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
+          badge: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
+          tag: 'tiryak-notification-' + Date.now(),
+          renotify: true,
+        } as NotificationOptions);
+      } else {
+        new Notification(title, { body, icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png' });
+      }
       console.log('✅ Web notification sent:', title);
     } catch (error) {
       console.error('❌ Error sending web notification:', error);
