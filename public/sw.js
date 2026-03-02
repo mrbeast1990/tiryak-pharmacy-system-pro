@@ -132,6 +132,34 @@ self.addEventListener('fetch', event => {
   }
 });
 
+// Push notifications - تظهر في شريط إشعارات الهاتف
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'تيرياق';
+  const options = {
+    body: data.body || 'لديك إشعار جديد',
+    icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
+    badge: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
+    vibrate: [200, 100, 200],
+    tag: 'tiryak-notification',
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// فتح التطبيق عند النقر على الإشعار
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('/');
+    })
+  );
+});
+
 // مزامنة الخلفية
 self.addEventListener('sync', event => {
   if (event.tag === 'pharmacy-sync') {
