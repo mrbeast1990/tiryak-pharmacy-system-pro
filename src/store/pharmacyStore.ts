@@ -25,7 +25,7 @@ interface PharmacyState {
   updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes' | 'repeat_count'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
   deleteSupply: (id: string) => Promise<void>;
-  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy'>) => Promise<void>;
+  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy'>) => Promise<boolean>;
   updateRevenue: (id: string, updates: Partial<Revenue>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
