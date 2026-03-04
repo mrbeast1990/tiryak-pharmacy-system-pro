@@ -361,9 +361,8 @@ addMedicine: async (medicine) => {
 
     getTotalRevenue: () => {
       const revenues = get().revenues;
-      // Only sum income, don't subtract expenses (cash disbursement doesn't reduce revenue)
       return revenues.reduce((total, revenue) => {
-        return revenue.type === 'income' ? total + revenue.amount : total;
+        return (revenue.type === 'income' || revenue.type === 'banking_services') ? total + revenue.amount : total;
       }, 0);
     },
 
