@@ -303,7 +303,10 @@ addMedicine: async (medicine) => {
     
     addRevenue: async (revenue) => {
       const user = useAuthStore.getState().user;
-      if (!user) return console.error("User not authenticated");
+      if (!user) {
+        console.error("User not authenticated");
+        return false;
+      }
 
       const { error } = await supabase.from('revenues').insert({
         amount: revenue.amount,
@@ -315,8 +318,12 @@ addMedicine: async (medicine) => {
         created_by_id: user.id,
         created_by_name: user.name,
       });
-      if (error) console.error("Error adding revenue:", error);
+      if (error) {
+        console.error("Error adding revenue:", error);
+        return false;
+      }
       await get().fetchRevenues();
+      return true;
     },
     
     updateRevenue: async (id, updates) => {
