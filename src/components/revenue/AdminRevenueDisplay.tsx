@@ -22,6 +22,7 @@ const SERVICE_NAMES: Record<string, string> = {
   mobi_nab: 'موبي ناب',
   bank_transfer: 'تحويل مصرفي',
   pay_for_me: 'ادفع لي',
+  cards: 'بطاقات',
 };
 
 interface AdminRevenueDisplayProps {

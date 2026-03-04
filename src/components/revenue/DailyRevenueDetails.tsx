@@ -110,8 +110,8 @@ const DailyRevenueDetails: React.FC<DailyRevenueDetailsProps> = ({
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                       <Badge variant={revenue.type === 'income' ? 'default' : 'destructive'}>
-                        {revenue.type === 'income' ? 'إيراد' : 'صرف'}
+                       <Badge variant={revenue.type === 'income' ? 'default' : 'secondary'}>
+                        {revenue.type === 'income' ? 'إيراد نقدي' : (revenue.service_name || 'خدمات مصرفية')}
                        </Badge>
                        {canManage && (
                          <>
