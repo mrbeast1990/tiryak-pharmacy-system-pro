@@ -69,9 +69,11 @@ export const useRevenueForm = ({
       return;
     }
 
+    let hasFailure = false;
+
     // Save cash income as one record
     if (incomeAmount > 0) {
-      await addRevenue({
+      const success = await addRevenue({
         amount: incomeAmount,
         type: 'income',
         period,
@@ -79,11 +81,12 @@ export const useRevenueForm = ({
         date: selectedDate,
         service_name: null,
       });
+      if (!success) hasFailure = true;
     }
 
     // Save each banking entry as a separate record
     for (const entry of bankingValues) {
-      await addRevenue({
+      const success = await addRevenue({
         amount: entry.amount,
         type: 'banking_services',
         period,
@@ -91,12 +94,21 @@ export const useRevenueForm = ({
         date: selectedDate,
         service_name: entry.service,
       });
+      if (!success) hasFailure = true;
     }
     
-    toast({
-      title: language === 'ar' ? "تم الإضافة" : "Added",
-      description: language === 'ar' ? `تم تسجيل العملية بنجاح` : `Transaction registered successfully`,
-    });
+    if (hasFailure) {
+      toast({
+        title: language === 'ar' ? "خطأ" : "Error",
+        description: language === 'ar' ? "فشل حفظ بعض البيانات. تحقق من صلاحياتك." : "Failed to save some data. Check your permissions.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: language === 'ar' ? "تم الإضافة" : "Added",
+        description: language === 'ar' ? `تم تسجيل العملية بنجاح` : `Transaction registered successfully`,
+      });
+    }
 
     setIncome('');
     setNotes('');

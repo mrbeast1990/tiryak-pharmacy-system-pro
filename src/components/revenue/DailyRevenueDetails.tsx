@@ -82,7 +82,9 @@ const DailyRevenueDetails: React.FC<DailyRevenueDetailsProps> = ({
             <CardContent className="pt-6">
               <div className="text-center mb-4">
                 <p className="text-sm text-gray-600">إجمالي إيراد اليوم</p>
-                <p className="text-2xl font-bold text-green-600">{dailyRevenue.toFixed(2)} دينار</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {dailyRevenues.reduce((s, r) => (r.type === 'income' || r.type === 'banking_services') ? s + r.amount : s, 0).toFixed(2)} دينار
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -108,8 +110,8 @@ const DailyRevenueDetails: React.FC<DailyRevenueDetailsProps> = ({
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                       <Badge variant={revenue.type === 'income' ? 'default' : 'destructive'}>
-                        {revenue.type === 'income' ? 'إيراد' : 'صرف'}
+                       <Badge variant={revenue.type === 'income' ? 'default' : 'secondary'}>
+                        {revenue.type === 'income' ? 'إيراد نقدي' : (revenue.service_name || 'خدمات مصرفية')}
                        </Badge>
                        {canManage && (
                          <>

@@ -25,7 +25,7 @@ interface PharmacyState {
   updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes' | 'repeat_count'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
   deleteSupply: (id: string) => Promise<void>;
-  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy'>) => Promise<void>;
+  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy'>) => Promise<boolean>;
   updateRevenue: (id: string, updates: Partial<Revenue>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
@@ -303,7 +303,10 @@ addMedicine: async (medicine) => {
     
     addRevenue: async (revenue) => {
       const user = useAuthStore.getState().user;
-      if (!user) return console.error("User not authenticated");
+      if (!user) {
+        console.error("User not authenticated");
+        return false;
+      }
 
       const { error } = await supabase.from('revenues').insert({
         amount: revenue.amount,
@@ -315,8 +318,12 @@ addMedicine: async (medicine) => {
         created_by_id: user.id,
         created_by_name: user.name,
       });
-      if (error) console.error("Error adding revenue:", error);
+      if (error) {
+        console.error("Error adding revenue:", error);
+        return false;
+      }
       await get().fetchRevenues();
+      return true;
     },
     
     updateRevenue: async (id, updates) => {
@@ -347,17 +354,15 @@ addMedicine: async (medicine) => {
     
     getTotalDailyRevenue: (date) => {
       const dayRevenues = get().revenues.filter((revenue) => revenue.date === date);
-      // Only sum income, don't subtract expenses (cash disbursement doesn't reduce revenue)
       return dayRevenues.reduce((total, revenue) => {
-        return revenue.type === 'income' ? total + revenue.amount : total;
+        return (revenue.type === 'income' || revenue.type === 'banking_services') ? total + revenue.amount : total;
       }, 0);
     },
 
     getTotalRevenue: () => {
       const revenues = get().revenues;
-      // Only sum income, don't subtract expenses (cash disbursement doesn't reduce revenue)
       return revenues.reduce((total, revenue) => {
-        return revenue.type === 'income' ? total + revenue.amount : total;
+        return (revenue.type === 'income' || revenue.type === 'banking_services') ? total + revenue.amount : total;
       }, 0);
     },
 
