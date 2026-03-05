@@ -71,8 +71,11 @@ export const useRevenueForm = ({
 
     let hasFailure = false;
 
+    console.log('📝 Submit - income:', incomeAmount, 'bankingValues:', JSON.stringify(bankingValues), 'bankingTotal:', bankingTotal, 'period:', period, 'date:', selectedDate);
+
     // Save cash income as one record
     if (incomeAmount > 0) {
+      console.log('💰 Saving income:', incomeAmount);
       const success = await addRevenue({
         amount: incomeAmount,
         type: 'income',
@@ -81,11 +84,14 @@ export const useRevenueForm = ({
         date: selectedDate,
         service_name: null,
       });
+      console.log('💰 Income save result:', success);
       if (!success) hasFailure = true;
     }
 
     // Save each banking entry as a separate record
+    console.log('🏦 Banking entries to save:', bankingValues.length);
     for (const entry of bankingValues) {
+      console.log('🏦 Saving banking entry:', entry.service, entry.amount);
       const success = await addRevenue({
         amount: entry.amount,
         type: 'banking_services',
@@ -94,6 +100,7 @@ export const useRevenueForm = ({
         date: selectedDate,
         service_name: entry.service,
       });
+      console.log('🏦 Banking save result:', success, 'for', entry.service);
       if (!success) hasFailure = true;
     }
     
