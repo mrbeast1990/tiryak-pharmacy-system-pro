@@ -308,7 +308,7 @@ addMedicine: async (medicine) => {
         return false;
       }
 
-      const { error } = await supabase.from('revenues').insert({
+      const insertData = {
         amount: revenue.amount,
         type: revenue.type,
         period: revenue.period,
@@ -317,11 +317,15 @@ addMedicine: async (medicine) => {
         service_name: revenue.service_name || null,
         created_by_id: user.id,
         created_by_name: user.name,
-      });
+      };
+      console.log('🔵 addRevenue inserting:', JSON.stringify(insertData));
+
+      const { data, error } = await supabase.from('revenues').insert(insertData).select();
       if (error) {
-        console.error("Error adding revenue:", error);
+        console.error("❌ Error adding revenue:", error.message, error.details, error.hint, error.code);
         return false;
       }
+      console.log('✅ Revenue inserted successfully:', data);
       await get().fetchRevenues();
       return true;
     },
