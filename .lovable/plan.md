@@ -1,25 +1,46 @@
 
 
-# تغيير PDF من تحميل إلى طباعة
+# تعديل فلترة المصاريف + السماح للموظفين بتعديل إيراداتهم
 
-## التعديل
+## الجزء 1: فلترة المصاريف (نفس نمط السدادات)
 
-**الملف**: `src/hooks/usePDFExport.ts`
+### 1. `src/store/expensesStore.ts`
+- تغيير `ExpensesFilters` ليشمل: `dateFilter: 'all' | 'month' | 'range'`، `selectedMonth`، `selectedYear`، `dateFrom`، `dateTo`
+- الفلتر الافتراضي: `dateFilter: 'month'` مع الشهر الحالي
+- تحديث `getFilteredExpenses()` للفلترة بالشهر المحدد أو النطاق
 
-في الويب (سطر 60-68)، بدلاً من `doc.save(filename)` الذي يحمّل الملف مباشرة، سنستخدم:
+### 2. `src/components/expenses/ExpensesFilters.tsx`
+- استبدال نظام Badges بواجهة مطابقة لـ `PaymentsFilters`:
+  - أزرار: الكل / شهر محدد / نطاق تاريخ
+  - Select للشهر + Select للسنة عند اختيار "شهر محدد"
+  - حقول من/إلى عند اختيار "نطاق تاريخ"
+  - زر "غير المخصومة فقط"
 
-```ts
-const pdfBlob = doc.output('blob');
-const pdfUrl = URL.createObjectURL(pdfBlob);
-const printWindow = window.open(pdfUrl);
-if (printWindow) {
-  printWindow.onload = () => {
-    printWindow.print();
-  };
-}
+### 3. `src/components/expenses/ExpensesSummary.tsx`
+- تحسين تنسيق العملة باستخدام `Intl.NumberFormat`
+
+---
+
+## الجزء 2: السماح للموظفين بتعديل إيراداتهم
+
+حالياً التعديل مقيد بـ `checkPermission('manage_users')` (المدير فقط). المطلوب: كل مستخدم يقدر يعدل سجلاته فقط.
+
+### 4. `src/components/revenue/DailyRevenueDetails.tsx`
+- تغيير شرط عرض أزرار التعديل من `canManage` إلى: المدير يرى الكل، والموظف يرى أزرار التعديل فقط على سجلاته (مقارنة `revenue.created_by_id` أو `revenue.createdBy` مع اسم المستخدم الحالي)
+- تمرير `userId` كـ prop جديد
+
+### 5. `src/components/revenue/PeriodRevenueDetails.tsx`
+- نفس التعديل: إضافة `userId` وعرض أزرار التعديل للموظف على سجلاته فقط
+
+### 6. `src/components/RevenueManager.tsx`
+- تمرير `userId` (من `useAuthStore`) إلى `DailyRevenueDetails` و `PeriodRevenueDetails`
+
+### 7. RLS Policy (قاعدة البيانات)
+- إضافة سياسة UPDATE جديدة على جدول `revenues` تسمح للموظفين بتعديل سجلاتهم فقط:
+```sql
+CREATE POLICY "Users can update their own revenues"
+ON public.revenues FOR UPDATE
+USING (created_by_id = auth.uid());
 ```
-
-هذا سيفتح نافذة طباعة المتصفح بدلاً من التحميل المباشر، والمستخدم يقدر يطبع أو يحفظ كـ PDF من نافذة الطباعة.
-
-رسالة التوست تتغير من "تم تحميل الملف" إلى "جاري فتح الطباعة".
+- السياسة الحالية تسمح فقط للمدير بالتعديل، لذلك نضيف سياسة جديدة بجانبها
 
