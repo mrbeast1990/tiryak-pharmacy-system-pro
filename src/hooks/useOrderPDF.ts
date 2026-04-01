@@ -159,7 +159,7 @@ export const useOrderPDF = () => {
     const totalAmount = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
     autoTable(doc, {
-      head: [['ر.م', 'اسم الصنف', 'الكمية', 'الصلاحية', 'السعر', 'الإجمالي']],
+      head: [['ر.م', 'Code', 'اسم الصنف', 'الكمية', 'الصلاحية', 'السعر', 'الإجمالي']],
       body: tableData,
       startY: yPos,
       margin: { left: margin, right: margin, bottom: 40 },
