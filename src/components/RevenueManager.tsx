@@ -47,6 +47,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         updateRevenue={manager.updateRevenue}
         deleteRevenue={manager.deleteRevenue}
         checkPermission={manager.checkPermission}
+        userId={manager.userId}
       />
     );
   }
@@ -62,6 +63,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         updateRevenue={manager.updateRevenue}
         deleteRevenue={manager.deleteRevenue}
         checkPermission={manager.checkPermission}
+        userId={manager.userId}
       />
     );
   }

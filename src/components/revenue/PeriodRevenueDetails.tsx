@@ -18,6 +18,7 @@ interface PeriodRevenueDetailsProps {
   updateRevenue: (id: string, updates: Partial<Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'date'>>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   checkPermission: (permission: string) => boolean;
+  userId?: string;
 }
 
 const PeriodRevenueDetails: React.FC<PeriodRevenueDetailsProps> = ({
@@ -30,10 +31,11 @@ const PeriodRevenueDetails: React.FC<PeriodRevenueDetailsProps> = ({
   updateRevenue,
   deleteRevenue,
   checkPermission,
+  userId,
 }) => {
   const [editingRevenue, setEditingRevenue] = useState<Revenue | null>(null);
   const { toast } = useToast();
-  const canManage = checkPermission('manage_users');
+  const isAdmin = checkPermission('manage_users');
 
   const handleUpdateRevenue = async (id: string, updates: Partial<Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'date'>>) => {
     await updateRevenue(id, updates);
@@ -112,7 +114,7 @@ const PeriodRevenueDetails: React.FC<PeriodRevenueDetailsProps> = ({
                         <Badge variant={revenue.type === 'income' ? 'default' : 'destructive'}>
                           {revenue.type === 'income' ? 'إيراد' : 'صرف'}
                         </Badge>
-                         {canManage && (
+                         {(isAdmin || revenue.created_by_id === userId) && (
                          <>
                           <Button variant="ghost" size="icon" onClick={() => setEditingRevenue(revenue)} className="h-8 w-8">
                             <Edit className="h-4 w-4" />
