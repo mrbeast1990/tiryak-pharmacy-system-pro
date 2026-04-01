@@ -29,10 +29,11 @@ const DailyRevenueDetails: React.FC<DailyRevenueDetailsProps> = ({
   updateRevenue,
   deleteRevenue,
   checkPermission,
+  userId,
 }) => {
   const [editingRevenue, setEditingRevenue] = useState<Revenue | null>(null);
   const { toast } = useToast();
-  const canManage = checkPermission('manage_users');
+  const isAdmin = checkPermission('manage_users');
 
   const handleUpdateRevenue = async (id: string, updates: Partial<Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'date'>>) => {
     await updateRevenue(id, updates);
