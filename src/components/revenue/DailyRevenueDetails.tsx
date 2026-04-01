@@ -17,6 +17,7 @@ interface DailyRevenueDetailsProps {
   updateRevenue: (id: string, updates: Partial<Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'date'>>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   checkPermission: (permission: string) => boolean;
+  userId?: string;
 }
 
 const DailyRevenueDetails: React.FC<DailyRevenueDetailsProps> = ({
