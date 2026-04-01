@@ -115,7 +115,7 @@ const DailyRevenueDetails: React.FC<DailyRevenueDetailsProps> = ({
                        <Badge variant={revenue.type === 'income' ? 'default' : 'secondary'}>
                         {revenue.type === 'income' ? 'إيراد نقدي' : (revenue.service_name || 'خدمات مصرفية')}
                        </Badge>
-                       {canManage && (
+                       {(isAdmin || revenue.created_by_id === userId) && (
                          <>
                           <Button variant="ghost" size="icon" onClick={() => setEditingRevenue(revenue)} className="h-8 w-8">
                             <Edit className="h-4 w-4" />

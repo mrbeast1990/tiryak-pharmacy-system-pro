@@ -82,6 +82,7 @@ export const useRevenueManager = () => {
     ...data,
     language,
     isAdmin,
+    userId: user?.id,
     checkPermission,
     handleSubmit: form.handleSubmit,
     navigateDate,

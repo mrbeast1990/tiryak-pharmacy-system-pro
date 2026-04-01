@@ -182,11 +182,12 @@ export const useOrderPDF = () => {
       },
       columnStyles: {
         0: { halign: 'center', cellWidth: 10 },
-        1: { halign: 'left', cellWidth: 'auto', fontStyle: 'bold' },
-        2: { halign: 'center', cellWidth: 15 },
-        3: { halign: 'center', cellWidth: 22 },
-        4: { halign: 'center', cellWidth: 20 },
-        5: { halign: 'center', cellWidth: 22 },
+        1: { halign: 'center', cellWidth: 18 },
+        2: { halign: 'left', cellWidth: 'auto', fontStyle: 'bold' },
+        3: { halign: 'center', cellWidth: 15 },
+        4: { halign: 'center', cellWidth: 22 },
+        5: { halign: 'center', cellWidth: 18 },
+        6: { halign: 'center', cellWidth: 22 },
       },
     });
 
