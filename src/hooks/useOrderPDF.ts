@@ -148,6 +148,7 @@ export const useOrderPDF = () => {
     // === Products Table ===
     const tableData = selectedProducts.map((p, index) => [
       (index + 1).toString(),
+      p.code || '-',
       p.name,
       p.quantity.toString(),
       p.expiryDate || '-',
