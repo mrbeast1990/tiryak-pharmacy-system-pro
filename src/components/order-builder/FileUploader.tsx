@@ -140,6 +140,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
           
           // Find column indices
           const nameIndex = findColumnIndex(headers, NAME_KEYWORDS);
+          const codeIndex = findColumnIndex(headers, CODE_KEYWORDS);
           const priceIndex = findColumnIndex(headers, PRICE_KEYWORDS);
           const expiryIndex = findColumnIndex(headers, EXPIRY_KEYWORDS);
 
