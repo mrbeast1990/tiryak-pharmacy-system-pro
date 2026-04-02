@@ -14,7 +14,8 @@ interface FileUploaderProps {
 }
 
 // Keywords for column detection
-const NAME_KEYWORDS = ['اسم الصنف', 'الاسم', 'الصنف', 'المنتج', 'trade_name', 'name', 'product', 'البند', 'الدواء'];
+const NAME_KEYWORDS = ['اسم الصنف', 'الاسم', 'الصنف', 'المنتج', 'trade_name', 'name', 'product', 'البند', 'الدواء', 'item description', 'description'];
+const CODE_KEYWORDS = ['code', 'كود', 'الكود', 'رمز', 'item_code', 'product_code', 'sku', 'رقم الصنف', 'item no', 'ref', 'المرجع', 'الرقم التجاري'];
 const PRICE_KEYWORDS = ['السعر', 'سعر الوحدة', 'unit_price', 'price', 'سعر', 'القيمة'];
 const EXPIRY_KEYWORDS = ['الصلاحية', 'تاريخ الصلاحية', 'الصلاحيه', 'انتهاء', 'expiry', 'expiry_date', 'exp'];
 
