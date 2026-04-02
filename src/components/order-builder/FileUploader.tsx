@@ -14,7 +14,8 @@ interface FileUploaderProps {
 }
 
 // Keywords for column detection
-const NAME_KEYWORDS = ['اسم الصنف', 'الاسم', 'الصنف', 'المنتج', 'trade_name', 'name', 'product', 'البند', 'الدواء'];
+const NAME_KEYWORDS = ['اسم الصنف', 'الاسم', 'الصنف', 'المنتج', 'trade_name', 'name', 'product', 'البند', 'الدواء', 'item description', 'description'];
+const CODE_KEYWORDS = ['code', 'كود', 'الكود', 'رمز', 'item_code', 'product_code', 'sku', 'رقم الصنف', 'item no', 'ref', 'المرجع', 'الرقم التجاري'];
 const PRICE_KEYWORDS = ['السعر', 'سعر الوحدة', 'unit_price', 'price', 'سعر', 'القيمة'];
 const EXPIRY_KEYWORDS = ['الصلاحية', 'تاريخ الصلاحية', 'الصلاحيه', 'انتهاء', 'expiry', 'expiry_date', 'exp'];
 
@@ -139,6 +140,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
           
           // Find column indices
           const nameIndex = findColumnIndex(headers, NAME_KEYWORDS);
+          const codeIndex = findColumnIndex(headers, CODE_KEYWORDS);
           const priceIndex = findColumnIndex(headers, PRICE_KEYWORDS);
           const expiryIndex = findColumnIndex(headers, EXPIRY_KEYWORDS);
 
@@ -163,12 +165,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
             const name = String(row[nameIndex]).trim();
             if (!name) continue;
 
+            const code = codeIndex >= 0 ? String(row[codeIndex] || '').trim() : undefined;
             const price = priceIndex >= 0 ? parseFloat(row[priceIndex]) || 0 : 0;
             const expiryDate = expiryIndex >= 0 ? parseExcelDate(row[expiryIndex]) : undefined;
 
             products.push({
               id: `excel-${i}`,
               name,
+              code: code || undefined,
               price,
               expiryDate: expiryDate || undefined,
             });
