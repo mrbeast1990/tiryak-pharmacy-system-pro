@@ -165,12 +165,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileProcessed }) => {
             const name = String(row[nameIndex]).trim();
             if (!name) continue;
 
+            const code = codeIndex >= 0 ? String(row[codeIndex] || '').trim() : undefined;
             const price = priceIndex >= 0 ? parseFloat(row[priceIndex]) || 0 : 0;
             const expiryDate = expiryIndex >= 0 ? parseExcelDate(row[expiryIndex]) : undefined;
 
             products.push({
               id: `excel-${i}`,
               name,
+              code: code || undefined,
               price,
               expiryDate: expiryDate || undefined,
             });
