@@ -86,6 +86,8 @@ export const useRevenueManager = () => {
       notes: '',
       date: state.selectedDate,
       service_name: serviceName,
+      is_verified: false,
+      verified_by_name: null,
     });
   }, [addRevenue, state.period, state.selectedDate]);
 
