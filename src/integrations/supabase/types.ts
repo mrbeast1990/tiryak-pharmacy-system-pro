@@ -479,6 +479,33 @@ export type Database = {
         }
         Relationships: []
       }
+      revenue_locks: {
+        Row: {
+          date: string
+          id: string
+          locked_at: string
+          locked_by_id: string
+          locked_by_name: string
+          period: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          locked_at?: string
+          locked_by_id: string
+          locked_by_name: string
+          period: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          locked_at?: string
+          locked_by_id?: string
+          locked_by_name?: string
+          period?: string
+        }
+        Relationships: []
+      }
       revenues: {
         Row: {
           amount: number
@@ -487,10 +514,12 @@ export type Database = {
           created_by_name: string
           date: string
           id: string
+          is_verified: boolean
           notes: string | null
           period: string
           service_name: string | null
           type: string
+          verified_by_name: string | null
         }
         Insert: {
           amount: number
@@ -499,10 +528,12 @@ export type Database = {
           created_by_name: string
           date: string
           id?: string
+          is_verified?: boolean
           notes?: string | null
           period: string
           service_name?: string | null
           type: string
+          verified_by_name?: string | null
         }
         Update: {
           amount?: number
@@ -511,10 +542,12 @@ export type Database = {
           created_by_name?: string
           date?: string
           id?: string
+          is_verified?: boolean
           notes?: string | null
           period?: string
           service_name?: string | null
           type?: string
+          verified_by_name?: string | null
         }
         Relationships: []
       }

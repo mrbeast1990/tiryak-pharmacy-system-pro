@@ -1,5 +1,5 @@
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useLanguageStore } from '@/store/languageStore';
 import { useRevenueState } from './revenue/useRevenueState';
@@ -11,7 +11,7 @@ import { usePharmacyStore } from '@/store/pharmacyStore';
 export const useRevenueManager = () => {
   const { user, checkPermission } = useAuthStore();
   const { language } = useLanguageStore();
-  const { updateRevenue, deleteRevenue } = usePharmacyStore();
+  const { addRevenue, updateRevenue, deleteRevenue, fetchRevenues } = usePharmacyStore();
 
   const state = useRevenueState();
 
@@ -77,6 +77,24 @@ export const useRevenueManager = () => {
     }
   }, [state.period]);
 
+  // Direct submit for POS (no form event needed)
+  const handleSubmitDirect = useCallback(async (amount: number, type: 'income' | 'banking_services', serviceName: string | null): Promise<boolean> => {
+    return await addRevenue({
+      amount,
+      type,
+      period: state.period,
+      notes: '',
+      date: state.selectedDate,
+      service_name: serviceName,
+      is_verified: false,
+      verified_by_name: null,
+    });
+  }, [addRevenue, state.period, state.selectedDate]);
+
+  const refreshRevenues = useCallback(async () => {
+    await fetchRevenues();
+  }, [fetchRevenues]);
+
   return {
     ...state,
     ...data,
@@ -85,6 +103,8 @@ export const useRevenueManager = () => {
     userId: user?.id,
     checkPermission,
     handleSubmit: form.handleSubmit,
+    handleSubmitDirect,
+    refreshRevenues,
     navigateDate,
     canNavigateDate,
     generatePeriodReport,
