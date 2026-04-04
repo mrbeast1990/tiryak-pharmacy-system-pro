@@ -83,6 +83,8 @@ export const useRevenueForm = ({
         notes: notes,
         date: selectedDate,
         service_name: null,
+        is_verified: false,
+        verified_by_name: null,
       });
       console.log('💰 Income save result:', success);
       if (!success) hasFailure = true;
