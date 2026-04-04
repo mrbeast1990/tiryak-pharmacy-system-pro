@@ -7,7 +7,7 @@ import { Tables } from '@/integrations/supabase/types';
 // Map Supabase types to our app interfaces.
 export type Medicine = Omit<Tables<'medicines'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
 export type Supply = Omit<Tables<'supplies'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
-export type Revenue = Omit<Tables<'revenues'>, 'created_by_name' | 'amount'> & { createdBy: string; amount: number; service_name?: string | null };
+export type Revenue = Omit<Tables<'revenues'>, 'created_by_name' | 'amount'> & { createdBy: string; amount: number; service_name?: string | null; is_verified?: boolean; verified_by_name?: string | null };
 
 interface PharmacyState {
   medicines: Medicine[];
