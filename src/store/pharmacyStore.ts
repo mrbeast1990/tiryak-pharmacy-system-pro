@@ -83,7 +83,7 @@ export const usePharmacyStore = create<PharmacyState>()(
         set({ revenues: [], revenuesLoading: false });
         return;
       }
-      const revenues: Revenue[] = data.map(r => ({ ...r, createdBy: r.created_by_name, amount: Number(r.amount), service_name: r.service_name }));
+      const revenues: Revenue[] = data.map(r => ({ ...r, createdBy: r.created_by_name, amount: Number(r.amount), service_name: r.service_name, is_verified: r.is_verified, verified_by_name: r.verified_by_name }));
       set({ revenues, revenuesLoading: false });
     },
     
