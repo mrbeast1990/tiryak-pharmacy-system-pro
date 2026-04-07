@@ -20,6 +20,8 @@ interface POSTransactionListProps {
   userId?: string;
   isLocked: boolean;
   onVerify?: (id: string) => Promise<void>;
+  staffName?: string;
+  onAdjust?: (id: string, adjustment: number, note: string) => Promise<void>;
 }
 
 const PERIOD_LABELS: Record<string, string> = {

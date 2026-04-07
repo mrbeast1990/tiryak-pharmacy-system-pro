@@ -508,6 +508,8 @@ export type Database = {
       }
       revenues: {
         Row: {
+          adjustment: number | null
+          adjustment_note: string | null
           amount: number
           created_at: string
           created_by_id: string
@@ -522,6 +524,8 @@ export type Database = {
           verified_by_name: string | null
         }
         Insert: {
+          adjustment?: number | null
+          adjustment_note?: string | null
           amount: number
           created_at?: string
           created_by_id: string
@@ -536,6 +540,8 @@ export type Database = {
           verified_by_name?: string | null
         }
         Update: {
+          adjustment?: number | null
+          adjustment_note?: string | null
           amount?: number
           created_at?: string
           created_by_id?: string
