@@ -85,6 +85,8 @@ export const useRevenueForm = ({
         service_name: null,
         is_verified: false,
         verified_by_name: null,
+        adjustment: 0,
+        adjustment_note: null,
       });
       console.log('💰 Income save result:', success);
       if (!success) hasFailure = true;
@@ -103,6 +105,8 @@ export const useRevenueForm = ({
         service_name: entry.service,
         is_verified: false,
         verified_by_name: null,
+        adjustment: 0,
+        adjustment_note: null,
       });
       console.log('🏦 Banking save result:', success, 'for', entry.service);
       if (!success) hasFailure = true;

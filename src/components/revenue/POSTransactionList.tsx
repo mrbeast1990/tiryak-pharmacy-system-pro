@@ -3,11 +3,13 @@ import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Edit, Trash2, CheckCircle2, Clock, User, DollarSign, Building2, TrendingUp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowRight, Edit, Trash2, CheckCircle2, Clock, User, DollarSign, Building2, TrendingUp, PlusCircle, MinusCircle } from 'lucide-react';
 import { Revenue } from '@/store/pharmacyStore';
 import EditRevenueDialog from './EditRevenueDialog';
 import { SERVICE_COLORS, SERVICE_LABELS } from './BankingServicesModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from 'sonner';
 
 interface POSTransactionListProps {
@@ -20,6 +22,8 @@ interface POSTransactionListProps {
   userId?: string;
   isLocked: boolean;
   onVerify?: (id: string) => Promise<void>;
+  staffName?: string;
+  onAdjust?: (id: string, adjustment: number, note: string) => Promise<void>;
 }
 
 const PERIOD_LABELS: Record<string, string> = {
@@ -40,8 +44,13 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
   userId,
   isLocked,
   onVerify,
+  staffName,
+  onAdjust,
 }) => {
   const [editingRevenue, setEditingRevenue] = useState<Revenue | null>(null);
+  const [adjustingId, setAdjustingId] = useState<string | null>(null);
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const [adjustNote, setAdjustNote] = useState('');
 
   const totals = useMemo(() => {
     const cash = dailyRevenues.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
@@ -57,6 +66,20 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
   const handleDelete = async (id: string) => {
     await deleteRevenue(id);
     toast.success('تم حذف السجل');
+  };
+
+  const handleAdjustSubmit = async () => {
+    if (!adjustingId || !onAdjust) return;
+    const amount = parseFloat(adjustAmount);
+    if (isNaN(amount) || amount === 0) {
+      toast.error('يرجى إدخال قيمة صحيحة');
+      return;
+    }
+    await onAdjust(adjustingId, amount, adjustNote);
+    setAdjustingId(null);
+    setAdjustAmount('');
+    setAdjustNote('');
+    toast.success('تم تسجيل الفرق');
   };
 
   const getServiceStyle = (rev: Revenue) => {
@@ -79,7 +102,12 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
               <ArrowRight className="w-4 h-4" />
               <span>العودة</span>
             </Button>
-            <h1 className="text-sm font-bold text-foreground">تفاصيل إيراد {selectedDate}</h1>
+            <div className="text-right">
+              <h1 className="text-sm font-bold text-foreground">
+                {staffName ? `إيراد ${staffName}` : `تفاصيل إيراد ${selectedDate}`}
+              </h1>
+              {staffName && <p className="text-[10px] text-muted-foreground">{selectedDate}</p>}
+            </div>
           </div>
         </div>
       </header>
@@ -127,10 +155,11 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
           </Card>
         ) : (
           <div className="space-y-2">
-            {dailyRevenues.map(rev => {
-              const isVerified = (rev as any).is_verified;
+            {dailyRevenues.map((rev, index) => {
+              const isVerified = rev.is_verified;
               const canEdit = !isLocked && !isVerified && (isAdmin || rev.created_by_id === userId);
               const canVerify = isAdmin && !isVerified && !isLocked;
+              const adjustment = (rev as any).adjustment || 0;
 
               return (
                 <Card key={rev.id} className={`border shadow-sm rounded-xl overflow-hidden transition-all ${isVerified ? 'border-emerald-300 bg-emerald-50/30' : ''}`}>
@@ -150,6 +179,16 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
                         )}
                         {isVerified && (
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        )}
+                        {isAdmin && onAdjust && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-amber-600 hover:bg-amber-100"
+                            onClick={() => { setAdjustingId(rev.id); setAdjustAmount(''); setAdjustNote(''); }}
+                          >
+                            {adjustment !== 0 ? <MinusCircle className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
+                          </Button>
                         )}
                         {canEdit && (
                           <>
@@ -180,20 +219,31 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
                       {/* Info */}
                       <div className="text-right flex-1 mr-2">
                         <div className="flex items-center justify-end gap-2 mb-1">
+                          <span className="text-[10px] text-muted-foreground/50">#{index + 1}</span>
                           <span className="text-base font-bold text-foreground">{rev.amount.toFixed(2)} د</span>
                           <Badge className={`text-[10px] border ${getServiceStyle(rev)}`} variant="outline">
                             {getServiceLabel(rev)}
                           </Badge>
                         </div>
+                        {/* Adjustment display */}
+                        {adjustment !== 0 && (
+                          <div className={`text-[10px] font-semibold mb-1 ${adjustment > 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                            {adjustment > 0 ? `+${adjustment}` : adjustment} د (فرق)
+                            {(rev as any).adjustment_note && <span className="text-muted-foreground mr-1">- {(rev as any).adjustment_note}</span>}
+                          </div>
+                        )}
                         <div className="flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
                           <span className="flex items-center gap-0.5">
                             <Clock className="w-2.5 h-2.5" />
                             {new Date(rev.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
                           </span>
-                          <span className="flex items-center gap-0.5">
-                            <User className="w-2.5 h-2.5" />
-                            {rev.createdBy}
-                          </span>
+                          {/* Only show user name if not in staffName mode */}
+                          {!staffName && (
+                            <span className="flex items-center gap-0.5">
+                              <User className="w-2.5 h-2.5" />
+                              {rev.createdBy}
+                            </span>
+                          )}
                           <span>{PERIOD_LABELS[rev.period] || rev.period}</span>
                         </div>
                         {rev.notes && <p className="text-[10px] text-muted-foreground mt-0.5">{rev.notes}</p>}
@@ -213,6 +263,40 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
         revenue={editingRevenue}
         onSave={handleUpdate}
       />
+
+      {/* Adjustment Dialog */}
+      <Dialog open={!!adjustingId} onOpenChange={(open) => { if (!open) setAdjustingId(null); }}>
+        <DialogContent className="max-w-sm" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تسجيل زيادة / نقصان</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">المبلغ (موجب = زيادة، سالب = نقصان)</label>
+              <Input
+                type="number"
+                value={adjustAmount}
+                onChange={e => setAdjustAmount(e.target.value)}
+                placeholder="مثال: 5 أو -3"
+                className="text-right"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">ملاحظة (اختياري)</label>
+              <Input
+                value={adjustNote}
+                onChange={e => setAdjustNote(e.target.value)}
+                placeholder="سبب الفرق..."
+                className="text-right"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleAdjustSubmit} className="w-full">تسجيل الفرق</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

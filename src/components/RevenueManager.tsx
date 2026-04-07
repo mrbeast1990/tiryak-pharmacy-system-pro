@@ -13,6 +13,7 @@ import POSCashInput from './revenue/POSCashInput';
 import POSDashboard from './revenue/POSDashboard';
 import BankingServicesModal from './revenue/BankingServicesModal';
 import POSTransactionList from './revenue/POSTransactionList';
+import StaffSummaryView from './revenue/StaffSummaryView';
 import AdminRevenueDisplay from './revenue/AdminRevenueDisplay';
 import RevenueReportSheet from './revenue/RevenueReportSheet';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
@@ -26,7 +27,9 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const manager = useRevenueManager();
   const [bankingModalOpen, setBankingModalOpen] = useState(false);
   const [locks, setLocks] = useState<Record<string, boolean>>({});
-  const [showTransactions, setShowTransactions] = useState(false);
+  // Navigation: 'pos' | 'staff-summary' | 'user-detail'
+  const [view, setView] = useState<'pos' | 'staff-summary' | 'user-detail'>('pos');
+  const [selectedStaff, setSelectedStaff] = useState<{ userId: string; userName: string } | null>(null);
 
   // Fetch locks for the selected date
   const fetchLocks = useCallback(async () => {
@@ -44,8 +47,6 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   useEffect(() => { fetchLocks(); }, [fetchLocks]);
 
   const isCurrentPeriodLocked = locks[manager.period] || false;
-
-  // Check if ANY period is locked for the selected date (for dashboard display)
   const isAnyLocked = Object.values(locks).some(v => v);
 
   const handleRegisterCash = useCallback(async (amount: number) => {
@@ -69,13 +70,10 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   }, [manager, isCurrentPeriodLocked]);
 
   const handleToggleLock = useCallback(async () => {
-    // Lock/unlock ALL periods for the date
     if (isAnyLocked) {
-      // Unlock: delete all locks for this date
       await supabase.from('revenue_locks').delete().eq('date', manager.selectedDate);
       toast.success('تم فتح القفل');
     } else {
-      // Lock: insert locks for all periods that have revenues
       const periods = ['morning', 'evening', 'night', 'ahmad_rajili', 'abdulwahab'];
       const userName = manager.userId ? 'Admin' : 'Unknown';
       const inserts = periods.map(p => ({
@@ -99,7 +97,21 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     toast.success('تم اعتماد العملية');
   }, [manager]);
 
-  if (manager.revenuesLoading && !showTransactions) {
+  const handleAdjust = useCallback(async (id: string, adjustment: number, note: string) => {
+    await supabase.from('revenues').update({
+      adjustment,
+      adjustment_note: note || null,
+    }).eq('id', id);
+    await manager.refreshRevenues();
+  }, [manager]);
+
+  // Filter revenues for selected staff
+  const staffRevenues = useMemo(() => {
+    if (!selectedStaff) return [];
+    return manager.dailyRevenues.filter(r => r.created_by_id === selectedStaff.userId);
+  }, [manager.dailyRevenues, selectedStaff]);
+
+  if (manager.revenuesLoading && view === 'pos') {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
         <div className="flex flex-col items-center gap-4">
@@ -112,18 +124,38 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     );
   }
 
-  if (showTransactions) {
+  // User Detail View
+  if (view === 'user-detail' && selectedStaff) {
     return (
       <POSTransactionList
-        onBack={() => setShowTransactions(false)}
+        onBack={() => setView('staff-summary')}
         selectedDate={manager.selectedDate}
-        dailyRevenues={manager.dailyRevenues}
+        dailyRevenues={staffRevenues}
         updateRevenue={manager.updateRevenue}
         deleteRevenue={manager.deleteRevenue}
         isAdmin={manager.isAdmin}
         userId={manager.userId}
         isLocked={isAnyLocked}
         onVerify={manager.isAdmin ? handleVerify : undefined}
+        staffName={selectedStaff.userName}
+        onAdjust={manager.isAdmin ? handleAdjust : undefined}
+      />
+    );
+  }
+
+  // Staff Summary View
+  if (view === 'staff-summary') {
+    return (
+      <StaffSummaryView
+        onBack={() => setView('pos')}
+        selectedDate={manager.selectedDate}
+        dailyRevenues={manager.dailyRevenues}
+        locks={locks}
+        onSelectUser={(userId, userName) => {
+          setSelectedStaff({ userId, userName });
+          setView('user-detail');
+        }}
+        isAdmin={manager.isAdmin}
       />
     );
   }
@@ -203,7 +235,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           selectedDate={manager.selectedDate}
           dailyCash={manager.dailyRevenue}
           dailyServices={manager.dailyBankingServices}
-          onShowDetails={() => setShowTransactions(true)}
+          onShowDetails={() => setView('staff-summary')}
           navigateDate={manager.navigateDate}
           canNavigateDate={manager.canNavigateDate}
           isAdmin={manager.isAdmin}
