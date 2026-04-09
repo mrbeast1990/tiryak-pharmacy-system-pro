@@ -14,6 +14,7 @@ import POSDashboard from './revenue/POSDashboard';
 import BankingServicesModal from './revenue/BankingServicesModal';
 import POSTransactionList from './revenue/POSTransactionList';
 import StaffSummaryView from './revenue/StaffSummaryView';
+import UserServicesDashboard from './revenue/UserServicesDashboard';
 import AdminRevenueDisplay from './revenue/AdminRevenueDisplay';
 import RevenueReportSheet from './revenue/RevenueReportSheet';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
@@ -124,10 +125,10 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     );
   }
 
-  // User Detail View
+  // User Detail View - Services Dashboard
   if (view === 'user-detail' && selectedStaff) {
     return (
-      <POSTransactionList
+      <UserServicesDashboard
         onBack={() => setView('staff-summary')}
         selectedDate={manager.selectedDate}
         dailyRevenues={staffRevenues}
