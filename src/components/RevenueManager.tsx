@@ -125,10 +125,10 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     );
   }
 
-  // User Detail View
+  // User Detail View - Services Dashboard
   if (view === 'user-detail' && selectedStaff) {
     return (
-      <POSTransactionList
+      <UserServicesDashboard
         onBack={() => setView('staff-summary')}
         selectedDate={manager.selectedDate}
         dailyRevenues={staffRevenues}
