@@ -175,19 +175,37 @@ setTimeout(() => {
           table: 'notification_read_status',
           filter: `user_id=eq.${user.id}`
         },
-        async () => {
+        async (payload) => {
+          // Fetch actual notification content
+          const notificationId = (payload.new as any)?.notification_id;
+          let notifTitle = language === 'ar' ? "إشعار جديد" : "New Notification";
+          let notifBody = language === 'ar' ? "لديك إشعار جديد في النظام" : "You have a new notification";
+          
+          if (notificationId) {
+            try {
+              const { data: notifData } = await supabase
+                .from('notifications')
+                .select('title, message')
+                .eq('id', notificationId)
+                .single();
+              if (notifData) {
+                notifTitle = notifData.title;
+                notifBody = notifData.message;
+              }
+            } catch (e) {
+              console.error('Error fetching notification details:', e);
+            }
+          }
+
           fetchNotifications();
           
-          // Send push notification
-          await sendLocalNotification(
-            language === 'ar' ? "إشعار جديد" : "New Notification",
-            language === 'ar' ? "لديك إشعار جديد في النظام" : "You have a new notification"
-          );
+          // Send push notification with actual content
+          await sendLocalNotification(notifTitle, notifBody);
           
-          // Show toast for new notification
+          // Show toast with actual content
           toast({
-            title: language === 'ar' ? "إشعار جديد" : "New Notification",
-            description: language === 'ar' ? "لديك إشعار جديد" : "You have a new notification",
+            title: notifTitle,
+            description: notifBody,
           });
         }
       )
