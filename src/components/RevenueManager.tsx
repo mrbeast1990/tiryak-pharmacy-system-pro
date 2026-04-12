@@ -246,6 +246,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           isAdmin={manager.isAdmin}
           isLocked={isAnyLocked}
           onToggleLock={manager.isAdmin ? handleToggleLock : undefined}
+          totalAdjustment={manager.dailyRevenues.reduce((s, r) => s + ((r as any).adjustment || 0), 0)}
         />
 
         {/* Cash Input */}
