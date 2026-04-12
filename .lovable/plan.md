@@ -1,56 +1,54 @@
-# تعديل فلترة المصاريف + السماح للموظفين بتعديل إيراداتهم
 
-## الجزء 1: فلترة المصاريف (نفس نمط السدادات)
 
-### 1. `src/store/expensesStore.ts`
+## Problem
 
-- تغيير `ExpensesFilters` ليشمل: `dateFilter: 'all' | 'month' | 'range'`، `selectedMonth`، `selectedYear`، `dateFrom`، `dateTo`
-- الفلتر الافتراضي: `dateFilter: 'month'` مع الشهر الحالي
-- تحديث `getFilteredExpenses()` للفلترة بالشهر المحدد أو النطاق
+The login form's `handleSubmit` function does not wrap the `login()` call in a `try/catch` block. If `login()` throws an unhandled exception (network error, Supabase timeout, etc.), `setIsLoading(false)` is never called, leaving the spinner spinning forever.
 
-### 2. `src/components/expenses/ExpensesFilters.tsx`
+## Fix
 
-- استبدال نظام Badges بواجهة مطابقة لـ `PaymentsFilters`:
-  - أزرار: الكل / شهر محدد / نطاق تاريخ
-  - Select للشهر + Select للسنة عند اختيار "شهر محدد"
-  - حقول من/إلى عند اختيار "نطاق تاريخ"
-  - زر "غير المخصومة فقط"
+**File: `src/components/LoginForm.tsx`** (lines 28-49)
 
-### 3. `src/components/expenses/ExpensesSummary.tsx`
+Wrap the login logic in a `try/catch/finally` block so `setIsLoading(false)` always runs:
 
-- تحسين تنسيق العملة باستخدام `Intl.NumberFormat`
-
----
-
-## الجزء 2: السماح للموظفين بتعديل إيراداتهم
-
-حالياً التعديل مقيد بـ `checkPermission('manage_users')` (المدير فقط). المطلوب: كل مستخدم يقدر يعدل سجلاته فقط.
-
-### 4. `src/components/revenue/DailyRevenueDetails.tsx`
-
-- تغيير شرط عرض أزرار التعديل من `canManage` إلى: المدير يرى الكل، والموظف يرى أزرار التعديل فقط على سجلاته (مقارنة `revenue.created_by_id` أو `revenue.createdBy` مع اسم المستخدم الحالي)
-- تمرير `userId` كـ prop جديد
-
-### 5. `src/components/revenue/PeriodRevenueDetails.tsx`
-
-- نفس التعديل: إضافة `userId` وعرض أزرار التعديل للموظف على سجلاته فقط
-
-### 6. `src/components/RevenueManager.tsx`
-
-- تمرير `userId` (من `useAuthStore`) إلى `DailyRevenueDetails` و `PeriodRevenueDetails`
-
-### 7. RLS Policy (قاعدة البيانات)
-
-- إضافة سياسة UPDATE جديدة على جدول `revenues` تسمح للموظفين بتعديل سجلاتهم فقط:
-
-```sql
-CREATE POLICY "Users can update their own revenues"
-ON public.revenues FOR UPDATE
-USING (created_by_id = auth.uid());
+```typescript
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      setAuthRememberMe(rememberMe);
+      const success = await login(email, password);
+      
+      if (success) {
+        toast({
+          title: language === 'ar' ? "تم تسجيل الدخول بنجاح" : "Login Successful",
+          description: language === 'ar' ? "مرحباً بك في نظام صيدلية الترياق الشافي" : "Welcome to Al-Tiryak Al-Shafi System",
+        });
+      } else {
+        toast({
+          title: language === 'ar' ? "خطأ في تسجيل الدخول" : "Login Error",
+          description: language === 'ar' ? "البريد الإلكتروني أو كلمة المرور غير صحيحة" : "Invalid email or password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: language === 'ar' ? "خطأ في الاتصال" : "Connection Error",
+        description: language === 'ar' ? "تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى." : "Could not connect to the server. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+};
 ```
 
-- السياسة الحالية تسمح فقط للمدير بالتعديل، لذلك نضيف سياسة جديدة بجانبها
+Also add similar `try/catch` to the `login` function in **`src/store/authStore.ts`** around the profile query to prevent unhandled promise rejections from propagating.
 
-&nbsp;
+## Technical Details
 
-في انشاء طلبيات عند انشاء الطلبية واصدارها pdf ضف عمود جنب ر.م اسمه Code فيه كود الصنف
+- The root cause is a missing error boundary in the async login handler
+- `setIsLoading(false)` in a `finally` block guarantees the spinner always stops
+- The `login()` function in the store already handles most errors, but network-level failures (DNS, timeout) can still throw uncaught exceptions
+
