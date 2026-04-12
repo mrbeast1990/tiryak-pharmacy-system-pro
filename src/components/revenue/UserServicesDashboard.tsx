@@ -7,6 +7,7 @@ import { ArrowRight, DollarSign, Building2, TrendingUp, ChevronDown, ChevronUp, 
 import { Input } from '@/components/ui/input';
 import { Revenue } from '@/store/pharmacyStore';
 import EditRevenueDialog from './EditRevenueDialog';
+import AccountantVerificationCard from './AccountantVerificationCard';
 import { SERVICE_COLORS, SERVICE_LABELS } from './BankingServicesModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -211,6 +212,18 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
             </div>
           </CardContent>
         </Card>
+
+        {/* Accountant Verification */}
+        <AccountantVerificationCard
+          selectedDate={selectedDate}
+          period={dailyRevenues[0]?.period || 'morning'}
+          targetUserId={dailyRevenues[0]?.created_by_id || ''}
+          staffName={staffName}
+          cashTotal={totals.cash}
+          isAdmin={isAdmin}
+          verifierUserId={userId}
+          verifierName={user?.name || 'المدير'}
+        />
 
         {/* Service Group Cards */}
         {serviceGroups.length === 0 ? (

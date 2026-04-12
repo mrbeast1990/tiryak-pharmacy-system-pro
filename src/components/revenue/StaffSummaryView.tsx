@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp, Filter, CalendarRange } from 'lucide-react';
+import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp, Filter, CalendarRange, ClipboardCheck } from 'lucide-react';
 import { Revenue } from '@/store/pharmacyStore';
+import { supabase } from '@/integrations/supabase/client';
 
 const MONTHS = [
   { value: 1, label: 'يناير' },
@@ -66,6 +67,23 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [verifications, setVerifications] = useState<Record<string, number>>({});
+
+  // Fetch accountant verifications for the selected date
+  const fetchVerifications = useCallback(async () => {
+    if (dateFilter !== 'day') { setVerifications({}); return; }
+    const { data } = await supabase
+      .from('accountant_verifications')
+      .select('target_user_id, reported_amount')
+      .eq('date', selectedDate);
+    if (data) {
+      const map: Record<string, number> = {};
+      data.forEach((v: any) => { map[v.target_user_id] = v.reported_amount; });
+      setVerifications(map);
+    }
+  }, [selectedDate, dateFilter]);
+
+  useEffect(() => { fetchVerifications(); }, [fetchVerifications]);
 
   const currentYear = now.getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -395,7 +413,23 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
                         </div>
                       </div>
 
-                      <p className="text-[10px] text-muted-foreground mt-1">{staff.count} عملية</p>
+                      <div className="flex items-center justify-end gap-2 mt-1">
+                        <p className="text-[10px] text-muted-foreground">{staff.count} عملية</p>
+                        {/* Accountant verification badge */}
+                        {verifications[staff.userId] !== undefined && (() => {
+                          const vDiff = verifications[staff.userId] - staff.totalCash;
+                          return (
+                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              vDiff > 0 ? 'bg-emerald-100 text-emerald-700' :
+                              vDiff < 0 ? 'bg-red-100 text-destructive' :
+                              'bg-muted text-muted-foreground'
+                            }`}>
+                              <ClipboardCheck className="w-3 h-3" />
+                              <span>{vDiff > 0 ? '+' : ''}{vDiff.toFixed(0)}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

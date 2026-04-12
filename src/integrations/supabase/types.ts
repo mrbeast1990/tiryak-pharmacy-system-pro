@@ -58,6 +58,42 @@ export type Database = {
           },
         ]
       }
+      accountant_verifications: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          period: string
+          reported_amount: number
+          target_user_id: string
+          verified_by_id: string
+          verified_by_name: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          period: string
+          reported_amount: number
+          target_user_id: string
+          verified_by_id: string
+          verified_by_name: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          period?: string
+          reported_amount?: number
+          target_user_id?: string
+          verified_by_id?: string
+          verified_by_name?: string
+        }
+        Relationships: []
+      }
       ai_conversations: {
         Row: {
           created_at: string
