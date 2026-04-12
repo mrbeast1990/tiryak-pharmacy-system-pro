@@ -19,9 +19,8 @@ const NotificationPromptCard: React.FC = () => {
 
   useEffect(() => {
     const checkVisibility = async () => {
-
       try {
-        // Check if dismissed recently
+        // Check if dismissed or already enabled - this is the primary gate
         const { value: dismissedUntil } = await Preferences.get({ key: DISMISS_KEY });
         if (dismissedUntil) {
           const dismissedTime = parseInt(dismissedUntil, 10);
@@ -31,7 +30,19 @@ const NotificationPromptCard: React.FC = () => {
           }
         }
 
-        // Check permission status
+        // Also check if notification permission was already granted
+        // On web, check Notification.permission directly
+        if ('Notification' in window && Notification.permission === 'granted') {
+          // Permission already granted, permanently dismiss
+          await Preferences.set({ 
+            key: DISMISS_KEY, 
+            value: (Date.now() + 365 * 24 * 60 * 60 * 1000).toString() 
+          });
+          setIsVisible(false);
+          return;
+        }
+
+        // Check permission status via our helper
         const status = await checkNotificationPermissions();
         
         // Show card only if permission is 'prompt' (not granted or denied)
