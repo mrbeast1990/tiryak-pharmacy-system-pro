@@ -29,24 +29,32 @@ const LoginForm: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    setAuthRememberMe(rememberMe);
-    
-    const success = await login(email, password);
-    
-    if (success) {
+    try {
+      setAuthRememberMe(rememberMe);
+      const success = await login(email, password);
+      
+      if (success) {
+        toast({
+          title: language === 'ar' ? "تم تسجيل الدخول بنجاح" : "Login Successful",
+          description: language === 'ar' ? "مرحباً بك في نظام صيدلية الترياق الشافي" : "Welcome to Al-Tiryak Al-Shafi System",
+        });
+      } else {
+        toast({
+          title: language === 'ar' ? "خطأ في تسجيل الدخول" : "Login Error",
+          description: language === 'ar' ? "البريد الإلكتروني أو كلمة المرور غير صحيحة" : "Invalid email or password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: language === 'ar' ? "تم تسجيل الدخول بنجاح" : "Login Successful",
-        description: language === 'ar' ? "مرحباً بك في نظام صيدلية الترياق الشافي" : "Welcome to Al-Tiryak Al-Shafi System",
-      });
-    } else {
-      toast({
-        title: language === 'ar' ? "خطأ في تسجيل الدخول" : "Login Error",
-        description: language === 'ar' ? "البريد الإلكتروني أو كلمة المرور غير صحيحة" : "Invalid email or password",
+        title: language === 'ar' ? "خطأ في الاتصال" : "Connection Error",
+        description: language === 'ar' ? "تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى." : "Could not connect to the server. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const handleBiometricLogin = async () => {
