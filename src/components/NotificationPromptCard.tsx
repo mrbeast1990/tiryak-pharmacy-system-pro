@@ -52,6 +52,11 @@ const NotificationPromptCard: React.FC = () => {
       const success = await requestNotificationPermissions();
       
       if (success) {
+        // Save permanent dismiss so card never shows again
+        await Preferences.set({ 
+          key: DISMISS_KEY, 
+          value: (Date.now() + 365 * 24 * 60 * 60 * 1000).toString() 
+        });
         toast({
           title: language === 'ar' ? '✅ تم تفعيل الإشعارات' : '✅ Notifications Enabled',
           description: language === 'ar' 
