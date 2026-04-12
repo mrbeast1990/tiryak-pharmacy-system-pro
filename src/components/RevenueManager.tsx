@@ -155,6 +155,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         onBack={() => setView('pos')}
         selectedDate={manager.selectedDate}
         dailyRevenues={manager.dailyRevenues}
+        allRevenues={manager.revenues}
         locks={locks}
         onSelectUser={(userId, userName) => {
           setSelectedStaff({ userId, userName });

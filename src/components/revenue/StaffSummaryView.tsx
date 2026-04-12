@@ -1,8 +1,31 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp, Filter, CalendarRange } from 'lucide-react';
 import { Revenue } from '@/store/pharmacyStore';
+
+const MONTHS = [
+  { value: 1, label: 'يناير' },
+  { value: 2, label: 'فبراير' },
+  { value: 3, label: 'مارس' },
+  { value: 4, label: 'أبريل' },
+  { value: 5, label: 'مايو' },
+  { value: 6, label: 'يونيو' },
+  { value: 7, label: 'يوليو' },
+  { value: 8, label: 'أغسطس' },
+  { value: 9, label: 'سبتمبر' },
+  { value: 10, label: 'أكتوبر' },
+  { value: 11, label: 'نوفمبر' },
+  { value: 12, label: 'ديسمبر' },
+];
 
 interface StaffGroup {
   userId: string;
@@ -19,30 +42,75 @@ interface StaffSummaryViewProps {
   onBack: () => void;
   selectedDate: string;
   dailyRevenues: Revenue[];
+  allRevenues: Revenue[];
   locks: Record<string, boolean>;
   onSelectUser: (userId: string, userName: string) => void;
   isAdmin: boolean;
   onToggleLockForPeriod?: (period: string) => void;
 }
 
+type DateFilterType = 'day' | 'month' | 'range';
+
 const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
   onBack,
   selectedDate,
   dailyRevenues,
+  allRevenues,
   locks,
   onSelectUser,
   isAdmin,
 }) => {
+  const now = new Date();
+  const [dateFilter, setDateFilter] = useState<DateFilterType>('day');
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
+  const currentYear = now.getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+
+  // Filter revenues based on selected filter
+  const filteredRevenues = useMemo(() => {
+    if (dateFilter === 'day') return dailyRevenues;
+    if (dateFilter === 'month') {
+      return allRevenues.filter(r => {
+        const d = new Date(r.date);
+        return d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
+      });
+    }
+    if (dateFilter === 'range') {
+      return allRevenues.filter(r => {
+        if (dateFrom && r.date < dateFrom) return false;
+        if (dateTo && r.date > dateTo) return false;
+        return true;
+      });
+    }
+    return dailyRevenues;
+  }, [dateFilter, dailyRevenues, allRevenues, selectedMonth, selectedYear, dateFrom, dateTo]);
+
+  const filterLabel = useMemo(() => {
+    if (dateFilter === 'day') return selectedDate;
+    if (dateFilter === 'month') return `${MONTHS.find(m => m.value === selectedMonth)?.label} ${selectedYear}`;
+    if (dateFilter === 'range') {
+      if (dateFrom && dateTo) return `${dateFrom} → ${dateTo}`;
+      if (dateFrom) return `من ${dateFrom}`;
+      if (dateTo) return `حتى ${dateTo}`;
+      return 'نطاق تاريخ';
+    }
+    return selectedDate;
+  }, [dateFilter, selectedDate, selectedMonth, selectedYear, dateFrom, dateTo]);
+
   const staffGroups = useMemo(() => {
     const groupMap = new Map<string, StaffGroup>();
 
-    dailyRevenues.forEach(rev => {
+    filteredRevenues.forEach(rev => {
       const key = rev.created_by_id;
       const existing = groupMap.get(key);
       const cash = rev.type === 'income' ? rev.amount : 0;
       const services = rev.type === 'banking_services' ? rev.amount : 0;
       const adjustment = (rev as any).adjustment || 0;
-      const isLocked = locks[rev.period] || false;
+      const isLocked = dateFilter === 'day' ? (locks[rev.period] || false) : false;
 
       if (existing) {
         existing.totalCash += cash;
@@ -66,12 +134,13 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
     });
 
     return Array.from(groupMap.values()).sort((a, b) => b.total - a.total);
-  }, [dailyRevenues, locks]);
+  }, [filteredRevenues, locks, dateFilter]);
 
-  const grandTotal = useMemo(() => dailyRevenues.reduce((s, r) => s + r.amount, 0), [dailyRevenues]);
-  const grandCash = useMemo(() => dailyRevenues.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0), [dailyRevenues]);
-  const grandAdjustment = useMemo(() => dailyRevenues.reduce((s, r) => s + ((r as any).adjustment || 0), 0), [dailyRevenues]);
-  const allLocked = useMemo(() => staffGroups.length > 0 && staffGroups.every(s => s.isLocked), [staffGroups]);
+  const grandTotal = useMemo(() => filteredRevenues.reduce((s, r) => s + r.amount, 0), [filteredRevenues]);
+  const grandCash = useMemo(() => filteredRevenues.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0), [filteredRevenues]);
+  const grandServices = useMemo(() => filteredRevenues.filter(r => r.type === 'banking_services').reduce((s, r) => s + r.amount, 0), [filteredRevenues]);
+  const grandAdjustment = useMemo(() => filteredRevenues.reduce((s, r) => s + ((r as any).adjustment || 0), 0), [filteredRevenues]);
+  const allLocked = useMemo(() => dateFilter === 'day' && staffGroups.length > 0 && staffGroups.every(s => s.isLocked), [staffGroups, dateFilter]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 relative" dir="rtl">
@@ -110,12 +179,106 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
               <ArrowRight className="w-4 h-4" />
               <span>العودة</span>
             </Button>
-            <h1 className="text-sm font-bold text-foreground">ملخص الموظفين - {selectedDate}</h1>
+            <h1 className="text-sm font-bold text-foreground">ملخص الموظفين</h1>
           </div>
         </div>
       </header>
 
       <main className="max-w-md mx-auto px-4 py-4 space-y-3 relative z-10">
+        {/* Date Filter Controls - Admin only */}
+        {isAdmin && (
+          <Card className="border-0 shadow-sm rounded-xl">
+            <CardContent className="p-3 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-1">
+                <Filter className="w-3.5 h-3.5" />
+                <span>فلترة حسب التاريخ</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Button
+                  variant={dateFilter === 'day' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDateFilter('day')}
+                  className="h-7 text-xs px-3"
+                >
+                  اليوم
+                </Button>
+                <Button
+                  variant={dateFilter === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDateFilter('month')}
+                  className="h-7 text-xs px-3"
+                >
+                  شهر محدد
+                </Button>
+                <Button
+                  variant={dateFilter === 'range' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setDateFilter('range')}
+                  className="h-7 text-xs px-3"
+                >
+                  <CalendarRange className="w-3 h-3 ml-1" />
+                  نطاق تاريخ
+                </Button>
+
+                {dateFilter === 'month' && (
+                  <div className="flex gap-1.5 mr-auto">
+                    <Select
+                      value={String(selectedMonth)}
+                      onValueChange={(v) => setSelectedMonth(Number(v))}
+                    >
+                      <SelectTrigger className="w-[100px] h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((m) => (
+                          <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={String(selectedYear)}
+                      onValueChange={(v) => setSelectedYear(Number(v))}
+                    >
+                      <SelectTrigger className="w-[80px] h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {years.map((y) => (
+                          <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {dateFilter === 'range' && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground">من:</span>
+                    <Input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="h-7 text-xs w-[130px]"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground">إلى:</span>
+                    <Input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="h-7 text-xs w-[130px]"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Grand Total Card */}
         <Card className={`border-0 shadow-md rounded-2xl ${allLocked ? 'bg-muted/50' : 'bg-primary/5'}`}>
           <CardContent className="p-4 text-center relative">
@@ -124,14 +287,18 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
                 <Lock className="w-5 h-5 text-destructive" />
               </div>
             )}
-            <p className="text-xs text-muted-foreground">الإجمالي الكلي لليوم</p>
+            <p className="text-xs text-muted-foreground">{filterLabel}</p>
             <p className="text-3xl font-black text-primary">{grandTotal.toFixed(0)} <span className="text-base">د</span></p>
             
-            {/* Show cash with adjustment */}
-            <div className="flex items-center justify-center gap-3 mt-2">
+            {/* Summary row: Cash, Services, Adjustment */}
+            <div className="flex items-center justify-center gap-4 mt-2 flex-wrap">
               <span className="text-sm text-emerald-600 font-bold flex items-center gap-1">
                 <DollarSign className="w-3 h-3" />
                 {grandCash.toFixed(0)}
+              </span>
+              <span className="text-sm text-blue-600 font-bold flex items-center gap-1">
+                <Building2 className="w-3 h-3" />
+                {grandServices.toFixed(0)}
               </span>
               {grandAdjustment !== 0 && (
                 <span className={`text-sm font-bold ${grandAdjustment > 0 ? 'text-emerald-600' : 'text-destructive'}`}>
@@ -140,7 +307,7 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
               )}
             </div>
             
-            <p className="text-[10px] text-muted-foreground mt-1">{staffGroups.length} موظف • {dailyRevenues.length} عملية</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{staffGroups.length} موظف • {filteredRevenues.length} عملية</p>
           </CardContent>
         </Card>
 
@@ -148,7 +315,7 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
         {staffGroups.length === 0 ? (
           <Card className="border-0 shadow-sm rounded-xl">
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground text-sm">لا توجد عمليات في هذا التاريخ</p>
+              <p className="text-muted-foreground text-sm">لا توجد عمليات في هذه الفترة</p>
             </CardContent>
           </Card>
         ) : (
