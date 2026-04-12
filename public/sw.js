@@ -140,9 +140,10 @@ self.addEventListener('push', event => {
     body: data.body || 'لديك إشعار جديد',
     icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
     badge: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
-    vibrate: [200, 100, 200],
-    tag: 'tiryak-notification',
+    vibrate: [200, 100, 200, 100, 200],
+    tag: 'tiryak-notification-' + Date.now(),
     renotify: true,
+    silent: false,
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });

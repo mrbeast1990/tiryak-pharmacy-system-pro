@@ -164,12 +164,26 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
   }
 };
 
+// Play notification sound
+const playNotificationSound = () => {
+  try {
+    const audio = new Audio('/notification-sound.wav');
+    audio.volume = 0.7;
+    audio.play().catch(err => console.log('Sound play blocked:', err));
+  } catch (e) {
+    console.log('Could not play notification sound:', e);
+  }
+};
+
 // Send local notification (can be used without permission request)
 export const sendLocalNotification = async (title: string, body: string, data?: any): Promise<void> => {
   // Web platform - use browser Notification API
   if (!Capacitor.isNativePlatform()) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
+      // Play sound
+      playNotificationSound();
+
       // Use Service Worker showNotification for notification bar visibility
       if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.ready;
@@ -179,6 +193,7 @@ export const sendLocalNotification = async (title: string, body: string, data?: 
           badge: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png',
           tag: 'tiryak-notification-' + Date.now(),
           renotify: true,
+          silent: false,
         } as NotificationOptions);
       } else {
         new Notification(title, { body, icon: '/lovable-uploads/e077b2e2-5bf4-4f3c-b603-29c91f59991e.png' });
