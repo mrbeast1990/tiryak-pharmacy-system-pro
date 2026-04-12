@@ -195,23 +195,41 @@ const NotificationCenter: React.FC = () => {
           table: 'notification_read_status',
           filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Notification change received:', payload);
           
           if (payload.eventType === 'INSERT') {
+            // Fetch actual notification content
+            const notificationId = (payload.new as any)?.notification_id;
+            let notifTitle = language === 'ar' ? 'إشعار جديد' : 'New Notification';
+            let notifBody = language === 'ar' ? 'لديك إشعار جديد' : 'You have a new notification';
+            
+            if (notificationId) {
+              try {
+                const { data: notifData } = await supabase
+                  .from('notifications')
+                  .select('title, message')
+                  .eq('id', notificationId)
+                  .single();
+                if (notifData) {
+                  notifTitle = notifData.title;
+                  notifBody = notifData.message;
+                }
+              } catch (e) {
+                console.error('Error fetching notification details:', e);
+              }
+            }
+
             // New notification received
             fetchNotifications();
             
-            // Send web/native notification
-            sendLocalNotification(
-              language === 'ar' ? 'إشعار جديد' : 'New Notification',
-              language === 'ar' ? 'لديك إشعار جديد' : 'You have a new notification'
-            );
+            // Send web/native notification with actual content
+            sendLocalNotification(notifTitle, notifBody);
             
-            // Show toast for new notification
+            // Show toast with actual content
             toast({
-              title: language === 'ar' ? "إشعار جديد" : "New Notification",
-              description: language === 'ar' ? "لديك إشعار جديد" : "You have a new notification",
+              title: notifTitle,
+              description: notifBody,
             });
           } else {
             // Update or delete
