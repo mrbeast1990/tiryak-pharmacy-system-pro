@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2, Wallet, BarChart3, Building2, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -245,6 +246,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           isAdmin={manager.isAdmin}
           isLocked={isAnyLocked}
           onToggleLock={manager.isAdmin ? handleToggleLock : undefined}
+          totalAdjustment={manager.dailyRevenues.reduce((s, r) => s + ((r as any).adjustment || 0), 0)}
         />
 
         {/* Cash Input */}
