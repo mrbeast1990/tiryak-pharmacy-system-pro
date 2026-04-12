@@ -1,54 +1,54 @@
 
 
-## Problem
+## ميزة إيراد المحاسب 3 والمقارنة التلقائية
 
-The login form's `handleSubmit` function does not wrap the `login()` call in a `try/catch` block. If `login()` throws an unhandled exception (network error, Supabase timeout, etc.), `setIsLoading(false)` is never called, leaving the spinner spinning forever.
+### الفكرة
+إضافة نظام يسمح بإدخال قيمة نقدية من طرف ثالث ("المحاسب 3") لكل موظف/فترة، ثم مقارنتها تلقائيا مع إجمالي مبيعات الموظف لعرض الفرق (زيادة/عجز).
 
-## Fix
+### التصميم
 
-**File: `src/components/LoginForm.tsx`** (lines 28-49)
+**1. جدول جديد في قاعدة البيانات: `accountant_verifications`**
 
-Wrap the login logic in a `try/catch/finally` block so `setIsLoading(false)` always runs:
+| العمود | النوع | الوصف |
+|--------|-------|-------|
+| id | uuid (PK) | |
+| date | date | تاريخ اليوم |
+| period | text | الفترة (morning, evening...) |
+| target_user_id | uuid | الموظف المستهدف |
+| reported_amount | numeric | المبلغ الذي أدخله المحاسب 3 |
+| verified_by_id | uuid | من أدخل القيمة |
+| verified_by_name | text | اسم المحاسب 3 |
+| notes | text | ملاحظة اختيارية |
+| created_at | timestamptz | |
 
-```typescript
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      setAuthRememberMe(rememberMe);
-      const success = await login(email, password);
-      
-      if (success) {
-        toast({
-          title: language === 'ar' ? "تم تسجيل الدخول بنجاح" : "Login Successful",
-          description: language === 'ar' ? "مرحباً بك في نظام صيدلية الترياق الشافي" : "Welcome to Al-Tiryak Al-Shafi System",
-        });
-      } else {
-        toast({
-          title: language === 'ar' ? "خطأ في تسجيل الدخول" : "Login Error",
-          description: language === 'ar' ? "البريد الإلكتروني أو كلمة المرور غير صحيحة" : "Invalid email or password",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: language === 'ar' ? "خطأ في الاتصال" : "Connection Error",
-        description: language === 'ar' ? "تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى." : "Could not connect to the server. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-};
-```
+مع فهرس فريد على `(date, period, target_user_id)` لمنع التكرار.
 
-Also add similar `try/catch` to the `login` function in **`src/store/authStore.ts`** around the profile query to prevent unhandled promise rejections from propagating.
+**2. واجهة الإدخال (في UserServicesDashboard)**
 
-## Technical Details
+- إضافة زر "مطابقة المحاسب" يظهر للمدير فقط داخل داشبورد الموظف
+- عند النقر يفتح Dialog بسيط: حقل رقمي لإدخال المبلغ + ملاحظة اختيارية + زر حفظ
+- المبلغ يُحفظ في الجدول الجديد
 
-- The root cause is a missing error boundary in the async login handler
-- `setIsLoading(false)` in a `finally` block guarantees the spinner always stops
-- The `login()` function in the store already handles most errors, but network-level failures (DNS, timeout) can still throw uncaught exceptions
+**3. عرض المقارنة التلقائية**
+
+- بعد إدخال مبلغ المحاسب 3، يظهر في بطاقة الموظف:
+  - مبلغ المحاسب 3 المُدخل
+  - إجمالي مبيعات الموظف (كاش فقط)
+  - الفرق = مبلغ المحاسب 3 - إجمالي المبيعات
+  - اللون أخضر للزيادة، أحمر للعجز، رمادي للمطابقة
+- يظهر أيضا في StaffSummaryView كمؤشر صغير على بطاقة كل موظف
+
+**4. الملفات المتأثرة**
+
+- **Migration جديد**: إنشاء جدول `accountant_verifications` مع RLS
+- **`src/components/revenue/UserServicesDashboard.tsx`**: إضافة زر المطابقة + Dialog الإدخال + بطاقة عرض الفرق
+- **`src/components/revenue/StaffSummaryView.tsx`**: عرض مؤشر المقارنة على بطاقة كل موظف (اختياري)
+- **`src/components/RevenueManager.tsx`**: تمرير دوال الجلب والحفظ للمكونات الفرعية
+- **`src/integrations/supabase/types.ts`**: سيتحدث تلقائيا بعد المايقريشن
+
+### التفاصيل التقنية
+
+- الجلب يتم عبر Supabase client مباشرة في المكون (مثل نمط `revenue_locks`)
+- المقارنة تتم على الكاش فقط (`type === 'income'`) لأن الخدمات المصرفية لها مسار تدقيق مختلف
+- RLS: المدير فقط يمكنه الإدراج والتعديل، الجميع يمكنهم القراءة
 
