@@ -413,7 +413,23 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
                         </div>
                       </div>
 
-                      <p className="text-[10px] text-muted-foreground mt-1">{staff.count} عملية</p>
+                      <div className="flex items-center justify-end gap-2 mt-1">
+                        <p className="text-[10px] text-muted-foreground">{staff.count} عملية</p>
+                        {/* Accountant verification badge */}
+                        {verifications[staff.userId] !== undefined && (() => {
+                          const vDiff = verifications[staff.userId] - staff.totalCash;
+                          return (
+                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              vDiff > 0 ? 'bg-emerald-100 text-emerald-700' :
+                              vDiff < 0 ? 'bg-red-100 text-destructive' :
+                              'bg-muted text-muted-foreground'
+                            }`}>
+                              <ClipboardCheck className="w-3 h-3" />
+                              <span>{vDiff > 0 ? '+' : ''}{vDiff.toFixed(0)}</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
