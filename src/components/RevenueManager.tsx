@@ -15,7 +15,7 @@ import BankingServicesModal from './revenue/BankingServicesModal';
 import POSTransactionList from './revenue/POSTransactionList';
 import StaffSummaryView from './revenue/StaffSummaryView';
 import UserServicesDashboard from './revenue/UserServicesDashboard';
-import AdminRevenueDisplay from './revenue/AdminRevenueDisplay';
+import AdminRevenueDisplay from './revenue/AdminRevenueDisplay'; // kept for type reference
 import RevenueReportSheet from './revenue/RevenueReportSheet';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
 import { Period } from '@/hooks/revenue/useRevenueState';
@@ -90,9 +90,12 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   }, [isAnyLocked, manager.selectedDate, manager.userId, fetchLocks]);
 
   const handleVerify = useCallback(async (id: string) => {
+    const user = manager.userId;
+    const { data: profile } = await supabase.from('profiles').select('name').eq('id', user!).single();
+    const verifierName = profile?.name || 'Admin';
     await supabase.from('revenues').update({
       is_verified: true,
-      verified_by_name: 'Admin',
+      verified_by_name: verifierName,
     }).eq('id', id);
     await manager.refreshRevenues();
     toast.success('تم اعتماد العملية');
