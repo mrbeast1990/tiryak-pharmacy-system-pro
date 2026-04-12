@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, DollarSign, Building2, TrendingUp, ChevronDown, ChevronUp, Clock, Edit, Trash2, CheckCircle2, PlusCircle, MinusCircle } from 'lucide-react';
+import { ArrowRight, DollarSign, Building2, TrendingUp, ChevronDown, ChevronUp, Clock, Edit, Trash2, ShieldCheck, Scale, Stamp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Revenue } from '@/store/pharmacyStore';
 import EditRevenueDialog from './EditRevenueDialog';
@@ -10,6 +11,7 @@ import { SERVICE_COLORS, SERVICE_LABELS } from './BankingServicesModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
 
 interface ServiceGroup {
   key: string;
@@ -34,14 +36,6 @@ interface UserServicesDashboardProps {
   onAdjust?: (id: string, adjustment: number, note: string) => Promise<void>;
 }
 
-const PERIOD_LABELS: Record<string, string> = {
-  morning: 'صباحية',
-  evening: 'مسائية',
-  night: 'ليلية',
-  ahmad_rajili: 'احمد الرجيلي',
-  abdulwahab: 'عبدالوهاب',
-};
-
 const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
   onBack,
   selectedDate,
@@ -60,11 +54,17 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
   const [adjustingId, setAdjustingId] = useState<string | null>(null);
   const [adjustAmount, setAdjustAmount] = useState('');
   const [adjustNote, setAdjustNote] = useState('');
+  const { user } = useAuthStore();
 
   const totals = useMemo(() => {
     const cash = dailyRevenues.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
     const services = dailyRevenues.filter(r => r.type === 'banking_services').reduce((s, r) => s + r.amount, 0);
     return { cash, services, total: cash + services };
+  }, [dailyRevenues]);
+
+  // Calculate total adjustments
+  const totalAdjustment = useMemo(() => {
+    return dailyRevenues.reduce((s, r) => s + ((r as any).adjustment || 0), 0);
   }, [dailyRevenues]);
 
   const serviceGroups = useMemo(() => {
@@ -115,7 +115,7 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
       toast.error('يرجى إدخال قيمة صحيحة');
       return;
     }
-    await onAdjust(adjustingId, amount, adjustNote);
+    await onAdjust(adjustingId, amount, adjustNote ? `${adjustNote} (بواسطة ${user?.name || 'مدير'})` : `بواسطة ${user?.name || 'مدير'}`);
     setAdjustingId(null);
     setAdjustAmount('');
     setAdjustNote('');
@@ -133,7 +133,35 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10" dir="rtl">
+    <div className={`min-h-screen relative ${isLocked ? 'bg-muted/30' : 'bg-gradient-to-br from-primary/5 via-background to-primary/10'}`} dir="rtl">
+      {/* Lock Stamp Overlay */}
+      {isLocked && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <div className={`
+            rotate-[-15deg] border-[6px] rounded-3xl px-10 py-6 opacity-20
+            ${totalAdjustment > 0 
+              ? 'border-emerald-600 text-emerald-600' 
+              : totalAdjustment < 0 
+                ? 'border-destructive text-destructive' 
+                : 'border-muted-foreground text-muted-foreground'
+            }
+          `}>
+            <div className="text-center">
+              <Stamp className="w-12 h-12 mx-auto mb-2" />
+              <p className="text-3xl font-black tracking-wider">تم الإقفال</p>
+              {totalAdjustment !== 0 && (
+                <p className="text-2xl font-bold mt-2">
+                  {totalAdjustment > 0 ? '+' : ''}{totalAdjustment.toFixed(0)} د
+                </p>
+              )}
+              {totalAdjustment > 0 && <p className="text-sm font-semibold mt-1">زيادة</p>}
+              {totalAdjustment < 0 && <p className="text-sm font-semibold mt-1">نقصان</p>}
+              {totalAdjustment === 0 && <p className="text-sm font-semibold mt-1">مطابق</p>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-card/80 backdrop-blur-sm shadow-sm border-b border-border/50 sticky top-0 z-20">
         <div className="max-w-md mx-auto px-4">
@@ -150,7 +178,7 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
         </div>
       </header>
 
-      <main className="max-w-md mx-auto px-4 py-4 space-y-3">
+      <main className="max-w-md mx-auto px-4 py-4 space-y-3 relative z-10">
         {/* Summary Card */}
         <Card className="border-0 shadow-md rounded-2xl">
           <CardContent className="p-4">
@@ -201,7 +229,7 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
               return (
                 <Card key={group.key} className={`border shadow-sm rounded-xl overflow-hidden ${group.colorClass}`}>
                   <CardContent className="p-0">
-                    {/* Service Header - clickable */}
+                    {/* Service Header */}
                     <button
                       onClick={() => setExpandedService(isExpanded ? null : group.key)}
                       className="w-full p-4 flex items-center justify-between"
@@ -233,31 +261,74 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                           const canEdit = !isLocked && !isVerified && (isAdmin || rev.created_by_id === userId);
                           const canVerify = isAdmin && !isVerified && !isLocked;
                           const adjustment = (rev as any).adjustment || 0;
+                          const adjustmentNote = (rev as any).adjustment_note || '';
 
                           return (
-                            <div key={rev.id} className={`p-2.5 rounded-lg border transition-all ${isVerified ? 'border-emerald-300 bg-emerald-50/50' : 'border-border/30 bg-card'}`}>
+                            <div key={rev.id} className={`p-3 rounded-xl border-2 transition-all ${isVerified ? 'border-emerald-400/60 bg-emerald-50/30' : 'border-border/20 bg-card'}`}>
                               <div className="flex items-center justify-between">
                                 {/* Actions */}
-                                <div className="flex items-center gap-0.5 shrink-0">
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {/* Verify Button */}
                                   {canVerify && onVerify && (
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-emerald-600 hover:bg-emerald-100" onClick={() => onVerify(rev.id)}>
-                                      <CheckCircle2 className="w-4 h-4" />
-                                    </Button>
+                                    <button
+                                      onClick={() => onVerify(rev.id)}
+                                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-700 transition-colors"
+                                    >
+                                      <ShieldCheck className="w-3.5 h-3.5" />
+                                      <span className="text-[10px] font-semibold">اعتماد</span>
+                                    </button>
                                   )}
-                                  {isVerified && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                                  
+                                  {/* Verified Badge */}
+                                  {isVerified && (
+                                    <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100/80 border border-emerald-300/50">
+                                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                      <div className="text-right">
+                                        <span className="text-[10px] font-bold text-emerald-700 block leading-tight">معتمد</span>
+                                        {rev.verified_by_name && (
+                                          <span className="text-[8px] text-emerald-600/80 block leading-tight">{rev.verified_by_name}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Adjust Button */}
                                   {isAdmin && onAdjust && (
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-amber-600 hover:bg-amber-100" onClick={() => { setAdjustingId(rev.id); setAdjustAmount(''); setAdjustNote(''); }}>
-                                      {adjustment !== 0 ? <MinusCircle className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
-                                    </Button>
+                                    <button
+                                      onClick={() => { setAdjustingId(rev.id); setAdjustAmount(String(adjustment || '')); setAdjustNote(''); }}
+                                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors ${
+                                        adjustment !== 0 
+                                          ? adjustment > 0 
+                                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-300/50' 
+                                            : 'bg-red-100 text-red-700 border border-red-300/50'
+                                          : 'bg-amber-50 hover:bg-amber-100 text-amber-700'
+                                      }`}
+                                    >
+                                      <Scale className="w-3.5 h-3.5" />
+                                      {adjustment !== 0 ? (
+                                        <div className="text-right">
+                                          <span className="text-[10px] font-bold block leading-tight">
+                                            {adjustment > 0 ? `+${adjustment}` : adjustment} د
+                                          </span>
+                                          {adjustmentNote && (
+                                            <span className="text-[8px] opacity-80 block leading-tight">{adjustmentNote}</span>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <span className="text-[10px] font-semibold">فرق</span>
+                                      )}
+                                    </button>
                                   )}
+
+                                  {/* Edit/Delete */}
                                   {canEdit && (
                                     <>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingRevenue(rev)}>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setEditingRevenue(rev)}>
                                         <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                                       </Button>
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
+                                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive">
                                             <Trash2 className="h-3.5 w-3.5" />
                                           </Button>
                                         </AlertDialogTrigger>
@@ -282,18 +353,11 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                                     <span className="text-[10px] text-muted-foreground/50">#{idx + 1}</span>
                                     <span className="text-base font-bold text-foreground">{rev.amount.toFixed(2)} د</span>
                                   </div>
-                                  {adjustment !== 0 && (
-                                    <div className={`text-[10px] font-semibold mb-0.5 ${adjustment > 0 ? 'text-emerald-600' : 'text-destructive'}`}>
-                                      {adjustment > 0 ? `+${adjustment}` : adjustment} د (فرق)
-                                      {(rev as any).adjustment_note && <span className="text-muted-foreground mr-1">- {(rev as any).adjustment_note}</span>}
-                                    </div>
-                                  )}
                                   <div className="flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
                                     <span className="flex items-center gap-0.5">
                                       <Clock className="w-2.5 h-2.5" />
                                       {new Date(rev.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
-                                    <span>{PERIOD_LABELS[rev.period] || rev.period}</span>
                                   </div>
                                   {rev.notes && <p className="text-[10px] text-muted-foreground mt-0.5">{rev.notes}</p>}
                                 </div>
@@ -322,7 +386,10 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
       <Dialog open={!!adjustingId} onOpenChange={(open) => { if (!open) setAdjustingId(null); }}>
         <DialogContent className="max-w-sm" dir="rtl">
           <DialogHeader>
-            <DialogTitle>تسجيل زيادة / نقصان</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Scale className="w-5 h-5 text-amber-600" />
+              <span>تسجيل زيادة / نقصان</span>
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>

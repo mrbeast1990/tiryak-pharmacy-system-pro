@@ -267,15 +267,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           disabled={isCurrentPeriodLocked}
         />
 
-        {/* Admin Period Breakdown */}
-        {manager.isAdmin && (
-          <AdminRevenueDisplay
-            dailyRevenues={manager.dailyRevenues}
-            selectedDate={manager.selectedDate}
-            updateRevenue={manager.updateRevenue}
-            deleteRevenue={manager.deleteRevenue}
-          />
-        )}
+        {/* Period breakdown removed - use Staff Summary instead */}
       </main>
 
       {/* FAB for Reports - Admin only */}
