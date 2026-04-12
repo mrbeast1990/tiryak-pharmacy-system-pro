@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp, Filter, CalendarRange } from 'lucide-react';
+import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp, Filter, CalendarRange, ClipboardCheck } from 'lucide-react';
 import { Revenue } from '@/store/pharmacyStore';
+import { supabase } from '@/integrations/supabase/client';
 
 const MONTHS = [
   { value: 1, label: 'يناير' },
