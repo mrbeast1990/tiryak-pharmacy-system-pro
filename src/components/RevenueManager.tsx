@@ -15,7 +15,7 @@ import BankingServicesModal from './revenue/BankingServicesModal';
 import POSTransactionList from './revenue/POSTransactionList';
 import StaffSummaryView from './revenue/StaffSummaryView';
 import UserServicesDashboard from './revenue/UserServicesDashboard';
-import AdminRevenueDisplay from './revenue/AdminRevenueDisplay'; // kept for type reference
+
 import RevenueReportSheet from './revenue/RevenueReportSheet';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
 import { Period } from '@/hooks/revenue/useRevenueState';
