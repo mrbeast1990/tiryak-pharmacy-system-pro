@@ -67,6 +67,23 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [verifications, setVerifications] = useState<Record<string, number>>({});
+
+  // Fetch accountant verifications for the selected date
+  const fetchVerifications = useCallback(async () => {
+    if (dateFilter !== 'day') { setVerifications({}); return; }
+    const { data } = await supabase
+      .from('accountant_verifications')
+      .select('target_user_id, reported_amount')
+      .eq('date', selectedDate);
+    if (data) {
+      const map: Record<string, number> = {};
+      data.forEach((v: any) => { map[v.target_user_id] = v.reported_amount; });
+      setVerifications(map);
+    }
+  }, [selectedDate, dateFilter]);
+
+  useEffect(() => { fetchVerifications(); }, [fetchVerifications]);
 
   const currentYear = now.getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
