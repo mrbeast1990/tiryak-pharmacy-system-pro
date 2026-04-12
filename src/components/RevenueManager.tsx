@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2, Wallet, BarChart3, Building2, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
