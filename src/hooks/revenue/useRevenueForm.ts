@@ -77,6 +77,18 @@ export const useRevenueForm = ({
       return;
     }
 
+    // Determine if user is registering for a period that's not their own
+    const ROLE_TO_PERIOD: Record<string, string> = {
+      morning_shift: 'morning',
+      evening_shift: 'evening',
+      night_shift: 'night',
+      abdulwahab: 'abdulwahab',
+      ahmad_rajili: 'ahmad_rajili',
+    };
+    const userDefaultPeriod = user?.role ? ROLE_TO_PERIOD[user.role] : undefined;
+    const isOtherPeriod = userDefaultPeriod && userDefaultPeriod !== period;
+    const nameOverride = isOtherPeriod ? PERIOD_DISPLAY_NAMES[period] || undefined : undefined;
+
     let hasFailure = false;
 
     console.log('📝 Submit - income:', incomeAmount, 'bankingValues:', JSON.stringify(bankingValues), 'bankingTotal:', bankingTotal, 'period:', period, 'date:', selectedDate);
