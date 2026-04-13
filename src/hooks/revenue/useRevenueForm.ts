@@ -107,6 +107,7 @@ export const useRevenueForm = ({
         verified_by_name: null,
         adjustment: 0,
         adjustment_note: null,
+        created_by_name_override: nameOverride,
       });
       console.log('💰 Income save result:', success);
       if (!success) hasFailure = true;
