@@ -128,6 +128,7 @@ export const useRevenueForm = ({
         verified_by_name: null,
         adjustment: 0,
         adjustment_note: null,
+        created_by_name_override: nameOverride,
       });
       console.log('🏦 Banking save result:', success, 'for', entry.service);
       if (!success) hasFailure = true;
