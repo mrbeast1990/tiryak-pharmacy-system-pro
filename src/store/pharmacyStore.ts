@@ -25,7 +25,7 @@ interface PharmacyState {
   updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes' | 'repeat_count'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
   deleteSupply: (id: string) => Promise<void>;
-  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'created_by_id'>) => Promise<boolean>;
+  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'created_by_id'> & { created_by_name_override?: string }) => Promise<boolean>;
   updateRevenue: (id: string, updates: Partial<Revenue>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
@@ -308,15 +308,16 @@ addMedicine: async (medicine) => {
         return false;
       }
 
+      const { created_by_name_override, ...revenueData } = revenue;
       const insertData = {
-        amount: revenue.amount,
-        type: revenue.type,
-        period: revenue.period,
-        notes: revenue.notes,
-        date: revenue.date,
-        service_name: revenue.service_name || null,
+        amount: revenueData.amount,
+        type: revenueData.type,
+        period: revenueData.period,
+        notes: revenueData.notes,
+        date: revenueData.date,
+        service_name: revenueData.service_name || null,
         created_by_id: user.id,
-        created_by_name: user.name,
+        created_by_name: created_by_name_override || user.name,
       };
       console.log('🔵 addRevenue inserting:', JSON.stringify(insertData));
 
