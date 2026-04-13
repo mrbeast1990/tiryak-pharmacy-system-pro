@@ -6,14 +6,7 @@ import { usePharmacyStore } from '@/store/pharmacyStore';
 import { useToast } from '@/hooks/use-toast';
 import { Period } from './useRevenueState';
 import { BankingServiceEntry } from '@/components/revenue/BankingServiceInput';
-
-const PERIOD_DISPLAY_NAMES: Record<string, string> = {
-  morning: 'صباحية',
-  evening: 'مسائية',
-  night: 'ليلية',
-  ahmad_rajili: 'احمد الرجيلي',
-  abdulwahab: 'عبدالوهاب',
-};
+import { getSelectedPeriodAttribution } from '@/lib/revenueAttribution';
 
 interface UseRevenueFormProps {
   income: string;
@@ -77,17 +70,11 @@ export const useRevenueForm = ({
       return;
     }
 
-    // Determine if user is registering for a period that's not their own
-    const ROLE_TO_PERIOD: Record<string, string> = {
-      morning_shift: 'morning',
-      evening_shift: 'evening',
-      night_shift: 'night',
-      abdulwahab: 'abdulwahab',
-      ahmad_rajili: 'ahmad_rajili',
-    };
-    const userDefaultPeriod = user?.role ? ROLE_TO_PERIOD[user.role] : undefined;
-    const isOtherPeriod = userDefaultPeriod && userDefaultPeriod !== period;
-    const nameOverride = isOtherPeriod ? PERIOD_DISPLAY_NAMES[period] || undefined : undefined;
+    const nameOverride = getSelectedPeriodAttribution({
+      userRole: user?.role,
+      period,
+      canSelectAnyPeriod: checkPermission('register_revenue_all'),
+    });
 
     let hasFailure = false;
 

@@ -20,6 +20,7 @@ import UserServicesDashboard from './revenue/UserServicesDashboard';
 import RevenueReportSheet from './revenue/RevenueReportSheet';
 import pharmacyLogo from '@/assets/pharmacy-logo.png';
 import { Period } from '@/hooks/revenue/useRevenueState';
+import { getRevenueAttributionKey } from '@/lib/revenueAttribution';
 
 interface RevenueManagerProps {
   onBack: () => void;
@@ -31,7 +32,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const [locks, setLocks] = useState<Record<string, boolean>>({});
   // Navigation: 'pos' | 'staff-summary' | 'user-detail'
   const [view, setView] = useState<'pos' | 'staff-summary' | 'user-detail'>('pos');
-  const [selectedStaff, setSelectedStaff] = useState<{ userId: string; userName: string } | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<{ attributionKey: string; userName: string } | null>(null);
 
   // Fetch locks for the selected date
   const fetchLocks = useCallback(async () => {
@@ -113,7 +114,7 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   // Filter revenues for selected staff
   const staffRevenues = useMemo(() => {
     if (!selectedStaff) return [];
-    return manager.dailyRevenues.filter(r => r.created_by_id === selectedStaff.userId);
+    return manager.dailyRevenues.filter(r => getRevenueAttributionKey(r) === selectedStaff.attributionKey);
   }, [manager.dailyRevenues, selectedStaff]);
 
   if (manager.revenuesLoading && view === 'pos') {
@@ -157,8 +158,8 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
         dailyRevenues={manager.dailyRevenues}
         allRevenues={manager.revenues}
         locks={locks}
-        onSelectUser={(userId, userName) => {
-          setSelectedStaff({ userId, userName });
+        onSelectUser={(attributionKey, userName) => {
+          setSelectedStaff({ attributionKey, userName });
           setView('user-detail');
         }}
         isAdmin={manager.isAdmin}

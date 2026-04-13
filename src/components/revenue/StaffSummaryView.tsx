@@ -12,6 +12,7 @@ import {
 import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp, Filter, CalendarRange, ClipboardCheck } from 'lucide-react';
 import { Revenue } from '@/store/pharmacyStore';
 import { supabase } from '@/integrations/supabase/client';
+import { getRevenueAttributionKey, getRevenueDisplayName, getVerificationKey } from '@/lib/revenueAttribution';
 
 const MONTHS = [
   { value: 1, label: 'يناير' },
@@ -31,6 +32,8 @@ const MONTHS = [
 interface StaffGroup {
   userId: string;
   userName: string;
+  period: string;
+  targetUserId: string;
   totalCash: number;
   totalServices: number;
   total: number;
@@ -74,11 +77,11 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
     if (dateFilter !== 'day') { setVerifications({}); return; }
     const { data } = await supabase
       .from('accountant_verifications')
-      .select('target_user_id, reported_amount')
+      .select('period, target_user_id, reported_amount')
       .eq('date', selectedDate);
     if (data) {
       const map: Record<string, number> = {};
-      data.forEach((v: any) => { map[v.target_user_id] = v.reported_amount; });
+      data.forEach((v: any) => { map[getVerificationKey(v.period, v.target_user_id)] = v.reported_amount; });
       setVerifications(map);
     }
   }, [selectedDate, dateFilter]);
@@ -123,7 +126,7 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
     const groupMap = new Map<string, StaffGroup>();
 
     filteredRevenues.forEach(rev => {
-      const key = rev.created_by_id;
+      const key = getRevenueAttributionKey(rev);
       const existing = groupMap.get(key);
       const cash = rev.type === 'income' ? rev.amount : 0;
       const services = rev.type === 'banking_services' ? rev.amount : 0;
@@ -140,7 +143,9 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
       } else {
         groupMap.set(key, {
           userId: key,
-          userName: rev.createdBy,
+          userName: getRevenueDisplayName(rev.createdBy, rev.period),
+          period: rev.period,
+          targetUserId: rev.created_by_id,
           totalCash: cash,
           totalServices: services,
           total: rev.amount,
@@ -416,8 +421,8 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
                       <div className="flex items-center justify-end gap-2 mt-1">
                         <p className="text-[10px] text-muted-foreground">{staff.count} عملية</p>
                         {/* Accountant verification badge */}
-                        {verifications[staff.userId] !== undefined && (() => {
-                          const vDiff = verifications[staff.userId] - staff.totalCash;
+                        {verifications[getVerificationKey(staff.period, staff.targetUserId)] !== undefined && (() => {
+                          const vDiff = verifications[getVerificationKey(staff.period, staff.targetUserId)] - staff.totalCash;
                           return (
                             <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               vDiff > 0 ? 'bg-emerald-100 text-emerald-700' :

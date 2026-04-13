@@ -7,6 +7,7 @@ import { useRevenueData } from './revenue/useRevenueData';
 import { useRevenuePDF } from './revenue/useRevenuePDF';
 import { useRevenueForm } from './revenue/useRevenueForm';
 import { usePharmacyStore } from '@/store/pharmacyStore';
+import { getSelectedPeriodAttribution } from '@/lib/revenueAttribution';
 
 export const useRevenueManager = () => {
   const { user, checkPermission } = useAuthStore();
@@ -79,23 +80,11 @@ export const useRevenueManager = () => {
 
   // Direct submit for POS (no form event needed)
   const handleSubmitDirect = useCallback(async (amount: number, type: 'income' | 'banking_services', serviceName: string | null): Promise<boolean> => {
-    const ROLE_TO_PERIOD: Record<string, string> = {
-      morning_shift: 'morning',
-      evening_shift: 'evening',
-      night_shift: 'night',
-      abdulwahab: 'abdulwahab',
-      ahmad_rajili: 'ahmad_rajili',
-    };
-    const PERIOD_DISPLAY_NAMES: Record<string, string> = {
-      morning: 'صباحية',
-      evening: 'مسائية',
-      night: 'ليلية',
-      ahmad_rajili: 'احمد الرجيلي',
-      abdulwahab: 'عبدالوهاب',
-    };
-    const userDefaultPeriod = user?.role ? ROLE_TO_PERIOD[user.role] : undefined;
-    const isOtherPeriod = userDefaultPeriod && userDefaultPeriod !== state.period;
-    const nameOverride = isOtherPeriod ? PERIOD_DISPLAY_NAMES[state.period] || undefined : undefined;
+    const nameOverride = getSelectedPeriodAttribution({
+      userRole: user?.role,
+      period: state.period,
+      canSelectAnyPeriod: checkPermission('register_revenue_all'),
+    });
 
     return await addRevenue({
       amount,
@@ -110,7 +99,7 @@ export const useRevenueManager = () => {
       adjustment_note: null,
       created_by_name_override: nameOverride,
     });
-  }, [addRevenue, state.period, state.selectedDate, user]);
+  }, [addRevenue, state.period, state.selectedDate, user, checkPermission]);
 
   const refreshRevenues = useCallback(async () => {
     await fetchRevenues();
