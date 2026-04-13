@@ -79,6 +79,24 @@ export const useRevenueManager = () => {
 
   // Direct submit for POS (no form event needed)
   const handleSubmitDirect = useCallback(async (amount: number, type: 'income' | 'banking_services', serviceName: string | null): Promise<boolean> => {
+    const ROLE_TO_PERIOD: Record<string, string> = {
+      morning_shift: 'morning',
+      evening_shift: 'evening',
+      night_shift: 'night',
+      abdulwahab: 'abdulwahab',
+      ahmad_rajili: 'ahmad_rajili',
+    };
+    const PERIOD_DISPLAY_NAMES: Record<string, string> = {
+      morning: 'صباحية',
+      evening: 'مسائية',
+      night: 'ليلية',
+      ahmad_rajili: 'احمد الرجيلي',
+      abdulwahab: 'عبدالوهاب',
+    };
+    const userDefaultPeriod = user?.role ? ROLE_TO_PERIOD[user.role] : undefined;
+    const isOtherPeriod = userDefaultPeriod && userDefaultPeriod !== state.period;
+    const nameOverride = isOtherPeriod ? PERIOD_DISPLAY_NAMES[state.period] || undefined : undefined;
+
     return await addRevenue({
       amount,
       type,
@@ -90,8 +108,9 @@ export const useRevenueManager = () => {
       verified_by_name: null,
       adjustment: 0,
       adjustment_note: null,
+      created_by_name_override: nameOverride,
     });
-  }, [addRevenue, state.period, state.selectedDate]);
+  }, [addRevenue, state.period, state.selectedDate, user]);
 
   const refreshRevenues = useCallback(async () => {
     await fetchRevenues();
