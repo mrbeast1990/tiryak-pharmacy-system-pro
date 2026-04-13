@@ -7,6 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Period } from './useRevenueState';
 import { BankingServiceEntry } from '@/components/revenue/BankingServiceInput';
 
+const PERIOD_DISPLAY_NAMES: Record<string, string> = {
+  morning: 'صباحية',
+  evening: 'مسائية',
+  night: 'ليلية',
+  ahmad_rajili: 'احمد الرجيلي',
+  abdulwahab: 'عبدالوهاب',
+};
+
 interface UseRevenueFormProps {
   income: string;
   setIncome: (val: string) => void;
