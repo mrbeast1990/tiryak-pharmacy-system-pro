@@ -5,11 +5,11 @@ import { Bell, X } from 'lucide-react';
 import { useLanguageStore } from '@/store/languageStore';
 import { useToast } from '@/hooks/use-toast';
 import { Preferences } from '@capacitor/preferences';
-import { Capacitor } from '@capacitor/core';
-import { checkNotificationPermissions, requestNotificationPermissions } from '@/hooks/usePushNotifications';
+import { checkNotificationPermissions, markNotificationPromptCompleted, NOTIFICATION_PROMPT_COMPLETED_KEY, requestNotificationPermissions } from '@/hooks/usePushNotifications';
 
 const DISMISS_KEY = 'notification_prompt_dismissed_until';
 const DISMISS_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const PERMANENT_DISMISS_DURATION = 365 * 24 * 60 * 60 * 1000;
 
 const NotificationPromptCard: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -20,8 +20,16 @@ const NotificationPromptCard: React.FC = () => {
   useEffect(() => {
     const checkVisibility = async () => {
       try {
-        // Check if dismissed or already enabled - this is the primary gate
-        const { value: dismissedUntil } = await Preferences.get({ key: DISMISS_KEY });
+        const [{ value: promptCompleted }, { value: dismissedUntil }] = await Promise.all([
+          Preferences.get({ key: NOTIFICATION_PROMPT_COMPLETED_KEY }),
+          Preferences.get({ key: DISMISS_KEY }),
+        ]);
+
+        if (promptCompleted === 'true') {
+          setIsVisible(false);
+          return;
+        }
+
         if (dismissedUntil) {
           const dismissedTime = parseInt(dismissedUntil, 10);
           if (Date.now() < dismissedTime) {
@@ -34,16 +42,31 @@ const NotificationPromptCard: React.FC = () => {
         // On web, check Notification.permission directly
         if ('Notification' in window && Notification.permission === 'granted') {
           // Permission already granted, permanently dismiss
-          await Preferences.set({ 
-            key: DISMISS_KEY, 
-            value: (Date.now() + 365 * 24 * 60 * 60 * 1000).toString() 
-          });
+          await Promise.all([
+            Preferences.set({
+              key: DISMISS_KEY,
+              value: (Date.now() + PERMANENT_DISMISS_DURATION).toString(),
+            }),
+            markNotificationPromptCompleted(),
+          ]);
           setIsVisible(false);
           return;
         }
 
         // Check permission status via our helper
         const status = await checkNotificationPermissions();
+
+        if (status === 'granted') {
+          await Promise.all([
+            Preferences.set({
+              key: DISMISS_KEY,
+              value: (Date.now() + PERMANENT_DISMISS_DURATION).toString(),
+            }),
+            markNotificationPromptCompleted(),
+          ]);
+          setIsVisible(false);
+          return;
+        }
         
         // Show card only if permission is 'prompt' (not granted or denied)
         setIsVisible(status === 'prompt');
@@ -63,11 +86,13 @@ const NotificationPromptCard: React.FC = () => {
       const success = await requestNotificationPermissions();
       
       if (success) {
-        // Save permanent dismiss so card never shows again
-        await Preferences.set({ 
-          key: DISMISS_KEY, 
-          value: (Date.now() + 365 * 24 * 60 * 60 * 1000).toString() 
-        });
+        await Promise.all([
+          Preferences.set({
+            key: DISMISS_KEY,
+            value: (Date.now() + PERMANENT_DISMISS_DURATION).toString(),
+          }),
+          markNotificationPromptCompleted(),
+        ]);
         toast({
           title: language === 'ar' ? '✅ تم تفعيل الإشعارات' : '✅ Notifications Enabled',
           description: language === 'ar' 

@@ -11,6 +11,23 @@ const PERMISSION_KEY = 'push_notification_permission_requested';
 const PERMISSION_STATUS_KEY = 'notification_permission_status';
 const CRASH_COUNT_KEY = 'notification_crash_count';
 const LAST_REQUEST_TIME_KEY = 'last_permission_request_time';
+export const NOTIFICATION_PROMPT_COMPLETED_KEY = 'notification_prompt_completed';
+
+const persistNotificationStatus = async (status: 'granted' | 'denied' | 'prompt') => {
+  await Preferences.set({ key: PERMISSION_STATUS_KEY, value: status });
+
+  if (status === 'granted') {
+    await Promise.all([
+      Preferences.set({ key: PERMISSION_KEY, value: 'true' }),
+      Preferences.set({ key: NOTIFICATION_PROMPT_COMPLETED_KEY, value: 'true' }),
+      Preferences.set({ key: CRASH_COUNT_KEY, value: '0' }),
+    ]);
+  }
+};
+
+export const markNotificationPromptCompleted = async () => {
+  await Preferences.set({ key: NOTIFICATION_PROMPT_COMPLETED_KEY, value: 'true' });
+};
 
 // Helper function to check if app is in foreground
 const isAppInForeground = () => {
@@ -34,13 +51,25 @@ const canRequestPermission = async (): Promise<boolean> => {
 export const checkNotificationPermissions = async (): Promise<'granted' | 'denied' | 'prompt'> => {
   // Web platform - use browser Notification API
   if (!Capacitor.isNativePlatform()) {
-    if (!('Notification' in window)) return 'denied';
-    return Notification.permission === 'default' ? 'prompt' : Notification.permission as 'granted' | 'denied';
+    if (!('Notification' in window)) {
+      await persistNotificationStatus('denied');
+      return 'denied';
+    }
+
+    const status = Notification.permission === 'default'
+      ? 'prompt'
+      : Notification.permission as 'granted' | 'denied';
+
+    await persistNotificationStatus(status);
+    return status;
   }
 
   try {
     const { value } = await Preferences.get({ key: PERMISSION_STATUS_KEY });
     if (value) {
+      if (value === 'granted') {
+        await markNotificationPromptCompleted();
+      }
       return value as 'granted' | 'denied' | 'prompt';
     }
 
@@ -49,7 +78,7 @@ export const checkNotificationPermissions = async (): Promise<'granted' | 'denie
     const status = result.receive === 'granted' ? 'granted' : 
                    result.receive === 'denied' ? 'denied' : 'prompt';
     
-    await Preferences.set({ key: PERMISSION_STATUS_KEY, value: status });
+    await persistNotificationStatus(status);
     return status;
   } catch (error) {
     console.error('❌ Error checking notification permissions:', error);
@@ -63,11 +92,13 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
   if (!Capacitor.isNativePlatform()) {
     if (!('Notification' in window)) {
       console.log('⚠️ Browser does not support notifications');
+      await persistNotificationStatus('denied');
       return false;
     }
     try {
       const result = await Notification.requestPermission();
       console.log('🌐 Web notification permission result:', result);
+      await persistNotificationStatus(result === 'default' ? 'prompt' : result);
       return result === 'granted';
     } catch (error) {
       console.error('❌ Error requesting web notification permission:', error);
@@ -91,11 +122,13 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     const currentStatus = await checkNotificationPermissions();
     if (currentStatus === 'denied') {
       console.log('⚠️ Permission already denied - user must enable manually');
+      await persistNotificationStatus('denied');
       return false;
     }
 
     if (currentStatus === 'granted') {
       console.log('✅ Permission already granted');
+      await persistNotificationStatus('granted');
       return true;
     }
 
@@ -105,7 +138,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     
     if (crashCount > 2) {
       console.log('⚠️ Too many crashes detected - manual setup required');
-      await Preferences.set({ key: PERMISSION_STATUS_KEY, value: 'denied' });
+      await persistNotificationStatus('denied');
       return false;
     }
 
@@ -125,7 +158,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     console.log('Push permission result:', pushResult);
 
     if (pushResult.receive !== 'granted') {
-      await Preferences.set({ key: PERMISSION_STATUS_KEY, value: 'denied' });
+      await persistNotificationStatus('denied');
       return false;
     }
 
@@ -147,9 +180,7 @@ export const requestNotificationPermissions = async (): Promise<boolean> => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Save success status
-    await Preferences.set({ key: PERMISSION_STATUS_KEY, value: 'granted' });
-    await Preferences.set({ key: PERMISSION_KEY, value: 'true' });
-    await Preferences.set({ key: CRASH_COUNT_KEY, value: '0' }); // Reset crash count
+    await persistNotificationStatus('granted');
 
     return true;
   } catch (error) {
