@@ -422,7 +422,7 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
                         <p className="text-[10px] text-muted-foreground">{staff.count} عملية</p>
                         {/* Accountant verification badge */}
                         {verifications[getVerificationKey(staff.period, staff.targetUserId)] !== undefined && (() => {
-                          const vDiff = verifications[getVerificationKey(staff.period, staff.targetUserId)] - staff.totalCash;
+                          const vDiff = staff.totalCash - verifications[getVerificationKey(staff.period, staff.targetUserId)];
                           return (
                             <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               vDiff > 0 ? 'bg-emerald-100 text-emerald-700' :
