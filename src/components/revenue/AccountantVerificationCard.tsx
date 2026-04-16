@@ -95,7 +95,8 @@ const AccountantVerificationCard: React.FC<AccountantVerificationCardProps> = ({
     }
   };
 
-  const diff = verification ? verification.reported_amount - cashTotal : null;
+  // الفرق = كاش الموظف - مبلغ المحاسب (موظف أعلى => +، أقل => -)
+  const diff = verification ? cashTotal - verification.reported_amount : null;
 
   return (
     <>
