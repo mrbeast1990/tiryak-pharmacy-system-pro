@@ -159,6 +159,7 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
               const isVerified = rev.is_verified;
               const canEdit = !isLocked && !isVerified && (isAdmin || rev.created_by_id === userId);
               const canVerify = isAdmin && !isVerified && !isLocked;
+              const canUnverify = isAdmin && isVerified && !isLocked;
               const adjustment = (rev as any).adjustment || 0;
 
               return (
@@ -178,7 +179,19 @@ const POSTransactionList: React.FC<POSTransactionListProps> = ({
                           </Button>
                         )}
                         {isVerified && (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          canUnverify && onVerify ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-emerald-600 hover:bg-red-100 hover:text-red-600"
+                              onClick={() => onVerify(rev.id)}
+                              title="إلغاء الاعتماد"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          )
                         )}
                         {isAdmin && onAdjust && (
                           <Button

@@ -92,6 +92,17 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   }, [isAnyLocked, manager.selectedDate, manager.userId, fetchLocks]);
 
   const handleVerify = useCallback(async (id: string) => {
+    const rev = manager.revenues.find(r => r.id === id);
+    if (rev?.is_verified) {
+      // Toggle: unverify
+      await supabase.from('revenues').update({
+        is_verified: false,
+        verified_by_name: null,
+      }).eq('id', id);
+      await manager.refreshRevenues();
+      toast.success('تم إلغاء الاعتماد');
+      return;
+    }
     const user = manager.userId;
     const { data: profile } = await supabase.from('profiles').select('name').eq('id', user!).single();
     const verifierName = profile?.name || 'Admin';
