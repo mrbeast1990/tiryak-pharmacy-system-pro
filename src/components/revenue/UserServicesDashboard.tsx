@@ -273,6 +273,7 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                           const isVerified = rev.is_verified;
                           const canEdit = !isLocked && !isVerified && (isAdmin || rev.created_by_id === userId);
                           const canVerify = isAdmin && !isVerified && !isLocked;
+                          const canUnverify = isAdmin && isVerified && !isLocked;
                           const adjustment = (rev as any).adjustment || 0;
                           const adjustmentNote = (rev as any).adjustment_note || '';
 
@@ -292,17 +293,25 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                                     </button>
                                   )}
                                   
-                                  {/* Verified Badge */}
+                                  {/* Verified Badge - admin can click to unverify */}
                                   {isVerified && (
-                                    <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100/80 border border-emerald-300/50">
+                                    <button
+                                      type="button"
+                                      onClick={canUnverify && onVerify ? () => onVerify(rev.id) : undefined}
+                                      disabled={!canUnverify}
+                                      title={canUnverify ? 'انقر لإلغاء الاعتماد' : undefined}
+                                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-100/80 border border-emerald-300/50 ${canUnverify ? 'hover:bg-red-100 hover:border-red-300 cursor-pointer' : 'cursor-default'}`}
+                                    >
                                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                                       <div className="text-right">
-                                        <span className="text-[10px] font-bold text-emerald-700 block leading-tight">معتمد</span>
+                                        <span className="text-[10px] font-bold text-emerald-700 block leading-tight">
+                                          {canUnverify ? 'معتمد · إلغاء' : 'معتمد'}
+                                        </span>
                                         {rev.verified_by_name && (
                                           <span className="text-[8px] text-emerald-600/80 block leading-tight">{rev.verified_by_name}</span>
                                         )}
                                       </div>
-                                    </div>
+                                    </button>
                                   )}
 
                                   {/* Adjust Button */}
