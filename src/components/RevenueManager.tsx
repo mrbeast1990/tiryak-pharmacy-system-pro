@@ -294,6 +294,13 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           <span>الخدمات المصرفية</span>
         </button>
 
+        {/* Notes & Attachments - applied to next registration */}
+        <RevenueAttachmentInput
+          value={attachment}
+          onChange={setAttachment}
+          disabled={isCurrentPeriodLocked}
+        />
+
         <BankingServicesModal
           open={bankingModalOpen}
           onOpenChange={setBankingModalOpen}
