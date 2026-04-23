@@ -25,7 +25,7 @@ interface PharmacyState {
   updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes' | 'repeat_count'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
   deleteSupply: (id: string) => Promise<void>;
-  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'created_by_id'> & { created_by_name_override?: string }) => Promise<boolean>;
+  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'created_by_id' | 'attachment_url' | 'voice_note_url'> & { created_by_name_override?: string; attachment_url?: string | null; voice_note_url?: string | null }) => Promise<boolean>;
   updateRevenue: (id: string, updates: Partial<Revenue>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
