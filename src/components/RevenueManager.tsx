@@ -31,9 +31,12 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
   const manager = useRevenueManager();
   const [bankingModalOpen, setBankingModalOpen] = useState(false);
   const [locks, setLocks] = useState<Record<string, boolean>>({});
+  const [attachment, setAttachment] = useState<AttachmentState>({ notes: '', attachmentUrl: null, voiceNoteUrl: null });
   // Navigation: 'pos' | 'staff-summary' | 'user-detail'
   const [view, setView] = useState<'pos' | 'staff-summary' | 'user-detail'>('pos');
   const [selectedStaff, setSelectedStaff] = useState<{ attributionKey: string; userName: string } | null>(null);
+
+  const resetAttachment = () => setAttachment({ notes: '', attachmentUrl: null, voiceNoteUrl: null });
 
   // Fetch locks for the selected date
   const fetchLocks = useCallback(async () => {
@@ -58,20 +61,32 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
       toast.error('هذه الوردية مقفلة');
       return;
     }
-    const success = await manager.handleSubmitDirect(amount, 'income', null);
-    if (success) toast.success('تم تسجيل الإيراد النقدي');
-    else toast.error('فشل تسجيل الإيراد');
-  }, [manager, isCurrentPeriodLocked]);
+    const success = await manager.handleSubmitDirect(amount, 'income', null, {
+      notes: attachment.notes,
+      attachment_url: attachment.attachmentUrl,
+      voice_note_url: attachment.voiceNoteUrl,
+    });
+    if (success) {
+      toast.success('تم تسجيل الإيراد النقدي');
+      resetAttachment();
+    } else toast.error('فشل تسجيل الإيراد');
+  }, [manager, isCurrentPeriodLocked, attachment]);
 
   const handleRegisterBanking = useCallback(async (service: string, amount: number) => {
     if (isCurrentPeriodLocked) {
       toast.error('هذه الوردية مقفلة');
       return;
     }
-    const success = await manager.handleSubmitDirect(amount, 'banking_services', service);
-    if (success) toast.success('تم تسجيل الخدمة المصرفية');
-    else toast.error('فشل التسجيل');
-  }, [manager, isCurrentPeriodLocked]);
+    const success = await manager.handleSubmitDirect(amount, 'banking_services', service, {
+      notes: attachment.notes,
+      attachment_url: attachment.attachmentUrl,
+      voice_note_url: attachment.voiceNoteUrl,
+    });
+    if (success) {
+      toast.success('تم تسجيل الخدمة المصرفية');
+      resetAttachment();
+    } else toast.error('فشل التسجيل');
+  }, [manager, isCurrentPeriodLocked, attachment]);
 
   const handleToggleLock = useCallback(async () => {
     if (isAnyLocked) {
