@@ -547,6 +547,7 @@ export type Database = {
           adjustment: number | null
           adjustment_note: string | null
           amount: number
+          attachment_url: string | null
           created_at: string
           created_by_id: string
           created_by_name: string
@@ -558,11 +559,13 @@ export type Database = {
           service_name: string | null
           type: string
           verified_by_name: string | null
+          voice_note_url: string | null
         }
         Insert: {
           adjustment?: number | null
           adjustment_note?: string | null
           amount: number
+          attachment_url?: string | null
           created_at?: string
           created_by_id: string
           created_by_name: string
@@ -574,11 +577,13 @@ export type Database = {
           service_name?: string | null
           type: string
           verified_by_name?: string | null
+          voice_note_url?: string | null
         }
         Update: {
           adjustment?: number | null
           adjustment_note?: string | null
           amount?: number
+          attachment_url?: string | null
           created_at?: string
           created_by_id?: string
           created_by_name?: string
@@ -590,6 +595,7 @@ export type Database = {
           service_name?: string | null
           type?: string
           verified_by_name?: string | null
+          voice_note_url?: string | null
         }
         Relationships: []
       }

@@ -79,7 +79,12 @@ export const useRevenueManager = () => {
   }, [state.period]);
 
   // Direct submit for POS (no form event needed)
-  const handleSubmitDirect = useCallback(async (amount: number, type: 'income' | 'banking_services', serviceName: string | null): Promise<boolean> => {
+  const handleSubmitDirect = useCallback(async (
+    amount: number,
+    type: 'income' | 'banking_services',
+    serviceName: string | null,
+    extras?: { notes?: string; attachment_url?: string | null; voice_note_url?: string | null }
+  ): Promise<boolean> => {
     const nameOverride = getSelectedPeriodAttribution({
       userRole: user?.role,
       period: state.period,
@@ -90,7 +95,7 @@ export const useRevenueManager = () => {
       amount,
       type,
       period: state.period,
-      notes: '',
+      notes: extras?.notes || '',
       date: state.selectedDate,
       service_name: serviceName,
       is_verified: false,
@@ -98,6 +103,8 @@ export const useRevenueManager = () => {
       adjustment: 0,
       adjustment_note: null,
       created_by_name_override: nameOverride,
+      attachment_url: extras?.attachment_url || null,
+      voice_note_url: extras?.voice_note_url || null,
     });
   }, [addRevenue, state.period, state.selectedDate, user, checkPermission]);
 
