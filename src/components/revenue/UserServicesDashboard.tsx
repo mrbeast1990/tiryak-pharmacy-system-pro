@@ -382,6 +382,18 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                                     </span>
                                   </div>
                                   {rev.notes && <p className="text-[10px] text-muted-foreground mt-0.5">{rev.notes}</p>}
+                                  {((rev as any).voice_note_url || (rev as any).attachment_url) && (
+                                    <div className="flex items-center justify-end gap-2 mt-1">
+                                      {(rev as any).voice_note_url && (
+                                        <audio controls src={(rev as any).voice_note_url} className="h-7 max-w-[180px]" />
+                                      )}
+                                      {(rev as any).attachment_url && (
+                                        <a href={(rev as any).attachment_url} target="_blank" rel="noopener noreferrer">
+                                          <img src={(rev as any).attachment_url} alt="مرفق" className="h-12 w-12 object-cover rounded border" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
