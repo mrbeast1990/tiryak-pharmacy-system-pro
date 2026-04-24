@@ -13,6 +13,7 @@ import { ArrowRight, Lock, LockOpen, User, DollarSign, Building2, Stamp, Filter,
 import { Revenue } from '@/store/pharmacyStore';
 import { supabase } from '@/integrations/supabase/client';
 import { getRevenueAttributionKey, getRevenueDisplayName, getVerificationKey } from '@/lib/revenueAttribution';
+import DataFixButton from './DataFixButton';
 
 const MONTHS = [
   { value: 1, label: 'يناير' },
@@ -207,6 +208,7 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
               <span>العودة</span>
             </Button>
             <h1 className="text-sm font-bold text-foreground">ملخص الموظفين</h1>
+            {isAdmin ? <DataFixButton /> : <div className="w-16" />}
           </div>
         </div>
       </header>

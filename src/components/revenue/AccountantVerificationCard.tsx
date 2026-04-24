@@ -68,12 +68,18 @@ const AccountantVerificationCard: React.FC<AccountantVerificationCardProps> = ({
     setSaving(true);
     try {
       if (verification) {
-        await supabase
+        const { data: updated, error } = await supabase
           .from('accountant_verifications')
           .update({ reported_amount: numAmount, notes: notes || null, verified_by_name: verifierName || 'المدير' })
-          .eq('id', verification.id);
+          .eq('id', verification.id)
+          .select('id, reported_amount, verified_by_name, notes')
+          .maybeSingle();
+        if (error) throw error;
+        if (updated) {
+          setVerification(updated as Verification);
+        }
       } else {
-        await supabase
+        const { data: inserted, error } = await supabase
           .from('accountant_verifications')
           .insert({
             date: selectedDate,
@@ -83,13 +89,20 @@ const AccountantVerificationCard: React.FC<AccountantVerificationCardProps> = ({
             verified_by_id: verifierUserId || '',
             verified_by_name: verifierName || 'المدير',
             notes: notes || null,
-          });
+          })
+          .select('id, reported_amount, verified_by_name, notes')
+          .maybeSingle();
+        if (error) throw error;
+        if (inserted) {
+          setVerification(inserted as Verification);
+        }
       }
       toast.success('تم حفظ مطابقة المحاسب');
       setDialogOpen(false);
       await fetchVerification();
-    } catch (err) {
-      toast.error('فشل الحفظ');
+    } catch (err: any) {
+      console.error('Verification save error:', err);
+      toast.error(`فشل الحفظ: ${err?.message || 'خطأ غير معروف'}`);
     } finally {
       setSaving(false);
     }
