@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, DollarSign, Building2, TrendingUp, ChevronDown, ChevronUp, Clock, Edit, Trash2, ShieldCheck, Scale, Stamp } from 'lucide-react';
+import { ArrowRight, DollarSign, Building2, TrendingUp, ChevronDown, ChevronUp, Clock, Edit, Trash2, ShieldCheck, Scale, Stamp, NotebookPen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Revenue } from '@/store/pharmacyStore';
 import EditRevenueDialog from './EditRevenueDialog';
@@ -74,7 +74,7 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
 
     dailyRevenues.forEach(rev => {
       const isNoteOnly = !!rev.is_note_only;
-      const key = rev.type === 'income' ? 'income' : (rev.service_name || 'other');
+      const key = isNoteOnly ? '__notes__' : rev.type === 'income' ? 'income' : (rev.service_name || 'other');
       const existing = groups.get(key);
 
       if (existing) {
@@ -83,8 +83,10 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
         if (isNoteOnly) existing.notesCount += 1;
         existing.revenues.push(rev);
       } else {
-        const label = rev.type === 'income' ? 'نقدي' : (SERVICE_LABELS[rev.service_name || ''] || rev.service_name || 'خدمات');
-        const colorClass = rev.type === 'income'
+        const label = isNoteOnly ? 'ملاحظات' : rev.type === 'income' ? 'نقدي' : (SERVICE_LABELS[rev.service_name || ''] || rev.service_name || 'خدمات');
+        const colorClass = isNoteOnly
+          ? 'text-amber-700 bg-amber-50 border-amber-200'
+          : rev.type === 'income'
           ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
           : (SERVICE_COLORS[rev.service_name || ''] || 'text-blue-600 bg-blue-50 border-blue-200');
 
@@ -266,7 +268,9 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                           <p className="text-[10px] opacity-70">{group.count} عملية{group.notesCount ? ` • ${group.notesCount} ملاحظة` : ''}</p>
                         </div>
                         <div className={`w-8 h-8 rounded-full ${bgColor} flex items-center justify-center`}>
-                          {group.key === 'income' ? (
+                          {group.key === '__notes__' ? (
+                            <NotebookPen className={`w-4 h-4 ${textColor}`} />
+                          ) : group.key === 'income' ? (
                             <DollarSign className={`w-4 h-4 ${textColor}`} />
                           ) : (
                             <Building2 className={`w-4 h-4 ${textColor}`} />
