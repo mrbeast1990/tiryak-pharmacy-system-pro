@@ -207,6 +207,7 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
               <span>العودة</span>
             </Button>
             <h1 className="text-sm font-bold text-foreground">ملخص الموظفين</h1>
+            {isAdmin ? <DataFixButton /> : <div className="w-16" />}
           </div>
         </div>
       </header>
