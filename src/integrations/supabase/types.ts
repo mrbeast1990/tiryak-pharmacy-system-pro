@@ -553,6 +553,7 @@ export type Database = {
           created_by_name: string
           date: string
           id: string
+          is_note_only: boolean
           is_verified: boolean
           notes: string | null
           period: string
@@ -571,6 +572,7 @@ export type Database = {
           created_by_name: string
           date: string
           id?: string
+          is_note_only?: boolean
           is_verified?: boolean
           notes?: string | null
           period: string
@@ -589,6 +591,7 @@ export type Database = {
           created_by_name?: string
           date?: string
           id?: string
+          is_note_only?: boolean
           is_verified?: boolean
           notes?: string | null
           period?: string
