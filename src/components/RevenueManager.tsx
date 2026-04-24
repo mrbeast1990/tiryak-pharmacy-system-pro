@@ -88,6 +88,33 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
     } else toast.error('فشل التسجيل');
   }, [manager, isCurrentPeriodLocked, attachment]);
 
+  const hasAttachmentContent = !!attachment.notes.trim() || !!attachment.attachmentUrl || !!attachment.voiceNoteUrl;
+
+  const handleSaveNoteOnly = useCallback(async () => {
+    if (isCurrentPeriodLocked) {
+      toast.error('هذه الوردية مقفلة');
+      return;
+    }
+    if (!hasAttachmentContent) {
+      toast.error('أضف ملاحظة أو تسجيل صوتي أو صورة أولاً');
+      return;
+    }
+
+    const success = await manager.handleSubmitDirect(0, 'income', null, {
+      notes: attachment.notes,
+      attachment_url: attachment.attachmentUrl,
+      voice_note_url: attachment.voiceNoteUrl,
+      is_note_only: true,
+    });
+
+    if (success) {
+      toast.success('تم حفظ الملاحظة');
+      resetAttachment();
+    } else {
+      toast.error('فشل حفظ الملاحظة');
+    }
+  }, [attachment, hasAttachmentContent, isCurrentPeriodLocked, manager]);
+
   const handleToggleLock = useCallback(async () => {
     if (isAnyLocked) {
       await supabase.from('revenue_locks').delete().eq('date', manager.selectedDate);
@@ -294,12 +321,20 @@ const RevenueManager: React.FC<RevenueManagerProps> = ({ onBack }) => {
           <span>الخدمات المصرفية</span>
         </button>
 
-        {/* Notes & Attachments - applied to next registration */}
+        {/* Notes & Attachments */}
         <RevenueAttachmentInput
           value={attachment}
           onChange={setAttachment}
           disabled={isCurrentPeriodLocked}
         />
+
+        <Button
+          onClick={handleSaveNoteOnly}
+          disabled={isCurrentPeriodLocked || !hasAttachmentContent}
+          className="w-full h-11 rounded-xl"
+        >
+          حفظ الملاحظة بشكل مستقل
+        </Button>
 
         <BankingServicesModal
           open={bankingModalOpen}

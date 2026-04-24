@@ -83,7 +83,7 @@ export const useRevenueManager = () => {
     amount: number,
     type: 'income' | 'banking_services',
     serviceName: string | null,
-    extras?: { notes?: string; attachment_url?: string | null; voice_note_url?: string | null }
+    extras?: { notes?: string; attachment_url?: string | null; voice_note_url?: string | null; is_note_only?: boolean }
   ): Promise<boolean> => {
     const nameOverride = getSelectedPeriodAttribution({
       userRole: user?.role,
@@ -105,6 +105,7 @@ export const useRevenueManager = () => {
       created_by_name_override: nameOverride,
       attachment_url: extras?.attachment_url || null,
       voice_note_url: extras?.voice_note_url || null,
+      is_note_only: extras?.is_note_only || false,
     });
   }, [addRevenue, state.period, state.selectedDate, user, checkPermission]);
 

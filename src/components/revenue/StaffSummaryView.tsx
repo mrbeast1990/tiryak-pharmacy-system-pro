@@ -36,6 +36,7 @@ interface StaffGroup {
   targetUserId: string;
   totalCash: number;
   totalServices: number;
+  notesCount: number;
   total: number;
   count: number;
   isLocked: boolean;
@@ -130,12 +131,14 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
       const existing = groupMap.get(key);
       const cash = rev.type === 'income' ? rev.amount : 0;
       const services = rev.type === 'banking_services' ? rev.amount : 0;
+      const noteCount = rev.is_note_only || rev.notes || rev.attachment_url || rev.voice_note_url ? 1 : 0;
       const adjustment = (rev as any).adjustment || 0;
       const isLocked = dateFilter === 'day' ? (locks[rev.period] || false) : false;
 
       if (existing) {
         existing.totalCash += cash;
         existing.totalServices += services;
+        existing.notesCount += noteCount;
         existing.total += rev.amount;
         existing.count += 1;
         existing.totalAdjustment += adjustment;
@@ -148,6 +151,7 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
           targetUserId: rev.created_by_id,
           totalCash: cash,
           totalServices: services,
+          notesCount: noteCount,
           total: rev.amount,
           count: 1,
           isLocked,
@@ -412,6 +416,10 @@ const StaffSummaryView: React.FC<StaffSummaryViewProps> = ({
                         <div className="flex items-center gap-1">
                           <span className="text-sm font-bold text-blue-600">{staff.totalServices.toFixed(0)}</span>
                           <Building2 className="w-3 h-3 text-blue-600" />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-bold text-amber-600">{staff.notesCount}</span>
+                          <ClipboardCheck className="w-3 h-3 text-amber-600" />
                         </div>
                         <div className="border-r border-border/50 pr-4">
                           <span className="text-lg font-black text-primary">{staff.total.toFixed(0)} د</span>

@@ -1,0 +1,1 @@
+ALTER TABLE public.revenues ADD COLUMN IF NOT EXISTS is_note_only boolean NOT NULL DEFAULT false;

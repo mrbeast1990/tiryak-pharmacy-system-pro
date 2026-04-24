@@ -7,7 +7,7 @@ import { Tables } from '@/integrations/supabase/types';
 // Map Supabase types to our app interfaces.
 export type Medicine = Omit<Tables<'medicines'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
 export type Supply = Omit<Tables<'supplies'>, 'updated_by_id' | 'updated_by_name'> & { updatedBy?: string };
-export type Revenue = Omit<Tables<'revenues'>, 'created_by_name' | 'amount'> & { createdBy: string; amount: number; service_name?: string | null; is_verified?: boolean; verified_by_name?: string | null; adjustment?: number; adjustment_note?: string | null; attachment_url?: string | null; voice_note_url?: string | null };
+export type Revenue = Omit<Tables<'revenues'>, 'created_by_name' | 'amount'> & { createdBy: string; amount: number; service_name?: string | null; is_verified?: boolean; verified_by_name?: string | null; adjustment?: number; adjustment_note?: string | null; attachment_url?: string | null; voice_note_url?: string | null; is_note_only?: boolean };
 
 interface PharmacyState {
   medicines: Medicine[];
@@ -25,7 +25,7 @@ interface PharmacyState {
   updateSupply: (id: string, updates: Partial<Pick<Supply, 'name' | 'status' | 'notes' | 'repeat_count'>>) => Promise<void>;
   deleteMedicine: (id: string) => Promise<void>;
   deleteSupply: (id: string) => Promise<void>;
-  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'created_by_id' | 'attachment_url' | 'voice_note_url'> & { created_by_name_override?: string; attachment_url?: string | null; voice_note_url?: string | null }) => Promise<boolean>;
+  addRevenue: (revenue: Omit<Revenue, 'id' | 'created_at' | 'createdBy' | 'created_by_id' | 'attachment_url' | 'voice_note_url' | 'is_note_only'> & { created_by_name_override?: string; attachment_url?: string | null; voice_note_url?: string | null; is_note_only?: boolean }) => Promise<boolean>;
   updateRevenue: (id: string, updates: Partial<Revenue>) => Promise<void>;
   deleteRevenue: (id: string) => Promise<void>;
   getMedicinesByStatus: (status: 'available' | 'shortage') => Medicine[];
@@ -320,6 +320,7 @@ addMedicine: async (medicine) => {
         created_by_name: created_by_name_override || user.name,
         attachment_url: (revenueData as any).attachment_url || null,
         voice_note_url: (revenueData as any).voice_note_url || null,
+        is_note_only: (revenueData as any).is_note_only || false,
       };
       console.log('🔵 addRevenue inserting:', JSON.stringify(insertData));
 

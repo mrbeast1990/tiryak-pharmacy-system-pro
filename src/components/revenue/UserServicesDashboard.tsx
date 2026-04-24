@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, DollarSign, Building2, TrendingUp, ChevronDown, ChevronUp, Clock, Edit, Trash2, ShieldCheck, Scale, Stamp } from 'lucide-react';
+import { ArrowRight, DollarSign, Building2, TrendingUp, ChevronDown, ChevronUp, Clock, Edit, Trash2, ShieldCheck, Scale, Stamp, NotebookPen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Revenue } from '@/store/pharmacyStore';
 import EditRevenueDialog from './EditRevenueDialog';
@@ -20,6 +20,7 @@ interface ServiceGroup {
   colorClass: string;
   total: number;
   count: number;
+  notesCount: number;
   revenues: Revenue[];
 }
 
@@ -72,16 +73,20 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
     const groups = new Map<string, ServiceGroup>();
 
     dailyRevenues.forEach(rev => {
-      const key = rev.type === 'income' ? 'income' : (rev.service_name || 'other');
+      const isNoteOnly = !!rev.is_note_only;
+      const key = isNoteOnly ? '__notes__' : rev.type === 'income' ? 'income' : (rev.service_name || 'other');
       const existing = groups.get(key);
 
       if (existing) {
         existing.total += rev.amount;
         existing.count += 1;
+        if (isNoteOnly) existing.notesCount += 1;
         existing.revenues.push(rev);
       } else {
-        const label = rev.type === 'income' ? 'نقدي' : (SERVICE_LABELS[rev.service_name || ''] || rev.service_name || 'خدمات');
-        const colorClass = rev.type === 'income'
+        const label = isNoteOnly ? 'ملاحظات' : rev.type === 'income' ? 'نقدي' : (SERVICE_LABELS[rev.service_name || ''] || rev.service_name || 'خدمات');
+        const colorClass = isNoteOnly
+          ? 'text-amber-700 bg-amber-50 border-amber-200'
+          : rev.type === 'income'
           ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
           : (SERVICE_COLORS[rev.service_name || ''] || 'text-blue-600 bg-blue-50 border-blue-200');
 
@@ -91,12 +96,18 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
           colorClass,
           total: rev.amount,
           count: 1,
+          notesCount: isNoteOnly ? 1 : 0,
           revenues: [rev],
         });
       }
     });
 
-    return Array.from(groups.values()).sort((a, b) => b.total - a.total);
+    return Array.from(groups.values())
+      .map(group => ({
+        ...group,
+        revenues: [...group.revenues].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+      }))
+      .sort((a, b) => b.total - a.total);
   }, [dailyRevenues]);
 
   const handleUpdate = async (id: string, updates: Partial<Revenue>) => {
@@ -254,10 +265,12 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                       <div className="flex items-center gap-2">
                         <div>
                           <span className="text-sm font-bold">{group.label}</span>
-                          <p className="text-[10px] opacity-70">{group.count} عملية</p>
+                          <p className="text-[10px] opacity-70">{group.count} عملية{group.notesCount ? ` • ${group.notesCount} ملاحظة` : ''}</p>
                         </div>
                         <div className={`w-8 h-8 rounded-full ${bgColor} flex items-center justify-center`}>
-                          {group.key === 'income' ? (
+                          {group.key === '__notes__' ? (
+                            <NotebookPen className={`w-4 h-4 ${textColor}`} />
+                          ) : group.key === 'income' ? (
                             <DollarSign className={`w-4 h-4 ${textColor}`} />
                           ) : (
                             <Building2 className={`w-4 h-4 ${textColor}`} />
@@ -372,8 +385,11 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                                 {/* Info */}
                                 <div className="text-right flex-1 mr-2">
                                   <div className="flex items-center justify-end gap-2 mb-0.5">
-                                    <span className="text-[10px] text-muted-foreground/50">#{idx + 1}</span>
+                                    <span className="text-[10px] text-muted-foreground/50">#{group.revenues.length - idx}</span>
                                     <span className="text-base font-bold text-foreground">{rev.amount.toFixed(2)} د</span>
+                                    {rev.is_note_only && (
+                                      <Badge variant="outline" className="text-[10px] border-amber-200 bg-amber-50 text-amber-700">ملاحظة</Badge>
+                                    )}
                                   </div>
                                   <div className="flex items-center justify-end gap-3 text-[10px] text-muted-foreground">
                                     <span className="flex items-center gap-0.5">
