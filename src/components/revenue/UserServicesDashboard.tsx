@@ -290,6 +290,66 @@ const UserServicesDashboard: React.FC<UserServicesDashboardProps> = ({
                           const adjustment = (rev as any).adjustment || 0;
                           const adjustmentNote = (rev as any).adjustment_note || '';
 
+                          // ===== Note-only entry: dedicated large layout =====
+                          if (rev.is_note_only) {
+                            const canEditNote = !isLocked && (isAdmin || rev.created_by_id === userId);
+                            return (
+                              <div key={rev.id} className="p-4 rounded-xl border-2 border-amber-200 bg-amber-50/40">
+                                <div className="flex items-start justify-between gap-3 mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-[11px] border-amber-300 bg-amber-100 text-amber-800 font-bold">ملاحظة</Badge>
+                                    <span className="text-[10px] text-muted-foreground/70">#{group.revenues.length - idx}</span>
+                                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                                      <Clock className="w-2.5 h-2.5" />
+                                      {new Date(rev.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                  {canEditNote && (
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setEditingRevenue(rev)}>
+                                        <Edit className="h-3.5 w-3.5 text-muted-foreground" />
+                                      </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-destructive">
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                                            <AlertDialogDescription>سيؤدي هذا إلى حذف الملاحظة نهائيًا.</AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(rev.id)} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
+                                  )}
+                                </div>
+                                {rev.notes && (
+                                  <p className="text-base text-foreground leading-relaxed whitespace-pre-wrap text-right font-medium">
+                                    {rev.notes}
+                                  </p>
+                                )}
+                                {((rev as any).voice_note_url || (rev as any).attachment_url) && (
+                                  <div className="flex flex-wrap items-center justify-end gap-3 mt-3">
+                                    {(rev as any).voice_note_url && (
+                                      <audio controls src={(rev as any).voice_note_url} className="h-9 w-full max-w-full" />
+                                    )}
+                                    {(rev as any).attachment_url && (
+                                      <a href={(rev as any).attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+                                        <img src={(rev as any).attachment_url} alt="مرفق" className="max-h-48 w-auto object-contain rounded-lg border" />
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
                           return (
                             <div key={rev.id} className={`p-3 rounded-xl border-2 transition-all ${isVerified ? 'border-emerald-400/60 bg-emerald-50/30' : 'border-border/20 bg-card'}`}>
                               <div className="flex items-center justify-between">
