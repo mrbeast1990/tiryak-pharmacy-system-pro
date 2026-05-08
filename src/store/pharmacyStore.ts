@@ -77,13 +77,38 @@ export const usePharmacyStore = create<PharmacyState>()(
 
     fetchRevenues: async () => {
       set({ revenuesLoading: true });
-      const { data, error } = await supabase.from('revenues').select('*').order('date', { ascending: false });
-      if (error) {
-        console.error('Error fetching revenues:', error);
+
+      const pageSize = 1000;
+      let from = 0;
+      let hasMore = true;
+      let fetchError: unknown = null;
+      const allRows: Tables<'revenues'>[] = [];
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('revenues')
+          .select('*')
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .range(from, from + pageSize - 1);
+
+        if (error) {
+          fetchError = error;
+          break;
+        }
+
+        allRows.push(...(data || []));
+        hasMore = (data?.length || 0) === pageSize;
+        from += pageSize;
+      }
+
+      if (fetchError) {
+        console.error('Error fetching revenues:', fetchError);
         set({ revenues: [], revenuesLoading: false });
         return;
       }
-      const revenues: Revenue[] = data.map(r => ({ ...r, createdBy: r.created_by_name, amount: Number(r.amount), service_name: r.service_name, is_verified: r.is_verified, verified_by_name: r.verified_by_name }));
+
+      const revenues: Revenue[] = allRows.map(r => ({ ...r, createdBy: r.created_by_name, amount: Number(r.amount), service_name: r.service_name, is_verified: r.is_verified, verified_by_name: r.verified_by_name }));
       set({ revenues, revenuesLoading: false });
     },
     
