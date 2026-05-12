@@ -21,7 +21,12 @@ const BUCKET = 'revenue-attachments';
 
 const uploadToBucket = async (file: Blob, ext: string): Promise<string | null> => {
   try {
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('يجب تسجيل الدخول');
+      return null;
+    }
+    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
     const { data, error } = await supabase.storage.from(BUCKET).upload(fileName, file, {
       cacheControl: '3600',
       upsert: false,

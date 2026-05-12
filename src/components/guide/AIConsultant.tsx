@@ -41,13 +41,16 @@ const AIConsultant: React.FC = () => {
   }, [messages]);
 
   const streamChat = async (userMessages: { role: string; content: string }[]) => {
-    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFveWF3a2ZieW9jZ3R5eGxwZ25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTgyNTcsImV4cCI6MjA2NTQ5NDI1N30.8neVXjoVGgh-bcyL5f5FUZnRkJ4eVfaTvwvItpwmEKI';
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('يجب تسجيل الدخول لاستخدام المستشار الذكي');
+    }
     const response = await fetch(CHAT_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ANON_KEY}`,
-        'apikey': ANON_KEY,
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({ messages: userMessages }),
     });
