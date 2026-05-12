@@ -18,6 +18,28 @@ serve(async (req: Request) => {
       },
     });
 
+    // Require admin caller
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAdmin.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles').select('role').eq('id', claimsData.claims.sub).maybeSingle();
+    if (!callerProfile || !['admin', 'ahmad_rajili'].includes(callerProfile.role)) {
+      return new Response(JSON.stringify({ error: 'Forbidden: admin only' }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // استقبال البيانات من الطلب
     const { email, password, name, role } = await req.json();
 
