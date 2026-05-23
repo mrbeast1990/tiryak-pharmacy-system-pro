@@ -47,6 +47,7 @@ const AccountantVerificationCard: React.FC<AccountantVerificationCardProps> = ({
       .from('accountant_verifications')
       .select('id, reported_amount, verified_by_name, notes')
       .eq('date', selectedDate)
+      .eq('period', period)
       .eq('target_user_id', targetUserId)
       .maybeSingle();
     
@@ -55,7 +56,7 @@ const AccountantVerificationCard: React.FC<AccountantVerificationCardProps> = ({
     } else {
       setVerification(null);
     }
-  }, [selectedDate, targetUserId]);
+  }, [selectedDate, period, targetUserId]);
 
   useEffect(() => { fetchVerification(); }, [fetchVerification]);
 
